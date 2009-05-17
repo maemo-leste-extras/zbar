@@ -1,0 +1,91 @@
+Author: Daniel Baumann <daniel@debian.org>
+Description: Ignoring stripped out documentation during build.
+
+diff -Naurp zbar.orig/Makefile.in zbar/Makefile.in
+--- zbar.orig/Makefile.in	2009-05-17 10:18:13.000000000 +0000
++++ zbar/Makefile.in	2009-05-17 10:44:13.000000000 +0000
+@@ -42,7 +42,7 @@ check_PROGRAMS = test/test_decode$(EXEEX
+ DIST_COMMON = README $(am__configure_deps) \
+ 	$(am__zinclude_HEADERS_DIST) $(dist_doc_DATA) $(dist_man_MANS) \
+ 	$(include_HEADERS) $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+-	$(srcdir)/doc/Makefile.am.inc $(srcdir)/gtk/Makefile.am.inc \
++	$(srcdir)/gtk/Makefile.am.inc \
+ 	$(srcdir)/include/Makefile.am.inc \
+ 	$(srcdir)/plugin/Makefile.am.inc \
+ 	$(srcdir)/pygtk/Makefile.am.inc \
+@@ -52,7 +52,6 @@ DIST_COMMON = README $(am__configure_dep
+ 	$(srcdir)/zbar.spec.in $(srcdir)/zbar/Makefile.am.inc \
+ 	$(srcdir)/zbarcam/Makefile.am.inc \
+ 	$(srcdir)/zbarimg/Makefile.am.inc $(top_srcdir)/configure \
+-	$(top_srcdir)/doc/doxygen.conf.in \
+ 	$(top_srcdir)/include/config.h.in COPYING.LIB ChangeLog \
+ 	INSTALL NEWS TODO config/compile config/config.guess \
+ 	config/config.sub config/depcomp config/install-sh \
+@@ -107,8 +106,6 @@ DIST_COMMON = README $(am__configure_dep
+ @HAVE_MAGICK_TRUE@am__append_42 = test/dbg_scan
+ @HAVE_GTK_TRUE@am__append_43 = test/test_gtk
+ @HAVE_QT_TRUE@am__append_44 = test/test_qt
+-@HAVE_MAGICK_TRUE@am__append_45 = doc/man/zbarimg.1
+-@HAVE_VIDEO_TRUE@am__append_46 = doc/man/zbarcam.1
+ subdir = .
+ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
+ am__aclocal_m4_deps = $(top_srcdir)/config/libtool.m4 \
+@@ -122,8 +119,7 @@ am__CONFIG_DISTCLEAN_FILES = config.stat
+  configure.lineno config.status.lineno
+ mkinstalldirs = $(install_sh) -d
+ CONFIG_HEADER = $(top_builddir)/include/config.h
+-CONFIG_CLEAN_FILES = zbar.pc zbar-gtk.pc zbar-qt.pc zbar.spec \
+-	doc/doxygen.conf
++CONFIG_CLEAN_FILES = zbar.pc zbar-gtk.pc zbar-qt.pc zbar.spec
+ am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+ am__vpath_adj = case $$p in \
+     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+@@ -717,7 +713,7 @@ all: $(BUILT_SOURCES)
+ .SUFFIXES: .c .cpp .lo .o .obj
+ am--refresh:
+ 	@:
+-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/include/Makefile.am.inc $(srcdir)/zbar/Makefile.am.inc $(srcdir)/zbarimg/Makefile.am.inc $(srcdir)/zbarcam/Makefile.am.inc $(srcdir)/python/Makefile.am.inc $(srcdir)/gtk/Makefile.am.inc $(srcdir)/pygtk/Makefile.am.inc $(srcdir)/qt/Makefile.am.inc $(srcdir)/plugin/Makefile.am.inc $(srcdir)/test/Makefile.am.inc $(srcdir)/doc/Makefile.am.inc $(am__configure_deps)
++$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/include/Makefile.am.inc $(srcdir)/zbar/Makefile.am.inc $(srcdir)/zbarimg/Makefile.am.inc $(srcdir)/zbarcam/Makefile.am.inc $(srcdir)/python/Makefile.am.inc $(srcdir)/gtk/Makefile.am.inc $(srcdir)/pygtk/Makefile.am.inc $(srcdir)/qt/Makefile.am.inc $(srcdir)/plugin/Makefile.am.inc $(srcdir)/test/Makefile.am.inc $(am__configure_deps)
+ 	@for dep in $?; do \
+ 	  case '$(am__configure_deps)' in \
+ 	    *$$dep*) \
+@@ -773,8 +769,6 @@ zbar-qt.pc: $(top_builddir)/config.statu
+ 	cd $(top_builddir) && $(SHELL) ./config.status $@
+ zbar.spec: $(top_builddir)/config.status $(srcdir)/zbar.spec.in
+ 	cd $(top_builddir) && $(SHELL) ./config.status $@
+-doc/doxygen.conf: $(top_builddir)/config.status $(top_srcdir)/doc/doxygen.conf.in
+-	cd $(top_builddir) && $(SHELL) ./config.status $@
+ install-libLTLIBRARIES: $(lib_LTLIBRARIES)
+ 	@$(NORMAL_INSTALL)
+ 	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
+diff -Naurp zbar.orig/configure zbar/configure
+--- zbar.orig/configure	2009-05-17 10:18:13.000000000 +0000
++++ zbar/configure	2009-05-17 10:44:04.000000000 +0000
+@@ -22022,7 +22022,7 @@ ac_config_commands="$ac_config_commands 
+ ac_config_commands="$ac_config_commands doc/reldate.xml"
+ 
+ 
+-ac_config_files="$ac_config_files Makefile zbar.pc zbar-gtk.pc zbar-qt.pc zbar.spec doc/doxygen.conf"
++ac_config_files="$ac_config_files Makefile zbar.pc zbar-gtk.pc zbar-qt.pc zbar.spec"
+ 
+ cat >confcache <<\_ACEOF
+ # This file is a shell script that caches the results of configure
+@@ -23114,7 +23114,6 @@ do
+     "zbar-gtk.pc") CONFIG_FILES="$CONFIG_FILES zbar-gtk.pc" ;;
+     "zbar-qt.pc") CONFIG_FILES="$CONFIG_FILES zbar-qt.pc" ;;
+     "zbar.spec") CONFIG_FILES="$CONFIG_FILES zbar.spec" ;;
+-    "doc/doxygen.conf") CONFIG_FILES="$CONFIG_FILES doc/doxygen.conf" ;;
+ 
+   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
+ echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
+diff -Naurp zbar.orig/configure.ac zbar/configure.ac
+--- zbar.orig/configure.ac	2009-05-17 10:18:13.000000000 +0000
++++ zbar/configure.ac	2009-05-17 10:44:04.000000000 +0000
+@@ -382,7 +382,6 @@ zbar.pc
+ zbar-gtk.pc
+ zbar-qt.pc
+ zbar.spec
+-doc/doxygen.conf
+ ])
+ AC_OUTPUT
+ 

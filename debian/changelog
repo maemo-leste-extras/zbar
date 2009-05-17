@@ -1,0 +1,64 @@
+zbar (0.7+dfsg-1) unstable; urgency=low
+
+  * Merging upstream version 0.7+dfsg.
+  * Adding upstream target in rules file.
+  * Adding patch to ignore stripped out documentation during build.
+  * Renaming binary and source package from zebra to zbar to match
+    upstream.
+  * Removing manpages from zbar-tools debhelper install file, manpages
+    are stripped out in dfsg tarball.
+  * Updating section of the debug package.
+  * Using correct rfc-2822 date formats in changelog.
+
+ -- Daniel Baumann <daniel@debian.org>  Sun, 17 May 2009 12:50:49 +0200
+
+zebra (0.7-1) unstable; urgency=low
+
+  * Merging upstream version 0.7.
+  * Updating debhelper install files to cope with upstreams zebra to zbar
+    rename.
+
+ -- Daniel Baumann <daniel@debian.org>  Sun, 26 Apr 2009 16:43:00 +0200
+
+zebra (0.6-1) unstable; urgency=low
+
+  * Updating imagemagick build-depends.
+  * Updating standards to 3.8.1.
+  * Merging upstream version 0.6.
+  * Unsetting LDFLAGS (which are exported to the environment by newer dpkg),
+    otherwise python modules fail to build.
+  * Tidy rules file.
+  * Updating year in copyright file.
+
+ -- Daniel Baumann <daniel@debian.org>  Sun, 26 Apr 2009 16:30:00 +0200
+
+zebra (0.5+debian-4) unstable; urgency=low
+
+  * Sorting config.guess/config.sub handling in rules.
+  * Passing flags to configure as arguments.
+  * Removing unnecessary passing of sourcedir to dh_install.
+
+ -- Daniel Baumann <daniel@debian.org>  Wed, 17 Dec 2008 21:21:00 +0100
+
+zebra (0.5+debian-3) unstable; urgency=low
+
+  * Replacing obsolete dh_clean -k with dh_prep.
+  * Adding conflicts against quagga to avoid /usr/lib/libzebra.a clash
+    (Closes: #505268).
+
+ -- Daniel Baumann <daniel@debian.org>  Tue, 11 Nov 2008 12:07:00 +0100
+
+zebra (0.5+debian-2) unstable; urgency=low
+
+  * Adding conflicts against libpacklib1-dev to avoid
+    /usr/include/zebra.h clash, unlikely that there is another solution
+    possible (Closes: #504526).
+
+ -- Daniel Baumann <daniel@debian.org>  Tue, 04 Nov 2008 21:07:00 +0100
+
+zebra (0.5+debian-1) unstable; urgency=low
+
+  * Initial release (Closes: #502992).
+  * Rebuild upstream tarball without debian directory.
+
+ -- Daniel Baumann <daniel@debian.org>  Thu, 23 Oct 2008 12:29:00 +0200
