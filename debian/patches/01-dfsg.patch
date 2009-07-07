@@ -1,9 +1,20 @@
 Author: Daniel Baumann <daniel@debian.org>
 Description: Ignoring stripped out documentation during build.
 
+diff -Naurp zbar.orig/Makefile.am zbar/Makefile.am
+--- zbar.orig/Makefile.am	2009-06-05 19:55:03.000000000 +0000
++++ zbar/Makefile.am	2009-07-07 14:27:36.000000000 +0000
+@@ -42,7 +42,6 @@ if HAVE_NPAPI
+ include $(srcdir)/plugin/Makefile.am.inc
+ endif
+ include $(srcdir)/test/Makefile.am.inc
+-include $(srcdir)/doc/Makefile.am.inc
+ 
+ EXTRA_DIST += zbar.spec.in zbar.spec
+ 
 diff -Naurp zbar.orig/Makefile.in zbar/Makefile.in
---- zbar.orig/Makefile.in	2009-05-17 10:18:13.000000000 +0000
-+++ zbar/Makefile.in	2009-05-17 10:44:13.000000000 +0000
+--- zbar.orig/Makefile.in	2009-07-07 14:16:13.000000000 +0000
++++ zbar/Makefile.in	2009-07-07 14:27:10.000000000 +0000
 @@ -42,7 +42,7 @@ check_PROGRAMS = test/test_decode$(EXEEX
  DIST_COMMON = README $(am__configure_deps) \
  	$(am__zinclude_HEADERS_DIST) $(dist_doc_DATA) $(dist_man_MANS) \
@@ -40,7 +51,7 @@ diff -Naurp zbar.orig/Makefile.in zbar/Makefile.in
  am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
  am__vpath_adj = case $$p in \
      $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-@@ -717,7 +713,7 @@ all: $(BUILT_SOURCES)
+@@ -718,7 +714,7 @@ all: $(BUILT_SOURCES)
  .SUFFIXES: .c .cpp .lo .o .obj
  am--refresh:
  	@:
@@ -49,7 +60,7 @@ diff -Naurp zbar.orig/Makefile.in zbar/Makefile.in
  	@for dep in $?; do \
  	  case '$(am__configure_deps)' in \
  	    *$$dep*) \
-@@ -773,8 +769,6 @@ zbar-qt.pc: $(top_builddir)/config.statu
+@@ -774,8 +770,6 @@ zbar-qt.pc: $(top_builddir)/config.statu
  	cd $(top_builddir) && $(SHELL) ./config.status $@
  zbar.spec: $(top_builddir)/config.status $(srcdir)/zbar.spec.in
  	cd $(top_builddir) && $(SHELL) ./config.status $@
@@ -59,9 +70,9 @@ diff -Naurp zbar.orig/Makefile.in zbar/Makefile.in
  	@$(NORMAL_INSTALL)
  	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
 diff -Naurp zbar.orig/configure zbar/configure
---- zbar.orig/configure	2009-05-17 10:18:13.000000000 +0000
-+++ zbar/configure	2009-05-17 10:44:04.000000000 +0000
-@@ -22022,7 +22022,7 @@ ac_config_commands="$ac_config_commands 
+--- zbar.orig/configure	2009-07-07 14:16:13.000000000 +0000
++++ zbar/configure	2009-07-07 14:27:10.000000000 +0000
+@@ -22395,7 +22395,7 @@ ac_config_commands="$ac_config_commands 
  ac_config_commands="$ac_config_commands doc/reldate.xml"
  
  
@@ -70,17 +81,17 @@ diff -Naurp zbar.orig/configure zbar/configure
  
  cat >confcache <<\_ACEOF
  # This file is a shell script that caches the results of configure
-@@ -23114,7 +23114,6 @@ do
+@@ -23529,7 +23529,6 @@ do
      "zbar-gtk.pc") CONFIG_FILES="$CONFIG_FILES zbar-gtk.pc" ;;
      "zbar-qt.pc") CONFIG_FILES="$CONFIG_FILES zbar-qt.pc" ;;
      "zbar.spec") CONFIG_FILES="$CONFIG_FILES zbar.spec" ;;
 -    "doc/doxygen.conf") CONFIG_FILES="$CONFIG_FILES doc/doxygen.conf" ;;
  
-   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
- echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
+   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
+ $as_echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
 diff -Naurp zbar.orig/configure.ac zbar/configure.ac
---- zbar.orig/configure.ac	2009-05-17 10:18:13.000000000 +0000
-+++ zbar/configure.ac	2009-05-17 10:44:04.000000000 +0000
+--- zbar.orig/configure.ac	2009-07-07 14:16:13.000000000 +0000
++++ zbar/configure.ac	2009-07-07 14:27:10.000000000 +0000
 @@ -382,7 +382,6 @@ zbar.pc
  zbar-gtk.pc
  zbar-qt.pc

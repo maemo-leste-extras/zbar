@@ -1,3 +1,12 @@
+zbar (0.8+dfsg-1) unstable; urgency=low
+
+  * Merging upstream version 0.8+dfsg.
+  * Updating dfsg.patch.
+  * Updating package to standards version 3.8.2.
+  * Updating year in copyright file.
+
+ -- Daniel Baumann <daniel@debian.org>  Tue, 07 Jul 2009 16:17:32 +0200
+
 zbar (0.7+dfsg-1) unstable; urgency=low
 
   * Merging upstream version 0.7+dfsg.
