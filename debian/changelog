@@ -1,3 +1,9 @@
+zbar (0.8+dfsg-2) unstable; urgency=low
+
+  * Correcting spelling of Qt in package descriptions (Closes: #534426).
+
+ -- Daniel Baumann <daniel@debian.org>  Sun, 26 Jul 2009 21:03:26 +0200
+
 zbar (0.8+dfsg-1) unstable; urgency=low
 
   * Merging upstream version 0.8+dfsg.

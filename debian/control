@@ -92,20 +92,20 @@ Package: libzbarqt0
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libzbar0 (= ${binary:Version})
-Description: scanning and decoding bar codes (QT bindings)
+Description: scanning and decoding bar codes (Qt bindings)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports EAN,
  UPC, Code 128, Code 39 and Interleaved 2 of 5.
  .
- This package contains the QT bindings.
+ This package contains the Qt bindings.
 
 Package: libzbarqt-dev
 Section: libdevel
 Architecture: any
 Depends: libzbarqt0 (= ${binary:Version}), libqt4-dev
-Description: scanning and decoding bar codes (QT bindings development)
+Description: scanning and decoding bar codes (Qt bindings development)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports EAN,
  UPC, Code 128, Code 39 and Interleaved 2 of 5.
  .
- This package contains the development files for the QT bindings.
+ This package contains the development files for the Qt bindings.
