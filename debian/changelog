@@ -1,3 +1,15 @@
+zbar (0.8+dfsg-4) unstable; urgency=low
+
+  * QA upload.
+  * Build-depend on python-support and call dh_pysupport in debian/rules
+    to allow byte-compilation (Closes: #571484).
+  * Bump Standards-Version to 3.8.4, no changes required.
+  * Add ${misc:Depends} dependency where needed.
+  * Remove duplicate section fields from some binary packages.
+  * Really remove Vcs-* fields.
+
+ -- Luca Falavigna <dktrkranz@debian.org>  Sun, 28 Feb 2010 15:59:51 +0100
+
 zbar (0.8+dfsg-3) unstable; urgency=low
 
   * Updating package to standards version 3.8.3.
