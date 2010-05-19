@@ -57,6 +57,19 @@ imagescanner_dealloc (zbarImageScanner *self)
     ((PyObject*)self)->ob_type->tp_free((PyObject*)self);
 }
 
+static zbarSymbolSet*
+imagescanner_get_results (zbarImageScanner *self,
+                          void *closure)
+{
+    const zbar_symbol_set_t *zsyms =
+        zbar_image_scanner_get_results(self->zscn);
+    return(zbarSymbolSet_FromSymbolSet(zsyms));
+}
+
+static PyGetSetDef imagescanner_getset[] = {
+    { "results", (getter)imagescanner_get_results, },
+};
+
 static PyObject*
 imagescanner_set_config (zbarImageScanner *self,
                          PyObject *args,
@@ -111,6 +124,21 @@ imagescanner_enable_cache (zbarImageScanner *self,
 }
 
 static PyObject*
+imagescanner_recycle (zbarImageScanner *self,
+                      PyObject *args,
+                      PyObject *kwds)
+{
+    zbarImage *img = NULL;
+    static char *kwlist[] = { "image", NULL };
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "O!", kwlist,
+                                    &zbarImage_Type, &img))
+        return(NULL);
+
+    zbar_image_scanner_recycle_image(self->zscn, img->zimg);
+    Py_RETURN_NONE;
+}
+
+static PyObject*
 imagescanner_scan (zbarImageScanner *self,
                    PyObject *args,
                    PyObject *kwds)
@@ -139,6 +167,8 @@ static PyMethodDef imagescanner_methods[] = {
       METH_VARARGS | METH_KEYWORDS, },
     { "enable_cache",  (PyCFunction)imagescanner_enable_cache,
       METH_VARARGS | METH_KEYWORDS, },
+    { "recycle",       (PyCFunction)imagescanner_recycle,
+      METH_VARARGS | METH_KEYWORDS, },
     { "scan",          (PyCFunction)imagescanner_scan,
       METH_VARARGS | METH_KEYWORDS, },
     { NULL, },
@@ -152,5 +182,6 @@ PyTypeObject zbarImageScanner_Type = {
     .tp_flags       = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     .tp_new         = (newfunc)imagescanner_new,
     .tp_dealloc     = (destructor)imagescanner_dealloc,
+    .tp_getset      = imagescanner_getset,
     .tp_methods     = imagescanner_methods,
 };

@@ -22,8 +22,13 @@
  *------------------------------------------------------------------------*/
 
 #include "window.h"
-#include "processor.h"
-#include <X11/keysym.h>
+#include "image.h"
+#include "x.h"
+#include <ctype.h>
+
+#ifndef ZBAR_OVERLAY_FONT
+# define ZBAR_OVERLAY_FONT "-*-fixed-medium-r-*-*-*-120-75-75-*-*-ISO8859-1"
+#endif
 
 static inline unsigned long window_alloc_color (zbar_window_t *w,
                                                 Colormap cmap,
@@ -42,17 +47,17 @@ static inline unsigned long window_alloc_color (zbar_window_t *w,
 
 static inline int window_alloc_colors (zbar_window_t *w)
 {
+    window_state_t *x = w->state;
     Colormap cmap = DefaultColormap(w->display, DefaultScreen(w->display));
     int i;
     for(i = 0; i < 8; i++)
-        w->colors[i] =
-            window_alloc_color(w, cmap,
-                               (i & 4) ? (0xcc * 0x101) : 0,
-                               (i & 2) ? (0xcc * 0x101) : 0,
-                               (i & 1) ? (0xcc * 0x101) : 0);
+        x->colors[i] = window_alloc_color(w, cmap,
+                                          (i & 4) ? (0xcc * 0x101) : 0,
+                                          (i & 2) ? (0xcc * 0x101) : 0,
+                                          (i & 1) ? (0xcc * 0x101) : 0);
 
-    w->logo_colors[0] = window_alloc_color(w, cmap, 0xd709, 0x3333, 0x3333);
-    w->logo_colors[1] = window_alloc_color(w, cmap, 0xa3d6, 0x0000, 0x0000);
+    x->logo_colors[0] = window_alloc_color(w, cmap, 0xd709, 0x3333, 0x3333);
+    x->logo_colors[1] = window_alloc_color(w, cmap, 0xa3d6, 0x0000, 0x0000);
     return(0);
 }
 
@@ -77,6 +82,10 @@ static inline int window_hide_cursor (zbar_window_t *w)
 
 int _zbar_window_resize (zbar_window_t *w)
 {
+    window_state_t *x = w->state;
+    if(!x)
+        return(0);
+
     int lbw;
     if(w->height * 8 / 10 <= w->width)
         lbw = w->height / 36;
@@ -84,10 +93,10 @@ int _zbar_window_resize (zbar_window_t *w)
         lbw = w->width * 5 / 144;
     if(lbw < 1)
         lbw = 1;
-    w->logo_scale = lbw;
-    if(w->logo_zbars)
-        XDestroyRegion(w->logo_zbars);
-    w->logo_zbars = XCreateRegion();
+    x->logo_scale = lbw;
+    if(x->logo_zbars)
+        XDestroyRegion(x->logo_zbars);
+    x->logo_zbars = XCreateRegion();
 
     int x0 = w->width / 2;
     int y0 = w->height / 2;
@@ -99,20 +108,20 @@ int _zbar_window_resize (zbar_window_t *w)
 
     int i;
     for(i = 0; i < 5; i++) {
-        XRectangle *bar = &w->logo_bars[i];
+        XRectangle *bar = &x->logo_bars[i];
         bar->x = x0 + lbw * bx[i];
         bar->y = by0;
         bar->width = lbw * bw[i];
         bar->height = bh;
-        XUnionRectWithRegion(bar, w->logo_zbars, w->logo_zbars);
+        XUnionRectWithRegion(bar, x->logo_zbars, x->logo_zbars);
     }
 
     static const int zx[4] = { -7,  7, -7,  7 };
     static const int zy[4] = { -8, -8,  8,  8 };
 
     for(i = 0; i < 4; i++) {
-        w->logo_z[i].x = x0 + lbw * zx[i];
-        w->logo_z[i].y = y0 + lbw * zy[i];
+        x->logo_z[i].x = x0 + lbw * zx[i];
+        x->logo_z[i].y = y0 + lbw * zy[i];
     }
     return(0);
 }
@@ -121,25 +130,42 @@ int _zbar_window_attach (zbar_window_t *w,
                          void *display,
                          unsigned long win)
 {
+    window_state_t *x = w->state;
     if(w->display) {
         /* cleanup existing resources */
-        if(w->gc)
-            XFreeGC(w->display, w->gc);
-        assert(!w->exposed);
-        if(w->logo_zbars) {
-            XDestroyRegion(w->logo_zbars);
-            w->logo_zbars = NULL;
+        if(x->gc)
+            XFreeGC(w->display, x->gc);
+        assert(!x->exposed);
+        if(x->font) {
+            XFreeFont(w->display, x->font);
+            x->font = NULL;
+        }
+        if(x->logo_zbars) {
+            XDestroyRegion(x->logo_zbars);
+            x->logo_zbars = NULL;
+        }
+        if(x->exposed) {
+            XDestroyRegion(x->exposed);
+            x->exposed = NULL;
         }
         w->display = NULL;
     }
     w->xwin = 0;
 
-    if(!display || !win)
+    if(!display || !win) {
+        if(x) {
+            free(x);
+            w->state = NULL;
+        }
         return(0);
+    }
+
+    if(!x)
+        x = w->state = calloc(1, sizeof(window_state_t));
 
     w->display = display;
     w->xwin = win;
-    w->gc = XCreateGC(display, win, 0, NULL);
+    x->gc = XCreateGC(display, win, 0, NULL);
 
     XWindowAttributes attr;
     XGetWindowAttributes(w->display, w->xwin, &attr);
@@ -149,6 +175,11 @@ int _zbar_window_attach (zbar_window_t *w,
 
     window_alloc_colors(w);
     window_hide_cursor(w);
+
+    /* load overlay font */
+    x->font = XLoadQueryFont(w->display, ZBAR_OVERLAY_FONT);
+    if(x->font)
+        XSetFont(w->display, x->gc, x->font->fid);
 
     /* FIXME add interface preference override */
 #ifdef HAVE_X11_EXTENSIONS_XVLIB_H
@@ -160,224 +191,41 @@ int _zbar_window_attach (zbar_window_t *w,
     return(_zbar_window_probe_ximage(w));
 }
 
-static int x_handle_event (zbar_processor_t *proc)
+int _zbar_window_expose (zbar_window_t *w,
+                         int x,
+                         int y,
+                         int width,
+                         int height)
 {
-    XEvent ev;
-    XNextEvent(proc->display, &ev);
-
-    switch(ev.type) {
-    case Expose: {
-        /* FIXME ignore when running(?) */
-        XExposeEvent *exp = (XExposeEvent*)&ev;
-        XRectangle r;
-        Region exposed = XCreateRegion();
-        while(1) {
-            assert(ev.type == Expose);
-            r.x = exp->x;
-            r.y = exp->y;
-            r.width = exp->width;
-            r.height = exp->height;
-            XUnionRectWithRegion(&r, exposed, exposed);
-
-            if(!exp->count)
-                break;
-            XNextEvent(proc->display, &ev);
-        }
-
-        proc->window->exposed = exposed;
-        zbar_window_redraw(proc->window);
-        proc->window->exposed = 0;
-
-        XDestroyRegion(exposed);
-        break;
-    }
-
-    case ConfigureNotify:
-        zprintf(3, "resized to %d x %d\n",
-                ev.xconfigure.width, ev.xconfigure.height);
-        zbar_window_resize(proc->window,
-                           ev.xconfigure.width, ev.xconfigure.height);
-        break;
-
-    case ClientMessage:
-        if((ev.xclient.message_type ==
-            XInternAtom(proc->display, "WM_PROTOCOLS", 0)) &&
-           ev.xclient.format == 32 &&
-           (ev.xclient.data.l[0] ==
-            XInternAtom(proc->display, "WM_DELETE_WINDOW", 0))) {
-            zprintf(3, "WM_DELETE_WINDOW\n");
-            _zbar_window_set_visible(proc, 0);
-            return(err_capture(proc, SEV_WARNING, ZBAR_ERR_CLOSED, __func__,
-                               "user closed display window"));
-        }
-
-    case KeyPress: {
-        KeySym key = XLookupKeysym(&ev.xkey, 0);
-        if((key & 0xff00) == 0xff00)
-            key &= 0x00ff;
-        /* FIXME this doesn't really work... */
-        return(key & 0xffff);
-    }
-    case ButtonPress:
-        switch(ev.xbutton.button) {
-        case Button2: return(2);
-        case Button3: return(3);
-        case Button4: return(4);
-        case Button5: return(5);
-        }
-        return(1);
-
-    default:
-        /* ignored */;
-    }
+    window_state_t *xs = w->state;
+    if(!xs->exposed)
+        xs->exposed = XCreateRegion();
+    XRectangle r;
+    r.x = x;
+    r.y = y;
+    r.width = width;
+    r.height = height;
+    XUnionRectWithRegion(&r, xs->exposed, xs->exposed);
     return(0);
 }
 
-int _zbar_window_handle_events (zbar_processor_t *proc,
-                                int block)
+int _zbar_window_begin (zbar_window_t *w)
 {
-    int rc = 0;
-    while(!rc && (block || XPending(proc->display))) {
-        proc->input = x_handle_event(proc);
-        rc = proc->input;
-    }
-
-    switch(rc) {
-    case 'q':
-        _zbar_window_set_visible(proc, 0);
-        rc = err_capture(proc, SEV_WARNING, ZBAR_ERR_CLOSED, __func__,
-                         "user closed display window");
-        break;
-
-    case 'd': {
-        /* FIXME localtime not threadsafe */
-        /* FIXME need ms resolution */
-        /*struct tm *t = localtime(time(NULL));*/
-        zbar_image_write(proc->window->image, "zbar");
-        break;
-    }
-    }
-
-    if(rc)
-        emit(proc, EVENT_INPUT);
-    return(rc);
-}
-
-static int x_connection_handler (zbar_processor_t *proc,
-                                 int i)
-{
-    return(_zbar_window_handle_events(proc, 0));
-}
-
-static int x_internal_handler (zbar_processor_t *proc,
-                               int i)
-{
-    XProcessInternalConnection(proc->display, proc->polling.fds[i].fd);
-    return(_zbar_window_handle_events(proc, 0));
-}
-
-static void x_internal_watcher (Display *display,
-                                XPointer client_arg,
-                                int fd,
-                                Bool opening,
-                                XPointer *watch_arg)
-{
-    zbar_processor_t *proc = (void*)client_arg;
-    if(opening)
-        add_poll(proc, fd, x_internal_handler);
-    else
-        remove_poll(proc, fd);
-}
-
-int _zbar_window_open (zbar_processor_t *proc,
-                       char *title,
-                       unsigned width,
-                       unsigned height)
-{
-    proc->display = XOpenDisplay(NULL);
-    if(!proc->display)
-        return(err_capture_str(proc, SEV_ERROR, ZBAR_ERR_XDISPLAY, __func__,
-                               "unable to open X display",
-                               XDisplayName(NULL)));
-
-    add_poll(proc, ConnectionNumber(proc->display), x_connection_handler);
-    XAddConnectionWatch(proc->display, x_internal_watcher, (void*)proc);
-
-    int screen = DefaultScreen(proc->display);
-    XSetWindowAttributes attr;
-    attr.event_mask = (ExposureMask | StructureNotifyMask |
-                       KeyPressMask | ButtonPressMask);
-
-    proc->xwin = XCreateWindow(proc->display,
-                               RootWindow(proc->display, screen),
-                               0, 0, width, height, 0,
-                               CopyFromParent, InputOutput,
-                               CopyFromParent, CWEventMask, &attr);
-    if(!proc->xwin) {
-        XCloseDisplay(proc->display);
-        return(err_capture(proc, SEV_ERROR, ZBAR_ERR_XPROTO, __func__,
-                           "creating window"));
-    }
-
-    XStoreName(proc->display, proc->xwin, title);
-
-    XClassHint *class_hint = XAllocClassHint();
-    class_hint->res_name = "zbar";
-    class_hint->res_class = "zbar";
-    XSetClassHint(proc->display, proc->xwin, class_hint);
-    XFree(class_hint);
-    class_hint = NULL;
-
-    Atom wm_delete_window = XInternAtom(proc->display, "WM_DELETE_WINDOW", 0);
-    if(wm_delete_window)
-        XSetWMProtocols(proc->display, proc->xwin, &wm_delete_window, 1);
+    window_state_t *xs = w->state;
+    if(xs->exposed)
+        XSetRegion(w->display, xs->gc, xs->exposed);
 
     return(0);
 }
 
-int _zbar_window_close (zbar_processor_t *proc)
+int _zbar_window_end (zbar_window_t *w)
 {
-    if(proc->display) {
-        if(proc->xwin) {
-            XDestroyWindow(proc->display, proc->xwin);
-            proc->xwin = 0;
-        }
-        remove_poll(proc, ConnectionNumber(proc->display));
-        XCloseDisplay(proc->display);
-        proc->display = NULL;
+    window_state_t *x = w->state;
+    XSetClipMask(w->display, x->gc, None);
+    if(x->exposed) {
+        XDestroyRegion(x->exposed);
+        x->exposed = NULL;
     }
-    return(0);
-}
-
-int _zbar_window_set_size (zbar_processor_t *proc,
-                           unsigned width,
-                           unsigned height)
-{
-    if(proc->display) {
-        XResizeWindow(proc->display, proc->xwin, width, height);
-        _zbar_window_clear(proc->window);
-        XFlush(proc->display);
-    }
-    return(0);
-}
-
-int _zbar_window_set_visible (zbar_processor_t *proc,
-                              int visible)
-{
-    if(visible)
-        XMapRaised(proc->display, proc->xwin);
-    else
-        XUnmapWindow(proc->display, proc->xwin);
-    XFlush(proc->display);
-    proc->visible = visible != 0;
-    return(0);
-}
-
-int _zbar_window_invalidate (zbar_window_t *w)
-{
-    if(!w->display)
-        return(0);
-    XClearArea(w->display, w->xwin, 0, 0, w->width, w->height, 1);
     XFlush(w->display);
     return(0);
 }
@@ -386,73 +234,123 @@ int _zbar_window_clear (zbar_window_t *w)
 {
     if(!w->display)
         return(0);
+    window_state_t *x = w->state;
     int screen = DefaultScreen(w->display);
-    XSetForeground(w->display, w->gc, WhitePixel(w->display, screen));
-    XFillRectangle(w->display, w->xwin, w->gc, 0, 0, w->width, w->height);
+    XSetForeground(w->display, x->gc, WhitePixel(w->display, screen));
+    XFillRectangle(w->display, w->xwin, x->gc, 0, 0, w->width, w->height);
     return(0);
 }
 
-int _zbar_window_draw_marker(zbar_window_t *w,
-                             uint32_t rgb,
-                             const point_t *p)
+int _zbar_window_draw_polygon (zbar_window_t *w,
+                               uint32_t rgb,
+                               const point_t *pts,
+                               int npts)
 {
-    XSetForeground(w->display, w->gc, w->colors[rgb]);
+    window_state_t *xs = w->state;
+    XSetForeground(w->display, xs->gc, xs->colors[rgb]);
 
-    int x = p->x;
-    if(x < 3)
-        x = 3;
-    else if(x > w->width - 4)
-        x = w->width - 4;
+    point_t org = w->scaled_offset;
+    XPoint xpts[npts + 1];
+    int i;
+    for(i = 0; i < npts; i++) {
+        point_t p = window_scale_pt(w, pts[i]);
+        xpts[i].x = p.x + org.x;
+        xpts[i].y = p.y + org.y;
+    }
+    xpts[npts] = xpts[0];
 
-    int y = p->y;
-    if(y < 3)
-        y = 3;
-    else if(y > w->height - 4)
-        y = w->height - 4;
+    XDrawLines(w->display, w->xwin, xs->gc, xpts, npts + 1, CoordModeOrigin);
 
-    XDrawRectangle(w->display, w->xwin, w->gc, x - 2, y - 2, 4, 4);
-    XDrawLine(w->display, w->xwin, w->gc, x, y - 3, x, y + 3);
-    XDrawLine(w->display, w->xwin, w->gc, x - 3, y, x + 3, y);
+    return(0);
+}
+
+int _zbar_window_draw_marker (zbar_window_t *w,
+                              uint32_t rgb,
+                              point_t p)
+{
+    window_state_t *xs = w->state;
+    XSetForeground(w->display, xs->gc, xs->colors[rgb]);
+    XDrawRectangle(w->display, w->xwin, xs->gc, p.x - 2, p.y - 2, 4, 4);
+    XDrawLine(w->display, w->xwin, xs->gc, p.x, p.y - 3, p.x, p.y + 3);
+    XDrawLine(w->display, w->xwin, xs->gc, p.x - 3, p.y, p.x + 3, p.y);
+    return(0);
+}
+
+int _zbar_window_draw_text (zbar_window_t *w,
+                            uint32_t rgb,
+                            point_t p,
+                            const char *text)
+{
+    window_state_t *xs = w->state;
+    if(!xs->font)
+        return(-1);
+
+    XSetForeground(w->display, xs->gc, xs->colors[rgb]);
+
+    int n = 0;
+    while(n < 32 && text[n] && isprint(text[n]))
+        n++;
+
+    int width = XTextWidth(xs->font, text, n);
+    if(p.x >= 0)
+        p.x -= width / 2;
+    else
+        p.x += w->width - width;
+
+    int dy = xs->font->ascent + xs->font->descent;
+    if(p.y >= 0)
+        p.y -= dy / 2;
+    else
+        p.y = w->height + p.y * dy * 5 / 4;
+
+    XDrawString(w->display, w->xwin, xs->gc, p.x, p.y, text, n);
+    return(0);
+}
+
+int _zbar_window_fill_rect (zbar_window_t *w,
+                            uint32_t rgb,
+                            point_t org,
+                            point_t size)
+{
+    window_state_t *xs = w->state;
+    XSetForeground(w->display, xs->gc, xs->colors[rgb]);
+    XFillRectangle(w->display, w->xwin, xs->gc, org.x, org.y, size.x, size.y);
     return(0);
 }
 
 int _zbar_window_draw_logo (zbar_window_t *w)
 {
-    if(w->exposed)
-        XSetRegion(w->display, w->gc, w->exposed);
-
+    window_state_t *x = w->state;
     int screen = DefaultScreen(w->display);
 
     /* clear to white */
-    XSetForeground(w->display, w->gc, WhitePixel(w->display, screen));
-    XFillRectangle(w->display, w->xwin, w->gc, 0, 0, w->width, w->height);
+    XSetForeground(w->display, x->gc, WhitePixel(w->display, screen));
+    XFillRectangle(w->display, w->xwin, x->gc, 0, 0, w->width, w->height);
 
-    if(!w->logo_scale || !w->logo_zbars)
+    if(!x->logo_scale || !x->logo_zbars)
         return(0);
 
-    XSetForeground(w->display, w->gc, BlackPixel(w->display, screen));
-    XFillRectangles(w->display, w->xwin, w->gc, w->logo_bars, 5);
+    XSetForeground(w->display, x->gc, BlackPixel(w->display, screen));
+    XFillRectangles(w->display, w->xwin, x->gc, x->logo_bars, 5);
 
-    XSetLineAttributes(w->display, w->gc, 2 * w->logo_scale,
+    XSetLineAttributes(w->display, x->gc, 2 * x->logo_scale,
                        LineSolid, CapRound, JoinRound);
 
-    XSetForeground(w->display, w->gc, w->logo_colors[0]);
-    XDrawLines(w->display, w->xwin, w->gc, w->logo_z, 4, CoordModeOrigin);
+    XSetForeground(w->display, x->gc, x->logo_colors[0]);
+    XDrawLines(w->display, w->xwin, x->gc, x->logo_z, 4, CoordModeOrigin);
 
-    if(w->exposed) {
-        XIntersectRegion(w->logo_zbars, w->exposed, w->exposed);
-        XSetRegion(w->display, w->gc, w->exposed);
+    if(x->exposed) {
+        XIntersectRegion(x->logo_zbars, x->exposed, x->exposed);
+        XSetRegion(w->display, x->gc, x->exposed);
     }
     else
-        XSetRegion(w->display, w->gc, w->logo_zbars);
+        XSetRegion(w->display, x->gc, x->logo_zbars);
 
-    XSetForeground(w->display, w->gc, w->logo_colors[1]);
-    XDrawLines(w->display, w->xwin, w->gc, w->logo_z, 4, CoordModeOrigin);
-    XFlush(w->display);
+    XSetForeground(w->display, x->gc, x->logo_colors[1]);
+    XDrawLines(w->display, w->xwin, x->gc, x->logo_z, 4, CoordModeOrigin);
 
     /* reset GC */
-    XSetLineAttributes(w->display, w->gc, 0,
+    XSetLineAttributes(w->display, x->gc, 0,
                        LineSolid, CapButt, JoinMiter);
-    XSetClipMask(w->display, w->gc, None);
     return(0);
 }

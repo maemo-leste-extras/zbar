@@ -417,6 +417,7 @@ static inline unsigned char postprocess (zbar_decoder_t *dcode)
                                         dcode->code128.character));
         j += postprocess_c(dcode, cexp, i, j) * 2;
     }
+    dcode->buflen = j;
     dcode->buf[j] = '\0';
     dcode->code128.character = j;
     return(0);
@@ -449,9 +450,14 @@ zbar_symbol_type_t _zbar_decode_code128 (zbar_decoder_t *dcode)
             dprintf(2, " [invalid]\n");
             return(0);
         }
+        unsigned qz = get_width(dcode, 6);
+        if(qz && qz < (dcode->code128.s6 * 3) / 4) {
+            dprintf(2, " [invalid qz %d]\n", qz);
+            return(0);
+        }
         /* lock shared resources */
-        if(get_lock(dcode)) {
-            dprintf(2, " [locked]\n");
+        if(get_lock(dcode, ZBAR_CODE128)) {
+            dprintf(2, " [locked %d]\n", dcode->lock);
             dcode128->character = -1;
             return(0);
         }
@@ -475,10 +481,10 @@ zbar_symbol_type_t _zbar_decode_code128 (zbar_decoder_t *dcode)
         return(0);
     }
 
-    zassert(dcode->buflen > dcode128->character, 0,
-            "buflen=%x idx=%x c=%02x %s\n",
-            dcode->buflen, dcode128->character, c,
-            _zbar_decoder_buf_dump(dcode->buf, dcode->buflen));
+    zassert(dcode->buf_alloc > dcode128->character, 0,
+            "alloc=%x idx=%x c=%02x %s\n",
+            dcode->buf_alloc, dcode128->character, c,
+            _zbar_decoder_buf_dump(dcode->buf, dcode->buf_alloc));
 
     dcode->buf[dcode128->character++] = c;
 

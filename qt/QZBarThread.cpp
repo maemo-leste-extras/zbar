@@ -29,7 +29,8 @@ using namespace zbar;
 static const QString textFormat("%1%2:%3");
 
 QZBarThread::QZBarThread ()
-    : reqWidth(DEFAULT_WIDTH),
+    : _videoOpened(false),
+      reqWidth(DEFAULT_WIDTH),
       reqHeight(DEFAULT_HEIGHT),
       video(NULL),
       image(NULL),
@@ -58,7 +59,12 @@ void QZBarThread::image_callback (Image &image)
 
 void QZBarThread::processImage (Image &image)
 {
-    scanner.scan(image);
+    {
+        scanner.recycle_image(image);
+        Image tmp = image.convert(*(long*)"Y800");
+        scanner.scan(tmp);
+        image.set_symbols(tmp.get_symbols());
+    }
     window.draw(image);
     if(this->image && this->image != &image) {
         delete this->image;

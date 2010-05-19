@@ -22,6 +22,9 @@
  *------------------------------------------------------------------------*/
 
 #include "zbarmodule.h"
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
 
 static char processor_doc[] = PyDoc_STR(
     "low level decode of measured bar/space widths.\n"
@@ -83,7 +86,7 @@ processor_get_bool (zbarProcessor *self,
                     void *closure)
 {
     int val;
-    switch((int)closure) {
+    switch((intptr_t)closure) {
     case 0:
         val = zbar_processor_is_visible(self->zproc);
         break;
@@ -108,7 +111,7 @@ processor_set_bool (zbarProcessor *self,
     int rc, val = PyObject_IsTrue(value);
     if(val < 0)
         return(-1);
-    switch((int)closure) {
+    switch((intptr_t)closure) {
     case 0:
         rc = zbar_processor_set_visible(self->zproc, val);
         break;
@@ -126,11 +129,21 @@ processor_set_bool (zbarProcessor *self,
     return(0);
 }
 
+static zbarSymbolSet*
+processor_get_results (zbarProcessor *self,
+                       void *closure)
+{
+    const zbar_symbol_set_t *zsyms =
+        zbar_processor_get_results(self->zproc);
+    return(zbarSymbolSet_FromSymbolSet(zsyms));
+}
+
 static PyGetSetDef processor_getset[] = {
     { "visible",  (getter)processor_get_bool, (setter)processor_set_bool,
       NULL, (void*)0 },
     { "active",   NULL,                       (setter)processor_set_bool,
       NULL, (void*)1 },
+    { "results",  (getter)processor_get_results, },
     { NULL, },
 };
 

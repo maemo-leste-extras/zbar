@@ -22,58 +22,53 @@
  *------------------------------------------------------------------------*/
 
 #include "window.h"
+#include "x.h"
+#include "image.h"
 #include <string.h>     /* strcmp */
 
 static int xv_cleanup (zbar_window_t *w)
 {
-    if(w->img.xv) {
-        XFree(w->img.xv);
-        w->img.xv = NULL;
+    window_state_t *x = w->state;
+    if(x->img.xv) {
+        XFree(x->img.xv);
+        x->img.xv = NULL;
     }
     int i;
-    for(i = 0; i < w->num_xv_adaptors; i++)
-        if(w->xv_adaptors[i]) {
-            XvUngrabPort(w->display, w->xv_adaptors[i], CurrentTime);
-            w->xv_adaptors[i] = 0;
+    for(i = 0; i < x->num_xv_adaptors; i++)
+        if(x->xv_adaptors[i]) {
+            XvUngrabPort(w->display, x->xv_adaptors[i], CurrentTime);
+            x->xv_adaptors[i] = 0;
         }
-    free(w->xv_ports);
-    free(w->xv_adaptors);
-    w->xv_ports = NULL;
-    w->num_xv_adaptors = 0;
-    w->xv_adaptors = NULL;
+    free(x->xv_ports);
+    free(x->xv_adaptors);
+    x->xv_ports = NULL;
+    x->num_xv_adaptors = 0;
+    x->xv_adaptors = NULL;
     return(0);
 }
 
 static inline int xv_init (zbar_window_t *w,
-                           zbar_image_t *img)
+                           zbar_image_t *img,
+                           int format_change)
 {
-    if(w->img.xv) {
-        XFree(w->img.xv);
-        w->img.xv = NULL;
+    window_state_t *x = w->state;
+    if(x->img.xv) {
+        XFree(x->img.xv);
+        x->img.xv = NULL;
     }
-    if(w->src_format != img->format &&
-       w->format != img->format) {
-        _zbar_best_format(img->format, &w->format, w->formats);
-        if(!w->format) {
-            err_capture_int(w, SEV_ERROR, ZBAR_ERR_UNSUPPORTED, __func__,
-                            "no conversion from %x to supported Xv formats",
-                            img->format);
-            return(-1);
-        }
-        w->src_format = img->format;
+    if(format_change) {
         /* lookup port for format */
-        w->img_port = 0;
+        x->img_port = 0;
         int i;
         for(i = 0; w->formats[i]; i++)
             if(w->formats[i] == w->format) {
-                w->img_port = w->xv_ports[i];
+                x->img_port = x->xv_ports[i];
                 break;
             }
-        assert(w->img_port > 0);
+        assert(x->img_port > 0);
     }
-    w->src_width = img->width;
-    w->src_height = img->height;
-    XvImage *xvimg = XvCreateImage(w->display, w->img_port, w->format,
+
+    XvImage *xvimg = XvCreateImage(w->display, x->img_port, w->format,
                                    NULL, img->width, img->height);
     zprintf(3, "new XvImage %.4s(%08" PRIx32 ") %dx%d(%d)"
             " from %.4s(%08" PRIx32 ") %dx%d\n",
@@ -87,6 +82,7 @@ static inline int xv_init (zbar_window_t *w,
     w->dst_width = ((xvimg->num_planes <= 1)
                     ? xvimg->width
                     : xvimg->pitches[0]);
+    w->dst_height = xvimg->height;
 
     /* FIXME datalen check */
     if(w->dst_width < img->width || xvimg->height < img->height) {
@@ -95,7 +91,7 @@ static inline int xv_init (zbar_window_t *w,
         return(err_capture(w, SEV_ERROR, ZBAR_ERR_UNSUPPORTED, __func__,
                            "output image size mismatch (XvCreateImage)"));
     }
-    w->img.xv = xvimg;
+    x->img.xv = xvimg;
 
     return(0);
 }
@@ -103,38 +99,17 @@ static inline int xv_init (zbar_window_t *w,
 static int xv_draw (zbar_window_t *w,
                     zbar_image_t *img)
 {
-    XvImage *xvimg = w->img.xv;
-    /* FIXME preserve aspect ratio (config?) */
-    if(!xvimg ||
-       (img->format != w->src_format &&
-        img->format != w->format) ||
-       (img->width != w->src_width  &&
-        img->width != w->dst_width) ||
-       (img->height != w->src_height  &&
-        img->height != xvimg->height)) {
-        if(xv_init(w, img))
-            return(-1);
-        xvimg = w->img.xv;
-    }
-    if(img->format != w->format ||
-       img->width != w->dst_width ||
-       img->height != xvimg->height) {
-        w->src_width = img->width;
-        w->src_height = img->height;
-        /* save *converted* image for redraw */
-        w->image = zbar_image_convert_resize(img, w->format,
-                                              w->dst_width,
-                                              xvimg->height);
-        zbar_image_destroy(img);
-        img = w->image;
-    }
-
+    window_state_t *x = w->state;
+    XvImage *xvimg = x->img.xv;
+    assert(xvimg);
     xvimg->data = (void*)img->data;
-    zprintf(24, "XvPutImage(%dx%d -> %dx%d)\n",
-            w->src_width, w->src_height, w->width, w->height);
-    XvPutImage(w->display, w->img_port, w->xwin, w->gc, xvimg,
+    zprintf(24, "XvPutImage(%dx%d -> %dx%d (%08lx))\n",
+            w->src_width, w->src_height, w->scaled_size.x, w->scaled_size.y,
+            img->datalen);
+    XvPutImage(w->display, x->img_port, w->xwin, x->gc, xvimg,
                0, 0, w->src_width, w->src_height,
-               0, 0, w->width, w->height);
+               w->scaled_offset.x, w->scaled_offset.y,
+               w->scaled_size.x, w->scaled_size.y);
     xvimg->data = NULL;  /* FIXME hold shm image until completion */
     return(0);
 }
@@ -145,11 +120,12 @@ static inline int xv_add_format (zbar_window_t *w,
 {
     int i = _zbar_window_add_format(w, fmt);
 
+    window_state_t *x = w->state;
     if(!w->formats[i + 1])
-        w->xv_ports = realloc(w->xv_ports, (i + 1) * sizeof(uint32_t));
+        x->xv_ports = realloc(x->xv_ports, (i + 1) * sizeof(*x->xv_ports));
 
     /* FIXME could prioritize by something (rate? size?) */
-    w->xv_ports[i] = port;
+    x->xv_ports[i] = port;
     return(i);
 }
 
@@ -227,8 +203,9 @@ int _zbar_window_probe_xv (zbar_window_t *w)
         return(err_capture(w, SEV_ERROR, ZBAR_ERR_XPROTO, __func__,
                            "unable to query XVideo adaptors"));
 
-    w->num_xv_adaptors = 0;
-    w->xv_adaptors = calloc(n, sizeof(int));
+    window_state_t *x = w->state;
+    x->num_xv_adaptors = 0;
+    x->xv_adaptors = calloc(n, sizeof(*x->xv_adaptors));
     int i;
     for(i = 0; i < n; i++) {
         XvAdaptorInfo *adapt = &adaptors[i];
@@ -244,7 +221,7 @@ int _zbar_window_probe_xv (zbar_window_t *w)
             if(!XvGrabPort(w->display, adapt->base_id + j, CurrentTime)) {
                 zprintf(3, "        grabbed port %u\n",
                         (unsigned)(adapt->base_id + j));
-                w->xv_adaptors[w->num_xv_adaptors++] = adapt->base_id + j;
+                x->xv_adaptors[x->num_xv_adaptors++] = adapt->base_id + j;
                 break;
             }
 
@@ -254,23 +231,23 @@ int _zbar_window_probe_xv (zbar_window_t *w)
     XvFreeAdaptorInfo(adaptors);
     adaptors = NULL;
 
-    if(!w->num_xv_adaptors) {
+    if(!x->num_xv_adaptors) {
         zprintf(1, "WARNING: no XVideo adaptor supporting XvImages found\n");
-        free(w->xv_adaptors);
-        w->xv_adaptors = NULL;
+        free(x->xv_adaptors);
+        x->xv_adaptors = NULL;
         return(-1);
     }
-    if(w->num_xv_adaptors < n)
-        w->xv_adaptors = realloc(w->xv_adaptors,
-                                 w->num_xv_adaptors * sizeof(int));
+    if(x->num_xv_adaptors < n)
+        x->xv_adaptors = realloc(x->xv_adaptors,
+                                 x->num_xv_adaptors * sizeof(int));
 
     w->max_width = w->max_height = 65536;
     w->formats = realloc(w->formats, sizeof(uint32_t));
     w->formats[0] = 0;
-    for(i = 0; i < w->num_xv_adaptors; i++)
-        if(xv_probe_port(w, w->xv_adaptors[i])) {
-            XvUngrabPort(w->display, w->xv_adaptors[i], CurrentTime);
-            w->xv_adaptors[i] = 0;
+    for(i = 0; i < x->num_xv_adaptors; i++)
+        if(xv_probe_port(w, x->xv_adaptors[i])) {
+            XvUngrabPort(w->display, x->xv_adaptors[i], CurrentTime);
+            x->xv_adaptors[i] = 0;
         }
     if(!w->formats[0] || w->max_width == 65536 || w->max_height == 65536) {
         xv_cleanup(w);
@@ -278,17 +255,18 @@ int _zbar_window_probe_xv (zbar_window_t *w)
     }
 
     /* clean out any unused adaptors */
-    for(i = 0; i < w->num_xv_adaptors; i++) {
+    for(i = 0; i < x->num_xv_adaptors; i++) {
         int j;
         for(j = 0; w->formats[j]; j++)
-            if(w->xv_ports[j] == w->xv_adaptors[i])
+            if(x->xv_ports[j] == x->xv_adaptors[i])
                 break;
         if(!w->formats[j]) {
-            XvUngrabPort(w->display, w->xv_adaptors[i], CurrentTime);
-            w->xv_adaptors[i] = 0;
+            XvUngrabPort(w->display, x->xv_adaptors[i], CurrentTime);
+            x->xv_adaptors[i] = 0;
         }
     }
 
+    w->init = xv_init;
     w->draw_image = xv_draw;
     w->cleanup = xv_cleanup;
     return(0);

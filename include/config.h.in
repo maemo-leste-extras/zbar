@@ -15,6 +15,9 @@
 /* whether to build support for PDF417 symbology */
 #undef ENABLE_PDF417
 
+/* whether to build support for QR Code */
+#undef ENABLE_QRCODE
+
 /* Define to 1 if you have the `atexit' function. */
 #undef HAVE_ATEXIT
 
@@ -24,8 +27,14 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
+/* Define to 1 if you have the <features.h> header file. */
+#undef HAVE_FEATURES_H
+
 /* Define to 1 if you have the `getpagesize' function. */
 #undef HAVE_GETPAGESIZE
+
+/* Define if you have the iconv() function and it works. */
+#undef HAVE_ICONV
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -105,11 +114,26 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 if you have the <vfw.h> header file. */
+#undef HAVE_VFW_H
+
 /* Define to 1 if you have the <X11/extensions/XShm.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XSHM_H
 
 /* Define to 1 if you have the <X11/extensions/Xvlib.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XVLIB_H
+
+/* Define as const if the declaration of iconv() needs const. */
+#undef ICONV_CONST
+
+/* Library major version */
+#undef LIB_VERSION_MAJOR
+
+/* Library minor version */
+#undef LIB_VERSION_MINOR
+
+/* Library revision */
+#undef LIB_VERSION_REVISION
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -163,6 +187,12 @@
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
 #undef _UINT8_T
+
+/* Minimum Windows API version */
+#undef _WIN32_WINNT
+
+/* used only for pthread debug attributes */
+#undef __USE_UNIX98
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const

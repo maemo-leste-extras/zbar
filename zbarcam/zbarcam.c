@@ -25,6 +25,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef _WIN32
+# include <io.h>
+# include <fcntl.h>
+#endif
 #include <assert.h>
 
 #include <zbar.h>
@@ -70,7 +74,7 @@ static unsigned xml_len = 0;
 static int usage (int rc)
 {
     FILE *out = (rc) ? stderr : stdout;
-    fprintf(out, note_usage);
+    fprintf(out, "%s", note_usage);
     return(rc);
 }
 
@@ -96,12 +100,15 @@ static void data_handler (zbar_image_t *img, const void *userdata)
     for(; sym; sym = zbar_symbol_next(sym)) {
         if(zbar_symbol_get_count(sym))
             continue;
-        if(!format) {
-            zbar_symbol_type_t type = zbar_symbol_get_type(sym);
+
+        zbar_symbol_type_t type = zbar_symbol_get_type(sym);
+        if(type == ZBAR_PARTIAL)
+            continue;
+
+        if(!format)
             printf("%s%s:%s\n",
                    zbar_get_symbol_name(type), zbar_get_addon_name(type),
                    zbar_symbol_get_data(sym));
-        }
         else if(format == RAW)
             printf("%s\n", zbar_symbol_get_data(sym));
         else if(format == XML) {
@@ -132,7 +139,7 @@ int main (int argc, const char *argv[])
     }
     zbar_processor_set_data_handler(proc, data_handler, NULL);
 
-    const char *video_device = "/dev/video0";
+    const char *video_device = "";
     int display = 1;
     unsigned long infmt = 0, outfmt = 0;
     int i;
@@ -143,9 +150,11 @@ int main (int argc, const char *argv[])
             int j;
             for(j = 1; argv[i][j]; j++) {
                 if(argv[i][j] == 'S') {
-                    if((argv[i][++j])
-                       ? parse_config(&argv[i][j], i, argc, "-S")
-                       : parse_config(argv[++i], i, argc, "-S"))
+                    if(!argv[i][++j]) {
+                        i++;
+                        j = 0;
+                    }
+                    if(parse_config(&argv[i][j], i, argc, "-S"))
                         return(usage(1));
                     break;
                 }
@@ -170,7 +179,8 @@ int main (int argc, const char *argv[])
         else if(!strcmp(argv[i], "--version"))
             return(printf(PACKAGE_VERSION "\n") <= 0);
         else if(!strcmp(argv[i], "--set")) {
-            if(parse_config(argv[++i], i, argc, "--set"))
+            i++;
+            if(parse_config(argv[i], i, argc, "--set"))
                 return(usage(1));
         }
         else if(!strncmp(argv[i], "--set=", 6)) {
@@ -234,6 +244,10 @@ int main (int argc, const char *argv[])
         return(zbar_processor_error_spew(proc, 0));
 
     if(format == XML) {
+#ifdef _WIN32
+        fflush(stdout);
+        _setmode(_fileno(stdout), _O_BINARY);
+#endif
         printf(xml_head, video_device);
         fflush(stdout);
     }
@@ -246,7 +260,7 @@ int main (int argc, const char *argv[])
     /* let the callback handle data */
     int rc;
     while((rc = zbar_processor_user_wait(proc, -1)) >= 0) {
-        if(rc == 'q')
+        if(rc == 'q' || rc == 'Q')
             break;
         if(rc == ' ') {
             active = !active;
@@ -256,7 +270,7 @@ int main (int argc, const char *argv[])
     }
 
     /* report any errors that aren't "window closed" */
-    if(rc && rc != 'q' &&
+    if(rc && rc != 'q' && rc != 'Q' &&
        zbar_processor_get_error_code(proc) != ZBAR_ERR_CLOSED)
         return(zbar_processor_error_spew(proc, 0));
 
@@ -264,7 +278,7 @@ int main (int argc, const char *argv[])
     zbar_processor_destroy(proc);
 
     if(format == XML) {
-        printf(xml_foot);
+        printf("%s", xml_foot);
         fflush(stdout);
     }
     return(0);

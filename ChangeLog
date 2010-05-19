@@ -1,3 +1,146 @@
+version 0.10:
+  * attempt fix for Qt4 < 4.4
+  * release updates
+    - fix perl Processor init without video
+  * fix window closed notification during events
+    - add read_one example, fix xs compiler warnings, update perl docs
+  * add result query interfaces to image scanner and processor
+    - move result filtering into image scanner (from user)
+    - abort output blockers when window closed
+  * Windows updates
+    - update installer and README for distribution of dependency libraries
+    - fix applications to use binary output for xml and raw modes
+  * add regression tests to makefile
+  * cleanup warnings from newer gcc versions
+  * fix excessive i25 QZ checks
+  * add regression script
+    - add zbarimg xml output for every source (even empty)
+    - add edge detection to svg debug overlay
+  * image scanner cleanup and minor performance enhancements
+  * bug hunt and stability improvements
+    - fix broken processor locks
+    - fix X connection polling, revert previous separate thread workaround
+    - refuse to resize windows larger than screen size
+    - fix window output scaling - preserve image aspect ratio, adjust overlay
+    - fix window redraw
+    - fix crash on Xv image creation failure (still need XImage fallback)
+    - clean up zbarimg exit cases (last image window close, missing decodes)
+  * always use separate video thread when threads enabled (even v4l2)
+  * add configure check for features.h
+  * overlay enhancements
+    - add fps to overlay
+    - add overlay control to processor
+    - add windows overlay drawing
+  * tweak linear code position info
+  * trim deep qrcode hierarchy
+  * fix zero length symbol data
+  * fix QR structured append result handling
+  * cleanup SVG debug dump (partial)
+    - some QR integration API cleanup
+  * extract explicit result container, separate from image
+    - remove (broken/tmp) converted image result sharing
+    - add explicit symbol recycle API, update processor/widgets to use
+    - cleanup and update C++ API
+    - update Python/Perl APIs
+    - fix broken and add new Python/Perl tests
+  * cleanup QR result integration
+    - add hierarchy to symbol results
+    - extract symbols during text decode, preserving position and structure
+    - outline QR symbols in window overlay
+    - tmp fix converted image result propagation
+  * factor image scanner cache and apply to QR
+    - fix image scanner handler called once per-image (vs every decode)
+  * QZ and clustering fixes to QR integration
+    - remove qr_finder QZ checks
+    - decrease center clustering threshold from 1/3 to 1/5 of length
+    - add img_scanner svg debug output
+    - manually add config.rpath to workaround broken autofoo
+  * finish initial integration of QR Code reader from maemo-barcode project
+  * zbar-side updates for QR Code integration
+    - add linear scanner position interface
+    - add QR finder position feedback
+    - integrate QR Code reader with img_scanner
+    - refactor some symbol/image interaction
+    - change default scanner density to 1
+    - add iconv to build infrastructure
+  * initial hooks for QR Code, first pass at finder
+  * fix broken builds with --disable-pthread
+
+version 0.9:
+  * hotfix configure check for Wand as well as MagickWand (bug #2848437)
+  * hotfix trim extraneous MagickWand calls (bug #2848445)
+  * release updates
+  * fix uninitialized member in Qt widget (bug #2844846)
+  * move image conversion out of image scanner up to higher levels
+    (preparation for library split)
+  * add symbol quality metric and image scanner position config
+    - update python, perl and docs
+  * compatibility fixes
+    - work around ImageMagick API breakages
+    - fix some OS X compile issues
+  * Qt widget cleanup
+    - handle video device set before window attached
+    - prevent exceptions from escaping event handlers
+  * more Qt window creation hook fixes
+    - NB may still cause problems if video is opened before window is visible
+  * finish fix for Qt init ordering (bug #2844846)
+  * potential fix for display init ordering (bug #2844846)
+    - new workaround for filtering bad EAN results in the image scanner
+  * more testing, fixes and cleanup
+    - fix v4l1
+    - fix/add null processor interface
+  * change default image scanner density to 1x1
+    - random cleanup, vfw hang, quit key
+    - fix scan_image example MSVC project
+    - windows installer tweaks
+  * add zbarcam to windows installer
+  * major restructuring to improve platform abstraction
+    - add lock, thread and timer abstractions
+    - migrate specific notification locks to platform independent layer
+    - fixes to vfw capture interface
+    - fix window format conversion issues
+    - fix some broken configure checks
+    - zbarcam working in windows!
+  * fix symbol leaks (bug #2820658)
+    - add symbol reference counting
+  * add support for binary symbol data
+  * initial VFW video support
+    - mostly working with uvc driver, broken for others
+    - factor out common video buffer handling
+    - fix processor to destroy window *before* video (ref TODO)
+    - use /dev/video* VFW pseudo-devices
+    - windows configure skip non-windows checks
+    - prep for platform refactoring
+  * fix zbarimg b&w format handling
+  * fix scan (image) boundary QZ handling (bug #2807538)
+    - add linear scanner manual flush API
+    - linear scanner always starts/ends w/a space of width 0
+    - remove artificial image scanner border
+    - decoders special case 0 width space for QZ checks
+    - add missing Code 128 leading QZ check
+  * fix Code39 max ICS checks (bug #2807447)
+    - add decoder lock owner tracking (debug)
+    - update dbg_scan to match img_scanner
+  * first pass installer
+    - add version and icon resources for libzbar, zbarimg
+  * zbarimg working in windows
+    - switch to StretchDIBits over DrawDib
+    - refactor some window drawing code to remove redundancies
+    - make refcounts thread safe
+    - clean up alloc/free bugs
+  * convert zbarimg to C (cross compiled C++ cannot run w/native libraries)
+    - fix DrawDib image width granularity
+    - fix window resize dimensions to include decorations
+    - images still inverted, otherwise zbarimg now "working" in windows
+  * refactor processor implementation to support cross-platform
+    - first pass windows processor (before debugging)
+    - make processor locks reentrant (call APIs from callback)
+  * initial Windows support for window interface
+    - currently supports VFW DrawDib interface for image display
+      (DirectDraw and others TBD)
+    - also basic processor window creation/manipulation
+    - Windows configure tests
+
 version 0.8:
   * release updates
   * add "raw" output option (without symbology prefix) to apps (req #2671863)
@@ -263,11 +406,11 @@ version 0.3:
   * configure dumps ImageMagick, SDL and firefox versions for debug
   * add NPAPI plugin stub and build infrastructure
   * flush zebracam output after each scanned symbol
-  * integrate RPM packaging spec file - thanks to Vít Hrachový for the draft!
+  * integrate RPM packaging spec file - thanks to Vï¿½t Hrachovï¿½ for the draft!
     (patch #1723536)
   * finally add HACKING to distribution/install (bug #1698202)
   * add extra documentation files to install (README NEWS INSTALL, etc)
-  * Debian package patch for 0.2 - thanks to Vít Hrachový:
+  * Debian package patch for 0.2 - thanks to Vï¿½t Hrachovï¿½:
     - add libsdl1.2-dev as a build dependency
     - update automake (>= 1:1.10) as a build dependency
     - new package
@@ -316,11 +459,11 @@ version 0.2:
     => reading both Code 128 *and* EAN still destabilized
   * add diagnostic program test_video to dump more verbose video debug
   * incorporate documentation into Debian package
-    - thanks to Vít Hrachový for the patch!
+    - thanks to Vï¿½t Hrachovï¿½ for the patch!
   * fix VPATH doc builds (requires automake-1.10 and autoconf-2.61)
   * build and dist fixes
     - suppress documentation rebuilds in distributed sources
-  * add Debian packaging sources - thanks to Vít Hrachový for the patch!
+  * add Debian packaging sources - thanks to Vï¿½t Hrachovï¿½ for the patch!
   * add DocBook template and build infrastructure
   * add manpages for zebracam and zebraimg
   * add GNU standard options to zebracam and zebraimg

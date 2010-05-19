@@ -23,13 +23,24 @@
 
 #include "error.h"
 #include "image.h"
+#include "refcnt.h"
 
 zbar_image_t *zbar_image_create ()
 {
     zbar_image_t *img = calloc(1, sizeof(zbar_image_t));
-    img->refcnt = 1;
+    _zbar_refcnt_init();
+    _zbar_image_refcnt(img, 1);
     img->srcidx = -1;
     return(img);
+}
+
+void _zbar_image_free (zbar_image_t *img)
+{
+    if(img->syms) {
+        zbar_symbol_set_ref(img->syms, -1);
+        img->syms = NULL;
+    }
+    free(img);
 }
 
 void zbar_image_destroy (zbar_image_t *img)
@@ -99,7 +110,7 @@ inline void zbar_image_free_data (zbar_image_t *img)
         return;
     if(img->src) {
         /* replace video image w/new copy */
-        assert(img->refcnt);
+        assert(img->refcnt); /* FIXME needs lock */
         zbar_image_t *newimg = zbar_image_create();
         memcpy(newimg, img, sizeof(zbar_image_t));
         /* recycle video image */
@@ -161,12 +172,24 @@ zbar_image_t *zbar_image_copy (const zbar_image_t *src)
     return(dst);
 }
 
+const zbar_symbol_set_t *zbar_image_get_symbols (const zbar_image_t *img)
+{
+    return(img->syms);
+}
+
+void zbar_image_set_symbols (zbar_image_t *img,
+                             const zbar_symbol_set_t *syms)
+{
+    if(img->syms)
+        zbar_symbol_set_ref(img->syms, -1);
+    img->syms = (zbar_symbol_set_t*)syms;
+    if(syms)
+        zbar_symbol_set_ref(img->syms, 1);
+}
+
 const zbar_symbol_t *zbar_image_first_symbol (const zbar_image_t *img)
 {
-    /* symbols stored on root image */
-    while(img->next)
-        img = img->next;
-    return(img->syms);
+    return((img->syms) ? img->syms->head : NULL);
 }
 
 typedef struct zimg_hdr_s {
@@ -217,3 +240,63 @@ int zbar_image_write (const zbar_image_t *img,
     }
     return(fclose(f));
 }
+
+#ifdef DEBUG_SVG
+# include <png.h>
+
+int zbar_image_write_png (const zbar_image_t *img,
+                          const char *filename)
+{
+    int rc = -1;
+    FILE *file = NULL;
+    png_struct *png = NULL;
+    png_info *info = NULL;
+    const uint8_t **rows = NULL;
+
+    rows = malloc(img->height * sizeof(*rows));
+    if(!rows)
+        goto done;
+
+    rows[0] = img->data;
+    int y;
+    for(y = 1; y < img->height; y++)
+        rows[y] = rows[y - 1] + img->width;
+
+    file = fopen(filename, "wb");
+    if(!file)
+        goto done;
+
+    png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if(!png)
+        goto done;
+
+    info = png_create_info_struct(png);
+    if(!info)
+        goto done;
+
+    if(setjmp(png_jmpbuf(png)))
+        goto done;
+
+    png_init_io(png, file);
+    png_set_compression_level(png, 9);
+    png_set_IHDR(png, info, img->width, img->height, 8, PNG_COLOR_TYPE_GRAY,
+                 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
+                 PNG_FILTER_TYPE_DEFAULT);
+
+    png_set_rows(png, info, (void*)rows);
+    png_write_png(png, info, PNG_TRANSFORM_IDENTITY, NULL);
+
+    png_write_end(png,info);
+    rc = 0;
+
+done:
+    if(png)
+        png_destroy_write_struct(&png, &info);
+    if(rows)
+        free(rows);
+    if(file)
+        fclose(file);
+    return(rc);
+}
+
+#endif

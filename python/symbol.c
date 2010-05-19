@@ -33,14 +33,17 @@ symbol_traverse (zbarSymbol *self,
                  visitproc visit,
                  void *arg)
 {
-    Py_VISIT(self->img);
     return(0);
 }
 
 static int
 symbol_clear (zbarSymbol *self)
 {
-    Py_CLEAR(self->img);
+    if(self->zsym) {
+        zbar_symbol_t *zsym = (zbar_symbol_t*)self->zsym;
+        self->zsym = NULL;
+        zbar_symbol_ref(zsym, -1);
+    }
     Py_CLEAR(self->data);
     Py_CLEAR(self->loc);
     return(0);
@@ -53,6 +56,23 @@ symbol_dealloc (zbarSymbol *self)
     ((PyObject*)self)->ob_type->tp_free((PyObject*)self);
 }
 
+static zbarSymbolSet*
+symbol_get_components (zbarSymbol *self,
+                       void *closure)
+{
+    const zbar_symbol_set_t *zsyms = zbar_symbol_get_components(self->zsym);
+    return(zbarSymbolSet_FromSymbolSet(zsyms));
+}
+
+static zbarSymbolIter*
+symbol_iter (zbarSymbol *self)
+{
+    zbarSymbolSet *syms = symbol_get_components(self, NULL);
+    zbarSymbolIter *iter = zbarSymbolIter_FromSymbolSet(syms);
+    Py_XDECREF(syms);
+    return(iter);
+}
+
 static zbarEnumItem*
 symbol_get_type (zbarSymbol *self,
                  void *closure)
@@ -61,10 +81,15 @@ symbol_get_type (zbarSymbol *self,
 }
 
 static PyObject*
-symbol_get_count (zbarSymbol *self,
-                  void *closure)
+symbol_get_long (zbarSymbol *self,
+                 void *closure)
 {
-    return(PyInt_FromLong(zbar_symbol_get_count(self->zsym)));
+    int val;
+    if(!closure)
+        val = zbar_symbol_get_quality(self->zsym);
+    else
+        val = zbar_symbol_get_count(self->zsym);
+    return(PyInt_FromLong(val));
 }
 
 static PyObject*
@@ -72,7 +97,10 @@ symbol_get_data (zbarSymbol *self,
                  void *closure)
 {
     if(!self->data) {
-        self->data = PyString_FromString(zbar_symbol_get_data(self->zsym));
+        /* FIXME this could be a buffer now */
+        self->data =
+            PyString_FromStringAndSize(zbar_symbol_get_data(self->zsym),
+                                       zbar_symbol_get_data_length(self->zsym));
         if(!self->data)
             return(NULL);
     }
@@ -101,10 +129,12 @@ symbol_get_location (zbarSymbol *self,
 }
 
 static PyGetSetDef symbol_getset[] = {
-    { "type",     (getter)symbol_get_type, },
-    { "count",    (getter)symbol_get_count, },
-    { "data",     (getter)symbol_get_data, },
-    { "location", (getter)symbol_get_location, },
+    { "type",       (getter)symbol_get_type, },
+    { "quality",    (getter)symbol_get_long, NULL, NULL, (void*)0 },
+    { "count",      (getter)symbol_get_long, NULL, NULL, (void*)1 },
+    { "data",       (getter)symbol_get_data, },
+    { "location",   (getter)symbol_get_location, },
+    { "components", (getter)symbol_get_components,  },
     { NULL, },
 };
 
@@ -118,22 +148,21 @@ PyTypeObject zbarSymbol_Type = {
     .tp_traverse    = (traverseproc)symbol_traverse,
     .tp_clear       = (inquiry)symbol_clear,
     .tp_dealloc     = (destructor)symbol_dealloc,
+    .tp_iter        = (getiterfunc)symbol_iter,
     .tp_getset      = symbol_getset,
 };
 
 zbarSymbol*
-zbarSymbol_FromSymbol (zbarImage *img,
-                       const zbar_symbol_t *zsym)
+zbarSymbol_FromSymbol (const zbar_symbol_t *zsym)
 {
     /* FIXME symbol object recycle cache */
     zbarSymbol *self = PyObject_GC_New(zbarSymbol, &zbarSymbol_Type);
     if(!self)
         return(NULL);
-    assert(img);
     assert(zsym);
-    Py_INCREF(img);
+    zbar_symbol_t *zs = (zbar_symbol_t*)zsym;
+    zbar_symbol_ref(zs, 1);
     self->zsym = zsym;
-    self->img = img;
     self->data = NULL;
     self->loc = NULL;
     return(self);

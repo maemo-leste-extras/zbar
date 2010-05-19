@@ -26,6 +26,7 @@
 #include <string.h>     /* memset */
 
 #include <zbar.h>
+#include "svg.h"
 
 #ifdef DEBUG_SCANNER
 # define DEBUG_LEVEL (DEBUG_SCANNER)
@@ -102,6 +103,20 @@ unsigned zbar_scanner_get_width (const zbar_scanner_t *scn)
     return(scn->width);
 }
 
+unsigned zbar_scanner_get_edge (const zbar_scanner_t *scn,
+                                unsigned offset,
+                                int prec)
+{
+    unsigned edge = scn->last_edge - offset - (1 << ZBAR_FIXED) - ROUND;
+    prec = ZBAR_FIXED - prec;
+    if(prec > 0)
+        return(edge >> prec);
+    else if(!prec)
+        return(edge);
+    else
+        return(edge << -prec);
+}
+
 zbar_color_t zbar_scanner_get_color (const zbar_scanner_t *scn)
 {
     return((scn->y1_sign <= 0) ? ZBAR_SPACE : ZBAR_BAR);
@@ -135,6 +150,11 @@ static inline unsigned calc_thresh (zbar_scanner_t *scn)
 static inline zbar_symbol_type_t process_edge (zbar_scanner_t *scn,
                                                int y1)
 {
+    if(!scn->y1_sign)
+        scn->last_edge = scn->cur_edge = (1 << ZBAR_FIXED) + ROUND;
+    else if(!scn->last_edge)
+        scn->last_edge = scn->cur_edge;
+
     scn->width = scn->cur_edge - scn->last_edge;
     dprintf(1, " sgn=%d cur=%d.%d w=%d (%s)\n",
             scn->y1_sign, scn->cur_edge >> ZBAR_FIXED,
@@ -142,24 +162,47 @@ static inline zbar_symbol_type_t process_edge (zbar_scanner_t *scn,
             ((y1 > 0) ? "SPACE" : "BAR"));
     scn->last_edge = scn->cur_edge;
 
+#if DEBUG_SVG > 1
+    svg_path_moveto(SVG_ABS, scn->last_edge - (1 << ZBAR_FIXED) - ROUND, 0);
+#endif
+
     /* pass to decoder */
-    if(scn->width || (y1 > 0)) {
-        if(scn->decoder)
-            return(zbar_decode_width(scn->decoder, scn->width));
-        return(ZBAR_PARTIAL);
+    if(scn->decoder)
+        return(zbar_decode_width(scn->decoder, scn->width));
+    return(ZBAR_PARTIAL);
+}
+
+inline zbar_symbol_type_t zbar_scanner_flush (zbar_scanner_t *scn)
+{
+    if(!scn->y1_sign)
+        return(ZBAR_NONE);
+
+    unsigned x = (scn->x << ZBAR_FIXED) + ROUND;
+
+    if(scn->cur_edge != x || scn->y1_sign > 0) {
+        dprintf(1, "flush0:");
+        zbar_symbol_type_t edge = process_edge(scn, -scn->y1_sign);
+        scn->cur_edge = x;
+        scn->y1_sign = -scn->y1_sign;
+        return(edge);
     }
-    /* skip initial transition */
-    return(ZBAR_NONE);
+
+    scn->y1_sign = scn->width = 0;
+    if(scn->decoder)
+        return(zbar_decode_width(scn->decoder, 0));
+    return(ZBAR_PARTIAL);
 }
 
 zbar_symbol_type_t zbar_scanner_new_scan (zbar_scanner_t *scn)
 {
-    /* finalize outstanding edge */
-    zbar_symbol_type_t edge = process_edge(scn, 0);
+    zbar_symbol_type_t edge = ZBAR_NONE;
+    while(scn->y1_sign) {
+        zbar_symbol_type_t tmp = zbar_scanner_flush(scn);
+        if(tmp < 0 || tmp > edge)
+            edge = tmp;
+    }
 
-    /* reset color to SPACE
-     * (actually just resets everything)
-     */
+    /* reset scanner and associated decoder */
     memset(&scn->x, 0, sizeof(zbar_scanner_t) + (void*)scn - (void*)&scn->x);
     scn->y1_thresh = scn->y1_min_thresh;
     if(scn->decoder)
@@ -172,17 +215,18 @@ zbar_symbol_type_t zbar_scan_y (zbar_scanner_t *scn,
 {
     /* FIXME calc and clip to max y range... */
     /* retrieve short value history */
-    register int y0_1 = scn->y0[(scn->x - 1) & 3];
+    register int x = scn->x;
+    register int y0_1 = scn->y0[(x - 1) & 3];
     register int y0_0 = y0_1;
-    if(scn->x) {
+    if(x) {
         /* update weighted moving average */
         y0_0 += ((int)((y - y0_1) * EWMA_WEIGHT)) >> ZBAR_FIXED;
-        scn->y0[scn->x & 3] = y0_0;
+        scn->y0[x & 3] = y0_0;
     }
     else
         y0_0 = y0_1 = scn->y0[0] = scn->y0[1] = scn->y0[2] = scn->y0[3] = y;
-    register int y0_2 = scn->y0[(scn->x - 2) & 3];
-    register int y0_3 = scn->y0[(scn->x - 3) & 3];
+    register int y0_2 = scn->y0[(x - 2) & 3];
+    register int y0_3 = scn->y0[(x - 3) & 3];
     /* 1st differential @ x-1 */
     register int y1_1 = y0_1 - y0_2;
     {
@@ -196,7 +240,8 @@ zbar_symbol_type_t zbar_scan_y (zbar_scanner_t *scn,
     register int y2_1 = y0_0 - (y0_1 * 2) + y0_2;
     register int y2_2 = y0_1 - (y0_2 * 2) + y0_3;
 
-    dprintf(1, "scan: y=%d y0=%d y1=%d y2=%d", y, y0_1, y1_1, y2_1);
+    dprintf(1, "scan: x=%d y=%d y0=%d y1=%d y2=%d",
+            x, y, y0_1, y1_1, y2_1);
 
     zbar_symbol_type_t edge = ZBAR_NONE;
     /* 2nd zero-crossing is 1st local min/max - could be edge */
@@ -206,11 +251,9 @@ zbar_symbol_type_t zbar_scan_y (zbar_scanner_t *scn,
     {
         /* check for 1st sign change */
         char y1_rev = (scn->y1_sign > 0) ? y1_1 < 0 : y1_1 > 0;
-        if(y1_rev || !scn->y1_sign)
+        if(y1_rev)
             /* intensity change reversal - finalize previous edge */
             edge = process_edge(scn, y1_1);
-        else
-            dprintf(1, "\n");
 
         if(y1_rev || (abs(scn->y1_sign) < abs(y1_1))) {
             scn->y1_sign = y1_1;
@@ -218,7 +261,7 @@ zbar_symbol_type_t zbar_scan_y (zbar_scanner_t *scn,
             /* adaptive thresholding */
             /* start at multiple of new min/max */
             scn->y1_thresh = (abs(y1_1) * THRESH_INIT + ROUND) >> ZBAR_FIXED;
-            dprintf(1, " thr=%d", scn->y1_thresh);
+            dprintf(1, "\tthr=%d", scn->y1_thresh);
             if(scn->y1_thresh < scn->y1_min_thresh)
                 scn->y1_thresh = scn->y1_min_thresh;
 
@@ -230,14 +273,15 @@ zbar_symbol_type_t zbar_scan_y (zbar_scanner_t *scn,
             else if(y2_1)
                 /* interpolate zero crossing */
                 scn->cur_edge -= ((y2_1 << ZBAR_FIXED) + 1) / d;
-            scn->cur_edge += scn->x << ZBAR_FIXED;
+            scn->cur_edge += x << ZBAR_FIXED;
+            dprintf(1, "\n");
         }
     }
     else
         dprintf(1, "\n");
     /* FIXME add fall-thru pass to decoder after heuristic "idle" period
        (eg, 6-8 * last width) */
-    scn->x++;
+    scn->x = x + 1;
     return(edge);
 }
 
@@ -263,4 +307,5 @@ void zbar_scanner_get_state (const zbar_scanner_t *scn,
     /* NB not quite accurate (uses updated x) */
     zbar_scanner_t *mut_scn = (zbar_scanner_t*)scn;
     if(y1_thresh) *y1_thresh = calc_thresh(mut_scn);
+    dprintf(1, "\n");
 }
