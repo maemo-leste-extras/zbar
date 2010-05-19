@@ -35,12 +35,13 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2)
+bin_PROGRAMS = $(am__EXEEXT_2) $(am__EXEEXT_3)
 check_PROGRAMS = test/test_decode$(EXEEXT) test/test_convert$(EXEEXT) \
-	$(am__EXEEXT_3) $(am__EXEEXT_4) $(am__EXEEXT_5) \
-	$(am__EXEEXT_6) $(am__EXEEXT_7)
-DIST_COMMON = README $(am__configure_deps) \
-	$(am__zinclude_HEADERS_DIST) $(dist_doc_DATA) $(dist_man_MANS) \
+	$(am__EXEEXT_4) test/test_proc$(EXEEXT) test/test_cpp$(EXEEXT) \
+	$(am__EXEEXT_5) $(am__EXEEXT_6) $(am__EXEEXT_7)
+EXTRA_PROGRAMS = $(am__EXEEXT_1)
+DIST_COMMON = README $(am__configure_deps) $(am__dist_doc_DATA_DIST) \
+	$(am__zinclude_HEADERS_DIST) $(dist_man_MANS) \
 	$(include_HEADERS) $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/doc/Makefile.am.inc $(srcdir)/gtk/Makefile.am.inc \
 	$(srcdir)/include/Makefile.am.inc \
@@ -49,66 +50,100 @@ DIST_COMMON = README $(am__configure_deps) \
 	$(srcdir)/python/Makefile.am.inc $(srcdir)/qt/Makefile.am.inc \
 	$(srcdir)/test/Makefile.am.inc $(srcdir)/zbar-gtk.pc.in \
 	$(srcdir)/zbar-qt.pc.in $(srcdir)/zbar.pc.in \
-	$(srcdir)/zbar.spec.in $(srcdir)/zbar/Makefile.am.inc \
+	$(srcdir)/zbar/Makefile.am.inc \
 	$(srcdir)/zbarcam/Makefile.am.inc \
 	$(srcdir)/zbarimg/Makefile.am.inc $(top_srcdir)/configure \
 	$(top_srcdir)/doc/doxygen.conf.in \
-	$(top_srcdir)/include/config.h.in COPYING.LIB ChangeLog \
-	INSTALL NEWS TODO config/compile config/config.guess \
-	config/config.sub config/depcomp config/install-sh \
-	config/ltmain.sh config/missing
+	$(top_srcdir)/include/config.h.in COPYING ChangeLog INSTALL \
+	NEWS TODO config/compile config/config.guess \
+	config/config.rpath config/config.sub config/depcomp \
+	config/install-sh config/ltmain.sh config/missing
 @HAVE_GTK_TRUE@am__append_1 = include/zbar/zbargtk.h
 @HAVE_QT_TRUE@am__append_2 = include/zbar/QZBar.h include/zbar/QZBarImage.h
-@HAVE_POLL_TRUE@am__append_3 = zbar/processor.h zbar/processor.c
-@ENABLE_EAN_TRUE@am__append_4 = zbar/decoder/ean.h zbar/decoder/ean.c
-@ENABLE_CODE128_TRUE@am__append_5 = zbar/decoder/code128.h zbar/decoder/code128.c
-@ENABLE_CODE39_TRUE@am__append_6 = zbar/decoder/code39.h zbar/decoder/code39.c
-@ENABLE_I25_TRUE@am__append_7 = zbar/decoder/i25.h zbar/decoder/i25.c
-@ENABLE_PDF417_TRUE@am__append_8 = zbar/decoder/pdf417.h zbar/decoder/pdf417.c \
+@ENABLE_EAN_TRUE@am__append_3 = zbar/decoder/ean.h zbar/decoder/ean.c
+@ENABLE_CODE128_TRUE@am__append_4 = zbar/decoder/code128.h zbar/decoder/code128.c
+@ENABLE_CODE39_TRUE@am__append_5 = zbar/decoder/code39.h zbar/decoder/code39.c
+@ENABLE_I25_TRUE@am__append_6 = zbar/decoder/i25.h zbar/decoder/i25.c
+@ENABLE_PDF417_TRUE@am__append_7 = zbar/decoder/pdf417.h zbar/decoder/pdf417.c \
 @ENABLE_PDF417_TRUE@    zbar/decoder/pdf417_hash.h
 
-@HAVE_V4L1_TRUE@am__append_9 = zbar/video/v4l1.c
-@HAVE_V4L1_TRUE@@HAVE_V4L2_TRUE@am__append_10 = zbar/video/v4l2.c
-@HAVE_V4L1_FALSE@am__append_11 = zbar/video/null.c
-@HAVE_JPEG_TRUE@am__append_12 = zbar/jpeg.c
-@HAVE_X_TRUE@am__append_13 = zbar/window/x.c zbar/window/ximage.c
-@HAVE_X_TRUE@am__append_14 = $(X_CFLAGS)
-@HAVE_X_TRUE@am__append_15 = $(X_LIBS)
-@HAVE_X_TRUE@am__append_16 = $(X_PRE_LIBS) -lX11 $(X_EXTRA_LIBS)
-@HAVE_XV_TRUE@@HAVE_X_TRUE@am__append_17 = zbar/window/xv.c
-@HAVE_XV_TRUE@@HAVE_X_TRUE@am__append_18 = $(XV_LIBS)
-@HAVE_X_FALSE@am__append_19 = zbar/window/null.c
-@HAVE_MAGICK_TRUE@am__append_20 = zbarimg/zbarimg
+@ENABLE_QRCODE_TRUE@am__append_8 = zbar/qrcode.h \
+@ENABLE_QRCODE_TRUE@    zbar/decoder/qr_finder.h zbar/decoder/qr_finder.c \
+@ENABLE_QRCODE_TRUE@    zbar/qrcode/qrdec.h zbar/qrcode/qrdec.c zbar/qrcode/qrdectxt.c \
+@ENABLE_QRCODE_TRUE@    zbar/qrcode/rs.h zbar/qrcode/rs.c \
+@ENABLE_QRCODE_TRUE@    zbar/qrcode/isaac.h zbar/qrcode/isaac.c \
+@ENABLE_QRCODE_TRUE@    zbar/qrcode/bch15_5.h zbar/qrcode/bch15_5.c \
+@ENABLE_QRCODE_TRUE@    zbar/qrcode/binarize.h zbar/qrcode/binarize.c \
+@ENABLE_QRCODE_TRUE@    zbar/qrcode/util.h zbar/qrcode/util.c
+
+@WIN32_TRUE@am__append_9 = zbar/processor/win.c zbar/libzbar.rc
+@WIN32_TRUE@am__append_10 = -mthreads
+@WIN32_TRUE@am__append_11 = -mthreads
+# FIXME broken
+@WIN32_TRUE@am__append_12 = zbar/libzbar-rc.lo
+@WIN32_FALSE@am__append_13 = zbar/processor/posix.h zbar/processor/posix.c
+@HAVE_V4L1_TRUE@am__append_14 = zbar/video/v4l1.c
+@HAVE_V4L1_TRUE@@HAVE_V4L2_TRUE@am__append_15 = zbar/video/v4l2.c
+@HAVE_VIDEO_TRUE@@WIN32_TRUE@am__append_16 = zbar/video/vfw.c
+@HAVE_VIDEO_TRUE@@WIN32_TRUE@am__append_17 = -lvfw32
+@HAVE_VIDEO_FALSE@am__append_18 = zbar/video/null.c
+@HAVE_JPEG_TRUE@am__append_19 = zbar/jpeg.c
+@HAVE_X_TRUE@am__append_20 = zbar/processor/x.c \
+@HAVE_X_TRUE@    zbar/window/x.h zbar/window/x.c zbar/window/ximage.c
+
+@HAVE_X_TRUE@am__append_21 = $(X_CFLAGS)
+@HAVE_X_TRUE@am__append_22 = $(X_LIBS)
+@HAVE_X_TRUE@am__append_23 = $(X_PRE_LIBS) -lX11 $(X_EXTRA_LIBS)
+@HAVE_XV_TRUE@@HAVE_X_TRUE@am__append_24 = zbar/window/xv.c
+@HAVE_XV_TRUE@@HAVE_X_TRUE@am__append_25 = $(XV_LIBS)
+@HAVE_X_FALSE@@WIN32_TRUE@am__append_26 = zbar/window/win.h zbar/window/win.c \
+@HAVE_X_FALSE@@WIN32_TRUE@    zbar/window/dib.c
+
+# zbar/window/vfw.c -lvfw32
+@HAVE_X_FALSE@@WIN32_TRUE@am__append_27 = -lgdi32 -lwinmm
+@HAVE_X_FALSE@@WIN32_FALSE@am__append_28 = zbar/processor/null.c zbar/window/null.c
+@HAVE_MAGICK_TRUE@am__append_29 = zbarimg/zbarimg
 # automake bug in "monolithic mode"?
-@HAVE_MAGICK_TRUE@am__append_21 = zbarimg/.libs/zbarimg
-@HAVE_VIDEO_TRUE@am__append_22 = zbarcam/zbarcam
+@HAVE_MAGICK_TRUE@am__append_30 = zbarimg/.libs/zbarimg
+@HAVE_MAGICK_TRUE@@WIN32_TRUE@am__append_31 = zbarimg/zbarimg.rc
+@HAVE_MAGICK_TRUE@@WIN32_TRUE@am__append_32 = zbarimg/zbarimg-rc.o
+@HAVE_MAGICK_TRUE@am__append_33 = test/barcodetest.py
+@HAVE_VIDEO_TRUE@am__append_34 = zbarcam/zbarcam
 # automake bug in "monolithic mode"?
-@HAVE_VIDEO_TRUE@am__append_23 = zbarcam/.libs/zbarcam
-@HAVE_PYTHON_TRUE@am__append_24 = python/zbar.la
-@HAVE_PYTHON_TRUE@am__append_25 = python/test/barcode.png python/test/test_zbar.py
-@HAVE_GTK_TRUE@am__append_26 = gtk/libzbargtk.la
-@HAVE_GTK_TRUE@am__append_27 = gtk/zbarmarshal.c gtk/zbarmarshal.h
-@HAVE_GTK_TRUE@am__append_28 = gtk/zbarmarshal.c gtk/zbarmarshal.h
-@HAVE_GTK_TRUE@am__append_29 = gtk/zbarmarshal.list
-@HAVE_GTK_TRUE@am__append_30 = zbar-gtk.pc
-@HAVE_GTK_TRUE@@HAVE_PYTHON_TRUE@am__append_31 = pygtk/zbarpygtk.la
-@HAVE_GTK_TRUE@@HAVE_PYTHON_TRUE@am__append_32 = pygtk/zbarpygtk.c pygtk/zbarpygtk.defs
-@HAVE_GTK_TRUE@@HAVE_PYTHON_TRUE@am__append_33 = pygtk/zbarpygtk.c pygtk/zbarpygtk.defs
-@HAVE_GTK_TRUE@@HAVE_PYTHON_TRUE@am__append_34 = pygtk/zbarpygtk.override
-@HAVE_QT_TRUE@am__append_35 = qt/libzbarqt.la
-@HAVE_QT_TRUE@am__append_36 = $(nodist_qt_libzbarqt_la_SOURCES) \
+@HAVE_VIDEO_TRUE@am__append_35 = zbarcam/.libs/zbarcam
+@HAVE_VIDEO_TRUE@@WIN32_TRUE@am__append_36 = zbarcam/zbarcam.rc
+@HAVE_VIDEO_TRUE@@WIN32_TRUE@am__append_37 = zbarcam/zbarcam-rc.o
+@HAVE_PYTHON_TRUE@am__append_38 = python/zbar.la
+@HAVE_PYTHON_TRUE@am__append_39 = python/test/barcode.png python/test/test_zbar.py
+@HAVE_GTK_TRUE@am__append_40 = gtk/libzbargtk.la
+@HAVE_GTK_TRUE@am__append_41 = gtk/zbarmarshal.c gtk/zbarmarshal.h
+@HAVE_GTK_TRUE@am__append_42 = gtk/zbarmarshal.c gtk/zbarmarshal.h
+@HAVE_GTK_TRUE@am__append_43 = gtk/zbarmarshal.list
+@HAVE_GTK_TRUE@am__append_44 = zbar-gtk.pc
+@HAVE_GTK_TRUE@@HAVE_PYTHON_TRUE@am__append_45 = pygtk/zbarpygtk.la
+@HAVE_GTK_TRUE@@HAVE_PYTHON_TRUE@am__append_46 = pygtk/zbarpygtk.c pygtk/zbarpygtk.defs
+@HAVE_GTK_TRUE@@HAVE_PYTHON_TRUE@am__append_47 = pygtk/zbarpygtk.c pygtk/zbarpygtk.defs
+@HAVE_GTK_TRUE@@HAVE_PYTHON_TRUE@am__append_48 = pygtk/zbarpygtk.override
+@HAVE_QT_TRUE@am__append_49 = qt/libzbarqt.la
+@HAVE_QT_TRUE@am__append_50 = $(nodist_qt_libzbarqt_la_SOURCES) \
 @HAVE_QT_TRUE@	$(nodist_test_test_qt_SOURCES)
-@HAVE_QT_TRUE@am__append_37 = $(nodist_qt_libzbarqt_la_SOURCES) \
+@HAVE_QT_TRUE@am__append_51 = $(nodist_qt_libzbarqt_la_SOURCES) \
 @HAVE_QT_TRUE@	$(nodist_test_test_qt_SOURCES)
-@HAVE_QT_TRUE@am__append_38 = zbar-qt.pc
-@HAVE_NPAPI_TRUE@am__append_39 = plugin/libzbarplugin.la
-@HAVE_POLL_TRUE@am__append_40 = test/test_proc test/test_cpp
-@HAVE_JPEG_TRUE@@HAVE_POLL_TRUE@am__append_41 = test/test_jpeg
-@HAVE_MAGICK_TRUE@am__append_42 = test/dbg_scan
-@HAVE_GTK_TRUE@am__append_43 = test/test_gtk
-@HAVE_QT_TRUE@am__append_44 = test/test_qt
-@HAVE_MAGICK_TRUE@am__append_45 = doc/man/zbarimg.1
-@HAVE_VIDEO_TRUE@am__append_46 = doc/man/zbarcam.1
+@HAVE_QT_TRUE@am__append_52 = zbar-qt.pc
+@HAVE_NPAPI_TRUE@am__append_53 = plugin/libzbarplugin.la
+
+#check_PROGRAMS += test/test_window
+#test_test_window_SOURCES = test/test_window.c $(TEST_IMAGE_SOURCES)
+#test_test_window_CPPFLAGS = -I$(srcdir)/zbar $(AM_CPPFLAGS)
+#test_test_window_LDADD = zbar/libzbar.la $(AM_LDADD)
+@HAVE_VIDEO_TRUE@am__append_54 = test/test_video
+@HAVE_JPEG_TRUE@am__append_55 = test/test_jpeg
+@HAVE_MAGICK_TRUE@am__append_56 = test/dbg_scan
+@HAVE_GTK_TRUE@am__append_57 = test/test_gtk
+@HAVE_QT_TRUE@am__append_58 = test/test_qt
+@HAVE_MAGICK_TRUE@am__append_59 = doc/man/zbarimg.1
+@HAVE_VIDEO_TRUE@am__append_60 = doc/man/zbarcam.1
+@WIN32_TRUE@am__append_61 = README.windows
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/libtool.m4 \
@@ -122,8 +157,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/config.h
-CONFIG_CLEAN_FILES = zbar.pc zbar-gtk.pc zbar-qt.pc zbar.spec \
-	doc/doxygen.conf
+CONFIG_CLEAN_FILES = zbar.pc zbar-gtk.pc zbar-qt.pc doc/doxygen.conf
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -133,7 +167,8 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pyexecdir)" \
 	"$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" \
 	"$(DESTDIR)$(docdir)" "$(DESTDIR)$(pkgconfigdir)" \
-	"$(DESTDIR)$(includedir)" "$(DESTDIR)$(zincludedir)"
+	"$(DESTDIR)$(pkgdatadir)" "$(DESTDIR)$(includedir)" \
+	"$(DESTDIR)$(zincludedir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 pyexecLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES) $(pyexec_LTLIBRARIES)
@@ -181,13 +216,16 @@ pygtk_zbarpygtk_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 @HAVE_PYTHON_TRUE@	zbar/libzbar.la
 am__python_zbar_la_SOURCES_DIST = python/zbarmodule.c \
 	python/zbarmodule.h python/enum.c python/exception.c \
-	python/symbol.c python/image.c python/processor.c \
-	python/imagescanner.c python/decoder.c python/scanner.c
+	python/symbol.c python/symbolset.c python/symboliter.c \
+	python/image.c python/processor.c python/imagescanner.c \
+	python/decoder.c python/scanner.c
 @HAVE_PYTHON_TRUE@am_python_zbar_la_OBJECTS =  \
 @HAVE_PYTHON_TRUE@	python/python_zbar_la-zbarmodule.lo \
 @HAVE_PYTHON_TRUE@	python/python_zbar_la-enum.lo \
 @HAVE_PYTHON_TRUE@	python/python_zbar_la-exception.lo \
 @HAVE_PYTHON_TRUE@	python/python_zbar_la-symbol.lo \
+@HAVE_PYTHON_TRUE@	python/python_zbar_la-symbolset.lo \
+@HAVE_PYTHON_TRUE@	python/python_zbar_la-symboliter.lo \
 @HAVE_PYTHON_TRUE@	python/python_zbar_la-image.lo \
 @HAVE_PYTHON_TRUE@	python/python_zbar_la-processor.lo \
 @HAVE_PYTHON_TRUE@	python/python_zbar_la-imagescanner.lo \
@@ -217,43 +255,75 @@ qt_libzbarqt_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 @HAVE_X_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) \
 @HAVE_X_TRUE@	$(am__DEPENDENCIES_1)
 @HAVE_XV_TRUE@@HAVE_X_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
-zbar_libzbar_la_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+zbar_libzbar_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__append_12) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_1)
 am__zbar_libzbar_la_SOURCES_DIST = zbar/debug.h zbar/config.c \
 	zbar/error.h zbar/error.c zbar/symbol.h zbar/symbol.c \
-	zbar/image.h zbar/image.c zbar/convert.c zbar/logo.c \
-	zbar/window.h zbar/window.c zbar/video.h zbar/video.c \
-	zbar/img_scanner.c zbar/scanner.c zbar/decoder.h \
-	zbar/decoder.c zbar/processor.h zbar/processor.c \
+	zbar/image.h zbar/image.c zbar/convert.c zbar/processor.c \
+	zbar/processor.h zbar/processor/lock.c zbar/refcnt.h \
+	zbar/refcnt.c zbar/timer.h zbar/mutex.h zbar/event.h \
+	zbar/thread.h zbar/window.h zbar/window.c zbar/video.h \
+	zbar/video.c zbar/img_scanner.h zbar/img_scanner.c \
+	zbar/scanner.c zbar/decoder.h zbar/decoder.c \
 	zbar/decoder/ean.h zbar/decoder/ean.c zbar/decoder/code128.h \
 	zbar/decoder/code128.c zbar/decoder/code39.h \
 	zbar/decoder/code39.c zbar/decoder/i25.h zbar/decoder/i25.c \
 	zbar/decoder/pdf417.h zbar/decoder/pdf417.c \
-	zbar/decoder/pdf417_hash.h zbar/video/v4l1.c zbar/video/v4l2.c \
-	zbar/video/null.c zbar/jpeg.c zbar/window/x.c \
-	zbar/window/ximage.c zbar/window/xv.c zbar/window/null.c
-@HAVE_POLL_TRUE@am__objects_1 = zbar/zbar_libzbar_la-processor.lo
-@ENABLE_EAN_TRUE@am__objects_2 = zbar/decoder/zbar_libzbar_la-ean.lo
-@ENABLE_CODE128_TRUE@am__objects_3 =  \
+	zbar/decoder/pdf417_hash.h zbar/qrcode.h \
+	zbar/decoder/qr_finder.h zbar/decoder/qr_finder.c \
+	zbar/qrcode/qrdec.h zbar/qrcode/qrdec.c zbar/qrcode/qrdectxt.c \
+	zbar/qrcode/rs.h zbar/qrcode/rs.c zbar/qrcode/isaac.h \
+	zbar/qrcode/isaac.c zbar/qrcode/bch15_5.h \
+	zbar/qrcode/bch15_5.c zbar/qrcode/binarize.h \
+	zbar/qrcode/binarize.c zbar/qrcode/util.h zbar/qrcode/util.c \
+	zbar/processor/win.c zbar/libzbar.rc zbar/processor/posix.h \
+	zbar/processor/posix.c zbar/video/v4l1.c zbar/video/v4l2.c \
+	zbar/video/vfw.c zbar/video/null.c zbar/jpeg.c \
+	zbar/processor/x.c zbar/window/x.h zbar/window/x.c \
+	zbar/window/ximage.c zbar/window/xv.c zbar/window/win.h \
+	zbar/window/win.c zbar/window/dib.c zbar/processor/null.c \
+	zbar/window/null.c
+@ENABLE_EAN_TRUE@am__objects_1 = zbar/decoder/zbar_libzbar_la-ean.lo
+@ENABLE_CODE128_TRUE@am__objects_2 =  \
 @ENABLE_CODE128_TRUE@	zbar/decoder/zbar_libzbar_la-code128.lo
-@ENABLE_CODE39_TRUE@am__objects_4 =  \
+@ENABLE_CODE39_TRUE@am__objects_3 =  \
 @ENABLE_CODE39_TRUE@	zbar/decoder/zbar_libzbar_la-code39.lo
-@ENABLE_I25_TRUE@am__objects_5 = zbar/decoder/zbar_libzbar_la-i25.lo
-@ENABLE_PDF417_TRUE@am__objects_6 =  \
+@ENABLE_I25_TRUE@am__objects_4 = zbar/decoder/zbar_libzbar_la-i25.lo
+@ENABLE_PDF417_TRUE@am__objects_5 =  \
 @ENABLE_PDF417_TRUE@	zbar/decoder/zbar_libzbar_la-pdf417.lo
-@HAVE_V4L1_TRUE@am__objects_7 = zbar/video/zbar_libzbar_la-v4l1.lo
-@HAVE_V4L1_TRUE@@HAVE_V4L2_TRUE@am__objects_8 = zbar/video/zbar_libzbar_la-v4l2.lo
-@HAVE_V4L1_FALSE@am__objects_9 = zbar/video/zbar_libzbar_la-null.lo
-@HAVE_JPEG_TRUE@am__objects_10 = zbar/zbar_libzbar_la-jpeg.lo
-@HAVE_X_TRUE@am__objects_11 = zbar/window/zbar_libzbar_la-x.lo \
+@ENABLE_QRCODE_TRUE@am__objects_6 =  \
+@ENABLE_QRCODE_TRUE@	zbar/decoder/zbar_libzbar_la-qr_finder.lo \
+@ENABLE_QRCODE_TRUE@	zbar/qrcode/zbar_libzbar_la-qrdec.lo \
+@ENABLE_QRCODE_TRUE@	zbar/qrcode/zbar_libzbar_la-qrdectxt.lo \
+@ENABLE_QRCODE_TRUE@	zbar/qrcode/zbar_libzbar_la-rs.lo \
+@ENABLE_QRCODE_TRUE@	zbar/qrcode/zbar_libzbar_la-isaac.lo \
+@ENABLE_QRCODE_TRUE@	zbar/qrcode/zbar_libzbar_la-bch15_5.lo \
+@ENABLE_QRCODE_TRUE@	zbar/qrcode/zbar_libzbar_la-binarize.lo \
+@ENABLE_QRCODE_TRUE@	zbar/qrcode/zbar_libzbar_la-util.lo
+@WIN32_TRUE@am__objects_7 = zbar/processor/zbar_libzbar_la-win.lo
+@WIN32_FALSE@am__objects_8 = zbar/processor/zbar_libzbar_la-posix.lo
+@HAVE_V4L1_TRUE@am__objects_9 = zbar/video/zbar_libzbar_la-v4l1.lo
+@HAVE_V4L1_TRUE@@HAVE_V4L2_TRUE@am__objects_10 = zbar/video/zbar_libzbar_la-v4l2.lo
+@HAVE_VIDEO_TRUE@@WIN32_TRUE@am__objects_11 = zbar/video/zbar_libzbar_la-vfw.lo
+@HAVE_VIDEO_FALSE@am__objects_12 = zbar/video/zbar_libzbar_la-null.lo
+@HAVE_JPEG_TRUE@am__objects_13 = zbar/zbar_libzbar_la-jpeg.lo
+@HAVE_X_TRUE@am__objects_14 = zbar/processor/zbar_libzbar_la-x.lo \
+@HAVE_X_TRUE@	zbar/window/zbar_libzbar_la-x.lo \
 @HAVE_X_TRUE@	zbar/window/zbar_libzbar_la-ximage.lo
-@HAVE_XV_TRUE@@HAVE_X_TRUE@am__objects_12 =  \
+@HAVE_XV_TRUE@@HAVE_X_TRUE@am__objects_15 =  \
 @HAVE_XV_TRUE@@HAVE_X_TRUE@	zbar/window/zbar_libzbar_la-xv.lo
-@HAVE_X_FALSE@am__objects_13 = zbar/window/zbar_libzbar_la-null.lo
+@HAVE_X_FALSE@@WIN32_TRUE@am__objects_16 =  \
+@HAVE_X_FALSE@@WIN32_TRUE@	zbar/window/zbar_libzbar_la-win.lo \
+@HAVE_X_FALSE@@WIN32_TRUE@	zbar/window/zbar_libzbar_la-dib.lo
+@HAVE_X_FALSE@@WIN32_FALSE@am__objects_17 = zbar/processor/zbar_libzbar_la-null.lo \
+@HAVE_X_FALSE@@WIN32_FALSE@	zbar/window/zbar_libzbar_la-null.lo
 am_zbar_libzbar_la_OBJECTS = zbar/zbar_libzbar_la-config.lo \
 	zbar/zbar_libzbar_la-error.lo zbar/zbar_libzbar_la-symbol.lo \
 	zbar/zbar_libzbar_la-image.lo zbar/zbar_libzbar_la-convert.lo \
-	zbar/zbar_libzbar_la-logo.lo zbar/zbar_libzbar_la-window.lo \
+	zbar/zbar_libzbar_la-processor.lo \
+	zbar/processor/zbar_libzbar_la-lock.lo \
+	zbar/zbar_libzbar_la-refcnt.lo zbar/zbar_libzbar_la-window.lo \
 	zbar/zbar_libzbar_la-video.lo \
 	zbar/zbar_libzbar_la-img_scanner.lo \
 	zbar/zbar_libzbar_la-scanner.lo \
@@ -261,19 +331,19 @@ am_zbar_libzbar_la_OBJECTS = zbar/zbar_libzbar_la-config.lo \
 	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
 	$(am__objects_5) $(am__objects_6) $(am__objects_7) \
 	$(am__objects_8) $(am__objects_9) $(am__objects_10) \
-	$(am__objects_11) $(am__objects_12) $(am__objects_13)
+	$(am__objects_11) $(am__objects_12) $(am__objects_13) \
+	$(am__objects_14) $(am__objects_15) $(am__objects_16) \
+	$(am__objects_17)
 zbar_libzbar_la_OBJECTS = $(am_zbar_libzbar_la_OBJECTS)
 zbar_libzbar_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(zbar_libzbar_la_LDFLAGS) $(LDFLAGS) -o $@
-@HAVE_MAGICK_TRUE@am__EXEEXT_1 = zbarimg/zbarimg$(EXEEXT)
-@HAVE_VIDEO_TRUE@am__EXEEXT_2 = zbarcam/zbarcam$(EXEEXT)
+@HAVE_MAGICK_TRUE@am__EXEEXT_1 = test/dbg_scan$(EXEEXT)
+@HAVE_MAGICK_TRUE@am__EXEEXT_2 = zbarimg/zbarimg$(EXEEXT)
+@HAVE_VIDEO_TRUE@am__EXEEXT_3 = zbarcam/zbarcam$(EXEEXT)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-@HAVE_POLL_TRUE@am__EXEEXT_3 = test/test_proc$(EXEEXT) \
-@HAVE_POLL_TRUE@	test/test_cpp$(EXEEXT)
-@HAVE_JPEG_TRUE@@HAVE_POLL_TRUE@am__EXEEXT_4 =  \
-@HAVE_JPEG_TRUE@@HAVE_POLL_TRUE@	test/test_jpeg$(EXEEXT)
-@HAVE_MAGICK_TRUE@am__EXEEXT_5 = test/dbg_scan$(EXEEXT)
+@HAVE_VIDEO_TRUE@am__EXEEXT_4 = test/test_video$(EXEEXT)
+@HAVE_JPEG_TRUE@am__EXEEXT_5 = test/test_jpeg$(EXEEXT)
 @HAVE_GTK_TRUE@am__EXEEXT_6 = test/test_gtk$(EXEEXT)
 @HAVE_QT_TRUE@am__EXEEXT_7 = test/test_qt$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
@@ -283,15 +353,14 @@ am__test_dbg_scan_SOURCES_DIST = test/dbg_scan.cpp
 test_dbg_scan_OBJECTS = $(am_test_dbg_scan_OBJECTS)
 @HAVE_MAGICK_TRUE@test_dbg_scan_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @HAVE_MAGICK_TRUE@	zbar/libzbar.la
-am__objects_14 = test/test_images.$(OBJEXT)
+am__objects_18 = test/test_images.$(OBJEXT)
 am_test_test_convert_OBJECTS = test/test_convert.$(OBJEXT) \
-	$(am__objects_14)
+	$(am__objects_18)
 test_test_convert_OBJECTS = $(am_test_test_convert_OBJECTS)
 test_test_convert_DEPENDENCIES = zbar/libzbar.la
-am__test_test_cpp_SOURCES_DIST = test/test_cpp.cpp
-@HAVE_POLL_TRUE@am_test_test_cpp_OBJECTS = test/test_cpp.$(OBJEXT)
+am_test_test_cpp_OBJECTS = test/test_cpp.$(OBJEXT)
 test_test_cpp_OBJECTS = $(am_test_test_cpp_OBJECTS)
-@HAVE_POLL_TRUE@test_test_cpp_DEPENDENCIES = zbar/libzbar.la
+test_test_cpp_DEPENDENCIES = zbar/libzbar.la
 am_test_test_decode_OBJECTS =  \
 	test/test_test_decode-test_decode.$(OBJEXT)
 test_test_decode_OBJECTS = $(am_test_test_decode_OBJECTS)
@@ -307,17 +376,12 @@ test_test_gtk_OBJECTS = $(am_test_test_gtk_OBJECTS)
 @HAVE_GTK_TRUE@test_test_gtk_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @HAVE_GTK_TRUE@	gtk/libzbargtk.la
 am__test_test_jpeg_SOURCES_DIST = test/test_jpeg.c
-@HAVE_JPEG_TRUE@@HAVE_POLL_TRUE@am_test_test_jpeg_OBJECTS =  \
-@HAVE_JPEG_TRUE@@HAVE_POLL_TRUE@	test/test_jpeg.$(OBJEXT)
+@HAVE_JPEG_TRUE@am_test_test_jpeg_OBJECTS = test/test_jpeg.$(OBJEXT)
 test_test_jpeg_OBJECTS = $(am_test_test_jpeg_OBJECTS)
-@HAVE_JPEG_TRUE@@HAVE_POLL_TRUE@test_test_jpeg_DEPENDENCIES =  \
-@HAVE_JPEG_TRUE@@HAVE_POLL_TRUE@	zbar/libzbar.la
-am__test_test_proc_SOURCES_DIST = test/test_proc.c test/test_images.c \
-	test/test_images.h
-@HAVE_POLL_TRUE@am_test_test_proc_OBJECTS = test/test_proc.$(OBJEXT) \
-@HAVE_POLL_TRUE@	$(am__objects_14)
+@HAVE_JPEG_TRUE@test_test_jpeg_DEPENDENCIES = zbar/libzbar.la
+am_test_test_proc_OBJECTS = test/test_proc.$(OBJEXT) $(am__objects_18)
 test_test_proc_OBJECTS = $(am_test_test_proc_OBJECTS)
-@HAVE_POLL_TRUE@test_test_proc_DEPENDENCIES = zbar/libzbar.la
+test_test_proc_DEPENDENCIES = zbar/libzbar.la
 am__test_test_qt_SOURCES_DIST = test/test_qt.cpp test/scan_video.c
 @HAVE_QT_TRUE@am_test_test_qt_OBJECTS =  \
 @HAVE_QT_TRUE@	test/test_test_qt-test_qt.$(OBJEXT) \
@@ -327,17 +391,29 @@ test_test_qt_OBJECTS = $(am_test_test_qt_OBJECTS) \
 	$(nodist_test_test_qt_OBJECTS)
 @HAVE_QT_TRUE@test_test_qt_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @HAVE_QT_TRUE@	qt/libzbarqt.la
-am__zbarcam_zbarcam_SOURCES_DIST = zbarcam/zbarcam.c
+am__test_test_video_SOURCES_DIST = test/test_video.c \
+	test/test_images.c test/test_images.h
+@HAVE_VIDEO_TRUE@am_test_test_video_OBJECTS =  \
+@HAVE_VIDEO_TRUE@	test/test_video.$(OBJEXT) $(am__objects_18)
+test_test_video_OBJECTS = $(am_test_test_video_OBJECTS)
+@HAVE_VIDEO_TRUE@test_test_video_DEPENDENCIES = zbar/libzbar.la
+am__zbarcam_zbarcam_SOURCES_DIST = zbarcam/zbarcam.c \
+	zbarcam/zbarcam.rc
+am__objects_19 =
 @HAVE_VIDEO_TRUE@am_zbarcam_zbarcam_OBJECTS =  \
-@HAVE_VIDEO_TRUE@	zbarcam/zbarcam.$(OBJEXT)
+@HAVE_VIDEO_TRUE@	zbarcam/zbarcam.$(OBJEXT) $(am__objects_19)
 zbarcam_zbarcam_OBJECTS = $(am_zbarcam_zbarcam_OBJECTS)
-@HAVE_VIDEO_TRUE@zbarcam_zbarcam_DEPENDENCIES = zbar/libzbar.la
-am__zbarimg_zbarimg_SOURCES_DIST = zbarimg/zbarimg.cpp
+@HAVE_VIDEO_TRUE@zbarcam_zbarcam_DEPENDENCIES = zbar/libzbar.la \
+@HAVE_VIDEO_TRUE@	$(am__append_37)
+am__zbarimg_zbarimg_SOURCES_DIST = zbarimg/zbarimg.c \
+	zbarimg/zbarimg.rc
 @HAVE_MAGICK_TRUE@am_zbarimg_zbarimg_OBJECTS =  \
-@HAVE_MAGICK_TRUE@	zbarimg/zbarimg_zbarimg-zbarimg.$(OBJEXT)
+@HAVE_MAGICK_TRUE@	zbarimg/zbarimg_zbarimg-zbarimg.$(OBJEXT) \
+@HAVE_MAGICK_TRUE@	$(am__objects_19)
 zbarimg_zbarimg_OBJECTS = $(am_zbarimg_zbarimg_OBJECTS)
 @HAVE_MAGICK_TRUE@zbarimg_zbarimg_DEPENDENCIES =  \
-@HAVE_MAGICK_TRUE@	$(am__DEPENDENCIES_1) zbar/libzbar.la
+@HAVE_MAGICK_TRUE@	$(am__DEPENDENCIES_1) zbar/libzbar.la \
+@HAVE_MAGICK_TRUE@	$(am__append_32)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
@@ -365,11 +441,12 @@ SOURCES = $(dist_gtk_libzbargtk_la_SOURCES) \
 	$(dist_pygtk_zbarpygtk_la_SOURCES) \
 	$(nodist_pygtk_zbarpygtk_la_SOURCES) $(python_zbar_la_SOURCES) \
 	$(qt_libzbarqt_la_SOURCES) $(nodist_qt_libzbarqt_la_SOURCES) \
-	$(zbar_libzbar_la_SOURCES) $(test_dbg_scan_SOURCES) \
-	$(test_test_convert_SOURCES) $(test_test_cpp_SOURCES) \
-	$(test_test_decode_SOURCES) $(test_test_gtk_SOURCES) \
-	$(test_test_jpeg_SOURCES) $(test_test_proc_SOURCES) \
-	$(test_test_qt_SOURCES) $(nodist_test_test_qt_SOURCES) \
+	$(zbar_libzbar_la_SOURCES) $(EXTRA_zbar_libzbar_la_SOURCES) \
+	$(test_dbg_scan_SOURCES) $(test_test_convert_SOURCES) \
+	$(test_test_cpp_SOURCES) $(test_test_decode_SOURCES) \
+	$(test_test_gtk_SOURCES) $(test_test_jpeg_SOURCES) \
+	$(test_test_proc_SOURCES) $(test_test_qt_SOURCES) \
+	$(nodist_test_test_qt_SOURCES) $(test_test_video_SOURCES) \
 	$(zbarcam_zbarcam_SOURCES) $(zbarimg_zbarimg_SOURCES)
 DIST_SOURCES = $(am__dist_gtk_libzbargtk_la_SOURCES_DIST) \
 	$(am__plugin_libzbarplugin_la_SOURCES_DIST) \
@@ -377,20 +454,24 @@ DIST_SOURCES = $(am__dist_gtk_libzbargtk_la_SOURCES_DIST) \
 	$(am__python_zbar_la_SOURCES_DIST) \
 	$(am__qt_libzbarqt_la_SOURCES_DIST) \
 	$(am__zbar_libzbar_la_SOURCES_DIST) \
+	$(EXTRA_zbar_libzbar_la_SOURCES) \
 	$(am__test_dbg_scan_SOURCES_DIST) $(test_test_convert_SOURCES) \
-	$(am__test_test_cpp_SOURCES_DIST) $(test_test_decode_SOURCES) \
+	$(test_test_cpp_SOURCES) $(test_test_decode_SOURCES) \
 	$(am__test_test_gtk_SOURCES_DIST) \
-	$(am__test_test_jpeg_SOURCES_DIST) \
-	$(am__test_test_proc_SOURCES_DIST) \
+	$(am__test_test_jpeg_SOURCES_DIST) $(test_test_proc_SOURCES) \
 	$(am__test_test_qt_SOURCES_DIST) \
+	$(am__test_test_video_SOURCES_DIST) \
 	$(am__zbarcam_zbarcam_SOURCES_DIST) \
 	$(am__zbarimg_zbarimg_SOURCES_DIST)
 man1dir = $(mandir)/man1
 NROFF = nroff
 MANS = $(dist_man_MANS)
+am__dist_doc_DATA_DIST = COPYING HACKING INSTALL LICENSE NEWS README \
+	TODO README.windows
 dist_docDATA_INSTALL = $(INSTALL_DATA)
 pkgconfigDATA_INSTALL = $(INSTALL_DATA)
-DATA = $(dist_doc_DATA) $(pkgconfig_DATA)
+pkgdataDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(dist_doc_DATA) $(pkgconfig_DATA) $(pkgdata_DATA)
 includeHEADERS_INSTALL = $(INSTALL_HEADER)
 am__zinclude_HEADERS_DIST = include/zbar/Scanner.h \
 	include/zbar/Decoder.h include/zbar/Exception.h \
@@ -454,12 +535,14 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LIBICONV = @LIBICONV@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIB_VERSION = @LIB_VERSION@
 LIPO = @LIPO@
 LN_S = @LN_S@
+LTLIBICONV = @LTLIBICONV@
 LTLIBOBJS = @LTLIBOBJS@
 MAGICK_CFLAGS = @MAGICK_CFLAGS@
 MAGICK_LIBS = @MAGICK_LIBS@
@@ -498,6 +581,7 @@ PYTHON_VERSION = @PYTHON_VERSION@
 QT_CFLAGS = @QT_CFLAGS@
 QT_LIBS = @QT_LIBS@
 RANLIB = @RANLIB@
+RC = @RC@
 RELDATE = @RELDATE@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -573,45 +657,48 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(srcdir)/include
-AM_CFLAGS = -Wall
+AM_CFLAGS = -Wall -Wno-parentheses
 AM_CXXFLAGS = $(AM_CFLAGS)
 ACLOCAL_AMFLAGS = -I config
-lib_LTLIBRARIES = zbar/libzbar.la $(am__append_26) $(am__append_35) \
-	$(am__append_39)
-pyexec_LTLIBRARIES = $(am__append_24) $(am__append_31)
+lib_LTLIBRARIES = zbar/libzbar.la $(am__append_40) $(am__append_49) \
+	$(am__append_53)
+pyexec_LTLIBRARIES = $(am__append_38) $(am__append_45)
 
 # automake bug in "monolithic mode"?
-CLEANFILES = $(am__append_21) $(am__append_23) $(am__append_28) \
-	$(am__append_33) test/.libs/test_decode test/.libs/test_proc \
+CLEANFILES = $(am__append_30) $(am__append_35) $(am__append_42) \
+	$(am__append_47) test/.libs/test_decode test/.libs/test_proc \
 	test/.libs/test_convert test/.libs/test_window \
 	test/.libs/test_video test/.libs/dbg_scan test/.libs/test_gtk
-DISTCLEANFILES = $(am__append_37)
-BUILT_SOURCES = $(am__append_27) $(am__append_32) $(am__append_36)
+DISTCLEANFILES = $(am__append_51)
+BUILT_SOURCES = $(am__append_41) $(am__append_46) $(am__append_50)
 
 # TBD add manual content
 #dist_doc_DATA = doc/zbar.pdf doc/zbar.html
 
 # distribute all documentation related files to avoid end-user rebuilds
-EXTRA_DIST = $(am__append_25) $(am__append_29) $(am__append_34) \
-	test/test_pygtk.py test/test_perl.pl $(DOCSOURCES) \
-	$(man_stamp) doc/api/footer.html doc/style.xsl zbar.spec.in \
-	zbar.spec examples/upcrpc.pl examples/upcrpc.py \
+EXTRA_DIST = $(am__append_33) $(am__append_39) $(am__append_43) \
+	$(am__append_48) test/test_pygtk.py test/test_perl.pl \
+	$(DOCSOURCES) $(man_stamp) doc/api/footer.html doc/style.xsl \
+	zbar.ico zbar.nsi examples/upcrpc.pl examples/upcrpc.py \
 	examples/paginate.pl examples/barcode.png \
 	examples/processor.pl examples/processor.py \
+	examples/read_one.py examples/read_one.pl \
 	examples/scan_image.c examples/scan_image.cpp \
-	examples/scan_image.pl examples/scan_image.py perl/MANIFEST \
-	perl/README perl/Changes perl/COPYING.LIB perl/Makefile.PL \
-	perl/typemap perl/ZBar.xs perl/ppport.h perl/ZBar.pm \
+	examples/scan_image.pl examples/scan_image.py \
+	examples/scan_image.vcproj perl/MANIFEST perl/README \
+	perl/Changes perl/COPYING.LIB perl/Makefile.PL perl/typemap \
+	perl/ZBar.xs perl/ppport.h perl/ZBar.pm \
 	perl/inc/Devel/CheckLib.pm perl/ZBar/Image.pod \
 	perl/ZBar/ImageScanner.pod perl/ZBar/Processor.pod \
 	perl/ZBar/Symbol.pod perl/examples/paginate.pl \
-	perl/examples/processor.pl perl/examples/scan_image.pl \
-	perl/t/barcode.png perl/t/ZBar.t perl/t/Decoder.t \
-	perl/t/Image.t perl/t/Processor.t perl/t/Scanner.t \
-	perl/t/pod.t perl/t/pod-coverage.t
+	perl/examples/processor.pl perl/examples/read_one.pl \
+	perl/examples/scan_image.pl perl/t/barcode.png perl/t/ZBar.t \
+	perl/t/Decoder.t perl/t/Image.t perl/t/Processor.t \
+	perl/t/Scanner.t perl/t/pod.t perl/t/pod-coverage.t
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = zbar.pc $(am__append_30) $(am__append_38)
-dist_doc_DATA = COPYING.LIB HACKING INSTALL NEWS README TODO
+pkgconfig_DATA = zbar.pc $(am__append_44) $(am__append_52)
+dist_doc_DATA = COPYING HACKING INSTALL LICENSE NEWS README TODO \
+	$(am__append_61)
 zincludedir = $(includedir)/zbar
 include_HEADERS = include/zbar.h
 zinclude_HEADERS = include/zbar/Scanner.h include/zbar/Decoder.h \
@@ -620,33 +707,44 @@ zinclude_HEADERS = include/zbar/Scanner.h include/zbar/Decoder.h \
 	include/zbar/Video.h include/zbar/Window.h \
 	include/zbar/Processor.h $(am__append_1) $(am__append_2)
 zbar_libzbar_la_CPPFLAGS = -I$(srcdir)/zbar $(AM_CPPFLAGS) \
-	$(am__append_14)
+	$(am__append_10) $(am__append_21)
 zbar_libzbar_la_LDFLAGS = -no-undefined -version-info $(LIB_VERSION) \
 	-export-symbols-regex "^(zbar|_zbar.*_error)_.*" $(AM_LDFLAGS) \
-	$(am__append_15) $(AM_LDFLAGS)
-zbar_libzbar_la_LIBADD = $(am__append_16) $(am__append_18) \
-	$(AM_LIBADD)
+	$(am__append_11) $(am__append_22) $(AM_LDFLAGS)
+zbar_libzbar_la_LIBADD = $(LTLIBICONV) $(am__append_12) \
+	$(am__append_17) $(am__append_23) $(am__append_25) \
+	$(am__append_27) $(AM_LIBADD)
 zbar_libzbar_la_SOURCES = zbar/debug.h zbar/config.c zbar/error.h \
 	zbar/error.c zbar/symbol.h zbar/symbol.c zbar/image.h \
-	zbar/image.c zbar/convert.c zbar/logo.c zbar/window.h \
-	zbar/window.c zbar/video.h zbar/video.c zbar/img_scanner.c \
-	zbar/scanner.c zbar/decoder.h zbar/decoder.c $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9) \
-	$(am__append_10) $(am__append_11) $(am__append_12) \
-	$(am__append_13) $(am__append_17) $(am__append_19)
-@HAVE_MAGICK_TRUE@zbarimg_zbarimg_SOURCES = zbarimg/zbarimg.cpp
+	zbar/image.c zbar/convert.c zbar/processor.c zbar/processor.h \
+	zbar/processor/lock.c zbar/refcnt.h zbar/refcnt.c zbar/timer.h \
+	zbar/mutex.h zbar/event.h zbar/thread.h zbar/window.h \
+	zbar/window.c zbar/video.h zbar/video.c zbar/img_scanner.h \
+	zbar/img_scanner.c zbar/scanner.c zbar/decoder.h \
+	zbar/decoder.c $(am__append_3) $(am__append_4) $(am__append_5) \
+	$(am__append_6) $(am__append_7) $(am__append_8) \
+	$(am__append_9) $(am__append_13) $(am__append_14) \
+	$(am__append_15) $(am__append_16) $(am__append_18) \
+	$(am__append_19) $(am__append_20) $(am__append_24) \
+	$(am__append_26) $(am__append_28)
+EXTRA_zbar_libzbar_la_SOURCES = zbar/svg.h zbar/svg.c
+@HAVE_MAGICK_TRUE@zbarimg_zbarimg_SOURCES = zbarimg/zbarimg.c \
+@HAVE_MAGICK_TRUE@	$(am__append_31)
 @HAVE_MAGICK_TRUE@zbarimg_zbarimg_CPPFLAGS = $(MAGICK_CFLAGS) $(AM_CPPFLAGS)
-@HAVE_MAGICK_TRUE@zbarimg_zbarimg_LDADD = $(MAGICK_LIBS) zbar/libzbar.la
-@HAVE_VIDEO_TRUE@zbarcam_zbarcam_SOURCES = zbarcam/zbarcam.c
-@HAVE_VIDEO_TRUE@zbarcam_zbarcam_LDADD = zbar/libzbar.la
+@HAVE_MAGICK_TRUE@zbarimg_zbarimg_LDADD = $(MAGICK_LIBS) \
+@HAVE_MAGICK_TRUE@	zbar/libzbar.la $(am__append_32)
+@HAVE_VIDEO_TRUE@zbarcam_zbarcam_SOURCES = zbarcam/zbarcam.c \
+@HAVE_VIDEO_TRUE@	$(am__append_36)
+@HAVE_VIDEO_TRUE@zbarcam_zbarcam_LDADD = zbar/libzbar.la \
+@HAVE_VIDEO_TRUE@	$(am__append_37)
 @HAVE_PYTHON_TRUE@python_zbar_la_CPPFLAGS = $(PYTHON_CFLAGS) $(AM_CPPFLAGS)
 @HAVE_PYTHON_TRUE@python_zbar_la_LDFLAGS = -shared -module -avoid-version -export-dynamic \
 @HAVE_PYTHON_TRUE@    -export-symbols-regex initzbar
 
 @HAVE_PYTHON_TRUE@python_zbar_la_LIBADD = $(PYTHON_LIBS) zbar/libzbar.la $(AM_LIBADD)
 @HAVE_PYTHON_TRUE@python_zbar_la_SOURCES = python/zbarmodule.c python/zbarmodule.h \
-@HAVE_PYTHON_TRUE@    python/enum.c python/exception.c python/symbol.c python/image.c \
+@HAVE_PYTHON_TRUE@    python/enum.c python/exception.c python/symbol.c python/symbolset.c \
+@HAVE_PYTHON_TRUE@    python/symboliter.c python/image.c \
 @HAVE_PYTHON_TRUE@    python/processor.c python/imagescanner.c python/decoder.c python/scanner.c
 
 @HAVE_GTK_TRUE@gtk_libzbargtk_la_CPPFLAGS = -Igtk $(GTK_CFLAGS) $(AM_CPPFLAGS)
@@ -683,15 +781,17 @@ test_test_decode_LDADD = zbar/libzbar.la $(AM_LDADD)
 TEST_IMAGE_SOURCES = test/test_images.c test/test_images.h
 test_test_convert_SOURCES = test/test_convert.c $(TEST_IMAGE_SOURCES)
 test_test_convert_LDADD = zbar/libzbar.la $(AM_LDADD)
-@HAVE_POLL_TRUE@test_test_proc_SOURCES = test/test_proc.c $(TEST_IMAGE_SOURCES)
-@HAVE_POLL_TRUE@test_test_proc_LDADD = zbar/libzbar.la $(AM_LDADD)
-@HAVE_POLL_TRUE@test_test_cpp_SOURCES = test/test_cpp.cpp
-@HAVE_POLL_TRUE@test_test_cpp_LDADD = zbar/libzbar.la $(AM_LDADD)
-@HAVE_JPEG_TRUE@@HAVE_POLL_TRUE@test_test_jpeg_SOURCES = test/test_jpeg.c
-@HAVE_JPEG_TRUE@@HAVE_POLL_TRUE@test_test_jpeg_LDADD = zbar/libzbar.la $(AM_LDADD)
+@HAVE_VIDEO_TRUE@test_test_video_SOURCES = test/test_video.c $(TEST_IMAGE_SOURCES)
+@HAVE_VIDEO_TRUE@test_test_video_LDADD = zbar/libzbar.la $(AM_LDADD)
+test_test_proc_SOURCES = test/test_proc.c $(TEST_IMAGE_SOURCES)
+test_test_proc_LDADD = zbar/libzbar.la $(AM_LDADD)
+test_test_cpp_SOURCES = test/test_cpp.cpp
+test_test_cpp_LDADD = zbar/libzbar.la $(AM_LDADD)
+@HAVE_JPEG_TRUE@test_test_jpeg_SOURCES = test/test_jpeg.c
+@HAVE_JPEG_TRUE@test_test_jpeg_LDADD = zbar/libzbar.la $(AM_LDADD)
 @HAVE_MAGICK_TRUE@test_dbg_scan_SOURCES = test/dbg_scan.cpp
 @HAVE_MAGICK_TRUE@test_dbg_scan_CPPFLAGS = $(MAGICK_CFLAGS) $(AM_CPPFLAGS)
-@HAVE_MAGICK_TRUE@test_dbg_scan_LDADD = $(MAGICK_LIBS) zbar/libzbar.la $(AM_LDADD)
+@HAVE_MAGICK_TRUE@test_dbg_scan_LDADD = $(MAGICK_LIBS) -lMagick++ zbar/libzbar.la $(AM_LDADD)
 @HAVE_GTK_TRUE@test_test_gtk_SOURCES = test/test_gtk.c test/scan_video.c
 @HAVE_GTK_TRUE@test_test_gtk_CPPFLAGS = $(GTK_CFLAGS) $(AM_CPPFLAGS)
 @HAVE_GTK_TRUE@test_test_gtk_LDADD = $(GTK_LIBS) gtk/libzbargtk.la $(AM_LDADD)
@@ -706,11 +806,16 @@ DOCSOURCES = doc/manual.xml doc/version.xml doc/reldate.xml \
 
 
 # man page targets to distribute and install
-dist_man_MANS = $(am__append_45) $(am__append_46)
+dist_man_MANS = $(am__append_59) $(am__append_60)
 
 # witness to man page build (many-to-many workaround)
 man_stamp = doc/man/man.stamp
-doc_path = --searchpath $(abs_builddir)/doc -m $(abs_srcdir)/doc/style.xsl
+# xmlto --searchpath broken again...
+doc_path = --searchpath $(abs_builddir)/doc -m \
+	$(abs_srcdir)/doc/style.xsl --skip-validation
+@WIN32_TRUE@pkgdata_DATA = $(srcdir)/examples/barcode.png \
+@WIN32_TRUE@    $(srcdir)/examples/scan_image.cpp $(srcdir)/examples/scan_image.vcproj
+
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -771,8 +876,6 @@ zbar.pc: $(top_builddir)/config.status $(srcdir)/zbar.pc.in
 zbar-gtk.pc: $(top_builddir)/config.status $(srcdir)/zbar-gtk.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 zbar-qt.pc: $(top_builddir)/config.status $(srcdir)/zbar-qt.pc.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-zbar.spec: $(top_builddir)/config.status $(srcdir)/zbar.spec.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 doc/doxygen.conf: $(top_builddir)/config.status $(top_srcdir)/doc/doxygen.conf.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
@@ -878,6 +981,10 @@ python/python_zbar_la-exception.lo: python/$(am__dirstamp) \
 	python/$(DEPDIR)/$(am__dirstamp)
 python/python_zbar_la-symbol.lo: python/$(am__dirstamp) \
 	python/$(DEPDIR)/$(am__dirstamp)
+python/python_zbar_la-symbolset.lo: python/$(am__dirstamp) \
+	python/$(DEPDIR)/$(am__dirstamp)
+python/python_zbar_la-symboliter.lo: python/$(am__dirstamp) \
+	python/$(DEPDIR)/$(am__dirstamp)
 python/python_zbar_la-image.lo: python/$(am__dirstamp) \
 	python/$(DEPDIR)/$(am__dirstamp)
 python/python_zbar_la-processor.lo: python/$(am__dirstamp) \
@@ -922,7 +1029,18 @@ zbar/zbar_libzbar_la-image.lo: zbar/$(am__dirstamp) \
 	zbar/$(DEPDIR)/$(am__dirstamp)
 zbar/zbar_libzbar_la-convert.lo: zbar/$(am__dirstamp) \
 	zbar/$(DEPDIR)/$(am__dirstamp)
-zbar/zbar_libzbar_la-logo.lo: zbar/$(am__dirstamp) \
+zbar/zbar_libzbar_la-processor.lo: zbar/$(am__dirstamp) \
+	zbar/$(DEPDIR)/$(am__dirstamp)
+zbar/processor/$(am__dirstamp):
+	@$(MKDIR_P) zbar/processor
+	@: > zbar/processor/$(am__dirstamp)
+zbar/processor/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) zbar/processor/$(DEPDIR)
+	@: > zbar/processor/$(DEPDIR)/$(am__dirstamp)
+zbar/processor/zbar_libzbar_la-lock.lo:  \
+	zbar/processor/$(am__dirstamp) \
+	zbar/processor/$(DEPDIR)/$(am__dirstamp)
+zbar/zbar_libzbar_la-refcnt.lo: zbar/$(am__dirstamp) \
 	zbar/$(DEPDIR)/$(am__dirstamp)
 zbar/zbar_libzbar_la-window.lo: zbar/$(am__dirstamp) \
 	zbar/$(DEPDIR)/$(am__dirstamp)
@@ -933,8 +1051,6 @@ zbar/zbar_libzbar_la-img_scanner.lo: zbar/$(am__dirstamp) \
 zbar/zbar_libzbar_la-scanner.lo: zbar/$(am__dirstamp) \
 	zbar/$(DEPDIR)/$(am__dirstamp)
 zbar/zbar_libzbar_la-decoder.lo: zbar/$(am__dirstamp) \
-	zbar/$(DEPDIR)/$(am__dirstamp)
-zbar/zbar_libzbar_la-processor.lo: zbar/$(am__dirstamp) \
 	zbar/$(DEPDIR)/$(am__dirstamp)
 zbar/decoder/$(am__dirstamp):
 	@$(MKDIR_P) zbar/decoder
@@ -952,6 +1068,34 @@ zbar/decoder/zbar_libzbar_la-i25.lo: zbar/decoder/$(am__dirstamp) \
 	zbar/decoder/$(DEPDIR)/$(am__dirstamp)
 zbar/decoder/zbar_libzbar_la-pdf417.lo: zbar/decoder/$(am__dirstamp) \
 	zbar/decoder/$(DEPDIR)/$(am__dirstamp)
+zbar/decoder/zbar_libzbar_la-qr_finder.lo:  \
+	zbar/decoder/$(am__dirstamp) \
+	zbar/decoder/$(DEPDIR)/$(am__dirstamp)
+zbar/qrcode/$(am__dirstamp):
+	@$(MKDIR_P) zbar/qrcode
+	@: > zbar/qrcode/$(am__dirstamp)
+zbar/qrcode/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) zbar/qrcode/$(DEPDIR)
+	@: > zbar/qrcode/$(DEPDIR)/$(am__dirstamp)
+zbar/qrcode/zbar_libzbar_la-qrdec.lo: zbar/qrcode/$(am__dirstamp) \
+	zbar/qrcode/$(DEPDIR)/$(am__dirstamp)
+zbar/qrcode/zbar_libzbar_la-qrdectxt.lo: zbar/qrcode/$(am__dirstamp) \
+	zbar/qrcode/$(DEPDIR)/$(am__dirstamp)
+zbar/qrcode/zbar_libzbar_la-rs.lo: zbar/qrcode/$(am__dirstamp) \
+	zbar/qrcode/$(DEPDIR)/$(am__dirstamp)
+zbar/qrcode/zbar_libzbar_la-isaac.lo: zbar/qrcode/$(am__dirstamp) \
+	zbar/qrcode/$(DEPDIR)/$(am__dirstamp)
+zbar/qrcode/zbar_libzbar_la-bch15_5.lo: zbar/qrcode/$(am__dirstamp) \
+	zbar/qrcode/$(DEPDIR)/$(am__dirstamp)
+zbar/qrcode/zbar_libzbar_la-binarize.lo: zbar/qrcode/$(am__dirstamp) \
+	zbar/qrcode/$(DEPDIR)/$(am__dirstamp)
+zbar/qrcode/zbar_libzbar_la-util.lo: zbar/qrcode/$(am__dirstamp) \
+	zbar/qrcode/$(DEPDIR)/$(am__dirstamp)
+zbar/processor/zbar_libzbar_la-win.lo: zbar/processor/$(am__dirstamp) \
+	zbar/processor/$(DEPDIR)/$(am__dirstamp)
+zbar/processor/zbar_libzbar_la-posix.lo:  \
+	zbar/processor/$(am__dirstamp) \
+	zbar/processor/$(DEPDIR)/$(am__dirstamp)
 zbar/video/$(am__dirstamp):
 	@$(MKDIR_P) zbar/video
 	@: > zbar/video/$(am__dirstamp)
@@ -962,10 +1106,14 @@ zbar/video/zbar_libzbar_la-v4l1.lo: zbar/video/$(am__dirstamp) \
 	zbar/video/$(DEPDIR)/$(am__dirstamp)
 zbar/video/zbar_libzbar_la-v4l2.lo: zbar/video/$(am__dirstamp) \
 	zbar/video/$(DEPDIR)/$(am__dirstamp)
+zbar/video/zbar_libzbar_la-vfw.lo: zbar/video/$(am__dirstamp) \
+	zbar/video/$(DEPDIR)/$(am__dirstamp)
 zbar/video/zbar_libzbar_la-null.lo: zbar/video/$(am__dirstamp) \
 	zbar/video/$(DEPDIR)/$(am__dirstamp)
 zbar/zbar_libzbar_la-jpeg.lo: zbar/$(am__dirstamp) \
 	zbar/$(DEPDIR)/$(am__dirstamp)
+zbar/processor/zbar_libzbar_la-x.lo: zbar/processor/$(am__dirstamp) \
+	zbar/processor/$(DEPDIR)/$(am__dirstamp)
 zbar/window/$(am__dirstamp):
 	@$(MKDIR_P) zbar/window
 	@: > zbar/window/$(am__dirstamp)
@@ -978,8 +1126,17 @@ zbar/window/zbar_libzbar_la-ximage.lo: zbar/window/$(am__dirstamp) \
 	zbar/window/$(DEPDIR)/$(am__dirstamp)
 zbar/window/zbar_libzbar_la-xv.lo: zbar/window/$(am__dirstamp) \
 	zbar/window/$(DEPDIR)/$(am__dirstamp)
+zbar/window/zbar_libzbar_la-win.lo: zbar/window/$(am__dirstamp) \
+	zbar/window/$(DEPDIR)/$(am__dirstamp)
+zbar/window/zbar_libzbar_la-dib.lo: zbar/window/$(am__dirstamp) \
+	zbar/window/$(DEPDIR)/$(am__dirstamp)
+zbar/processor/zbar_libzbar_la-null.lo:  \
+	zbar/processor/$(am__dirstamp) \
+	zbar/processor/$(DEPDIR)/$(am__dirstamp)
 zbar/window/zbar_libzbar_la-null.lo: zbar/window/$(am__dirstamp) \
 	zbar/window/$(DEPDIR)/$(am__dirstamp)
+zbar/zbar_libzbar_la-svg.lo: zbar/$(am__dirstamp) \
+	zbar/$(DEPDIR)/$(am__dirstamp)
 zbar/libzbar.la: $(zbar_libzbar_la_OBJECTS) $(zbar_libzbar_la_DEPENDENCIES) zbar/$(am__dirstamp)
 	$(zbar_libzbar_la_LINK) -rpath $(libdir) $(zbar_libzbar_la_OBJECTS) $(zbar_libzbar_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
@@ -1085,6 +1242,11 @@ test/test_test_qt-scan_video.$(OBJEXT): test/$(am__dirstamp) \
 test/test_qt$(EXEEXT): $(test_test_qt_OBJECTS) $(test_test_qt_DEPENDENCIES) test/$(am__dirstamp)
 	@rm -f test/test_qt$(EXEEXT)
 	$(CXXLINK) $(test_test_qt_OBJECTS) $(test_test_qt_LDADD) $(LIBS)
+test/test_video.$(OBJEXT): test/$(am__dirstamp) \
+	test/$(DEPDIR)/$(am__dirstamp)
+test/test_video$(EXEEXT): $(test_test_video_OBJECTS) $(test_test_video_DEPENDENCIES) test/$(am__dirstamp)
+	@rm -f test/test_video$(EXEEXT)
+	$(LINK) $(test_test_video_OBJECTS) $(test_test_video_LDADD) $(LIBS)
 zbarcam/$(am__dirstamp):
 	@$(MKDIR_P) zbarcam
 	@: > zbarcam/$(am__dirstamp)
@@ -1106,7 +1268,7 @@ zbarimg/zbarimg_zbarimg-zbarimg.$(OBJEXT): zbarimg/$(am__dirstamp) \
 	zbarimg/$(DEPDIR)/$(am__dirstamp)
 zbarimg/zbarimg$(EXEEXT): $(zbarimg_zbarimg_OBJECTS) $(zbarimg_zbarimg_DEPENDENCIES) zbarimg/$(am__dirstamp)
 	@rm -f zbarimg/zbarimg$(EXEEXT)
-	$(CXXLINK) $(zbarimg_zbarimg_OBJECTS) $(zbarimg_zbarimg_LDADD) $(LIBS)
+	$(LINK) $(zbarimg_zbarimg_OBJECTS) $(zbarimg_zbarimg_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -1136,6 +1298,10 @@ mostlyclean-compile:
 	-rm -f python/python_zbar_la-scanner.lo
 	-rm -f python/python_zbar_la-symbol.$(OBJEXT)
 	-rm -f python/python_zbar_la-symbol.lo
+	-rm -f python/python_zbar_la-symboliter.$(OBJEXT)
+	-rm -f python/python_zbar_la-symboliter.lo
+	-rm -f python/python_zbar_la-symbolset.$(OBJEXT)
+	-rm -f python/python_zbar_la-symbolset.lo
 	-rm -f python/python_zbar_la-zbarmodule.$(OBJEXT)
 	-rm -f python/python_zbar_la-zbarmodule.lo
 	-rm -f qt/qt_libzbarqt_la-QZBar.$(OBJEXT)
@@ -1157,6 +1323,7 @@ mostlyclean-compile:
 	-rm -f test/test_test_gtk-test_gtk.$(OBJEXT)
 	-rm -f test/test_test_qt-scan_video.$(OBJEXT)
 	-rm -f test/test_test_qt-test_qt.$(OBJEXT)
+	-rm -f test/test_video.$(OBJEXT)
 	-rm -f zbar/decoder/zbar_libzbar_la-code128.$(OBJEXT)
 	-rm -f zbar/decoder/zbar_libzbar_la-code128.lo
 	-rm -f zbar/decoder/zbar_libzbar_la-code39.$(OBJEXT)
@@ -1167,14 +1334,46 @@ mostlyclean-compile:
 	-rm -f zbar/decoder/zbar_libzbar_la-i25.lo
 	-rm -f zbar/decoder/zbar_libzbar_la-pdf417.$(OBJEXT)
 	-rm -f zbar/decoder/zbar_libzbar_la-pdf417.lo
+	-rm -f zbar/decoder/zbar_libzbar_la-qr_finder.$(OBJEXT)
+	-rm -f zbar/decoder/zbar_libzbar_la-qr_finder.lo
+	-rm -f zbar/processor/zbar_libzbar_la-lock.$(OBJEXT)
+	-rm -f zbar/processor/zbar_libzbar_la-lock.lo
+	-rm -f zbar/processor/zbar_libzbar_la-null.$(OBJEXT)
+	-rm -f zbar/processor/zbar_libzbar_la-null.lo
+	-rm -f zbar/processor/zbar_libzbar_la-posix.$(OBJEXT)
+	-rm -f zbar/processor/zbar_libzbar_la-posix.lo
+	-rm -f zbar/processor/zbar_libzbar_la-win.$(OBJEXT)
+	-rm -f zbar/processor/zbar_libzbar_la-win.lo
+	-rm -f zbar/processor/zbar_libzbar_la-x.$(OBJEXT)
+	-rm -f zbar/processor/zbar_libzbar_la-x.lo
+	-rm -f zbar/qrcode/zbar_libzbar_la-bch15_5.$(OBJEXT)
+	-rm -f zbar/qrcode/zbar_libzbar_la-bch15_5.lo
+	-rm -f zbar/qrcode/zbar_libzbar_la-binarize.$(OBJEXT)
+	-rm -f zbar/qrcode/zbar_libzbar_la-binarize.lo
+	-rm -f zbar/qrcode/zbar_libzbar_la-isaac.$(OBJEXT)
+	-rm -f zbar/qrcode/zbar_libzbar_la-isaac.lo
+	-rm -f zbar/qrcode/zbar_libzbar_la-qrdec.$(OBJEXT)
+	-rm -f zbar/qrcode/zbar_libzbar_la-qrdec.lo
+	-rm -f zbar/qrcode/zbar_libzbar_la-qrdectxt.$(OBJEXT)
+	-rm -f zbar/qrcode/zbar_libzbar_la-qrdectxt.lo
+	-rm -f zbar/qrcode/zbar_libzbar_la-rs.$(OBJEXT)
+	-rm -f zbar/qrcode/zbar_libzbar_la-rs.lo
+	-rm -f zbar/qrcode/zbar_libzbar_la-util.$(OBJEXT)
+	-rm -f zbar/qrcode/zbar_libzbar_la-util.lo
 	-rm -f zbar/video/zbar_libzbar_la-null.$(OBJEXT)
 	-rm -f zbar/video/zbar_libzbar_la-null.lo
 	-rm -f zbar/video/zbar_libzbar_la-v4l1.$(OBJEXT)
 	-rm -f zbar/video/zbar_libzbar_la-v4l1.lo
 	-rm -f zbar/video/zbar_libzbar_la-v4l2.$(OBJEXT)
 	-rm -f zbar/video/zbar_libzbar_la-v4l2.lo
+	-rm -f zbar/video/zbar_libzbar_la-vfw.$(OBJEXT)
+	-rm -f zbar/video/zbar_libzbar_la-vfw.lo
+	-rm -f zbar/window/zbar_libzbar_la-dib.$(OBJEXT)
+	-rm -f zbar/window/zbar_libzbar_la-dib.lo
 	-rm -f zbar/window/zbar_libzbar_la-null.$(OBJEXT)
 	-rm -f zbar/window/zbar_libzbar_la-null.lo
+	-rm -f zbar/window/zbar_libzbar_la-win.$(OBJEXT)
+	-rm -f zbar/window/zbar_libzbar_la-win.lo
 	-rm -f zbar/window/zbar_libzbar_la-x.$(OBJEXT)
 	-rm -f zbar/window/zbar_libzbar_la-x.lo
 	-rm -f zbar/window/zbar_libzbar_la-ximage.$(OBJEXT)
@@ -1195,12 +1394,14 @@ mostlyclean-compile:
 	-rm -f zbar/zbar_libzbar_la-img_scanner.lo
 	-rm -f zbar/zbar_libzbar_la-jpeg.$(OBJEXT)
 	-rm -f zbar/zbar_libzbar_la-jpeg.lo
-	-rm -f zbar/zbar_libzbar_la-logo.$(OBJEXT)
-	-rm -f zbar/zbar_libzbar_la-logo.lo
 	-rm -f zbar/zbar_libzbar_la-processor.$(OBJEXT)
 	-rm -f zbar/zbar_libzbar_la-processor.lo
+	-rm -f zbar/zbar_libzbar_la-refcnt.$(OBJEXT)
+	-rm -f zbar/zbar_libzbar_la-refcnt.lo
 	-rm -f zbar/zbar_libzbar_la-scanner.$(OBJEXT)
 	-rm -f zbar/zbar_libzbar_la-scanner.lo
+	-rm -f zbar/zbar_libzbar_la-svg.$(OBJEXT)
+	-rm -f zbar/zbar_libzbar_la-svg.lo
 	-rm -f zbar/zbar_libzbar_la-symbol.$(OBJEXT)
 	-rm -f zbar/zbar_libzbar_la-symbol.lo
 	-rm -f zbar/zbar_libzbar_la-video.$(OBJEXT)
@@ -1226,6 +1427,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@python/$(DEPDIR)/python_zbar_la-processor.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@python/$(DEPDIR)/python_zbar_la-scanner.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@python/$(DEPDIR)/python_zbar_la-symbol.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@python/$(DEPDIR)/python_zbar_la-symboliter.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@python/$(DEPDIR)/python_zbar_la-symbolset.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@python/$(DEPDIR)/python_zbar_la-zbarmodule.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@qt/$(DEPDIR)/qt_libzbarqt_la-QZBar.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@qt/$(DEPDIR)/qt_libzbarqt_la-QZBarThread.Plo@am__quote@
@@ -1242,6 +1445,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test_test_gtk-test_gtk.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test_test_qt-scan_video.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test_test_qt-test_qt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@test/$(DEPDIR)/test_video.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-config.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-convert.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-decoder.Plo@am__quote@
@@ -1249,9 +1453,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-image.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-img_scanner.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-jpeg.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-logo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-processor.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-refcnt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-scanner.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-svg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-symbol.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-video.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/$(DEPDIR)/zbar_libzbar_la-window.Plo@am__quote@
@@ -1260,10 +1465,26 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/decoder/$(DEPDIR)/zbar_libzbar_la-ean.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/decoder/$(DEPDIR)/zbar_libzbar_la-i25.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/decoder/$(DEPDIR)/zbar_libzbar_la-pdf417.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/decoder/$(DEPDIR)/zbar_libzbar_la-qr_finder.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/processor/$(DEPDIR)/zbar_libzbar_la-lock.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/processor/$(DEPDIR)/zbar_libzbar_la-null.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/processor/$(DEPDIR)/zbar_libzbar_la-posix.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/processor/$(DEPDIR)/zbar_libzbar_la-win.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/processor/$(DEPDIR)/zbar_libzbar_la-x.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-bch15_5.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-binarize.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-isaac.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-qrdec.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-qrdectxt.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-rs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-util.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/video/$(DEPDIR)/zbar_libzbar_la-null.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/video/$(DEPDIR)/zbar_libzbar_la-v4l1.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/video/$(DEPDIR)/zbar_libzbar_la-v4l2.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/video/$(DEPDIR)/zbar_libzbar_la-vfw.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/window/$(DEPDIR)/zbar_libzbar_la-dib.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/window/$(DEPDIR)/zbar_libzbar_la-null.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@zbar/window/$(DEPDIR)/zbar_libzbar_la-win.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/window/$(DEPDIR)/zbar_libzbar_la-x.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/window/$(DEPDIR)/zbar_libzbar_la-ximage.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@zbar/window/$(DEPDIR)/zbar_libzbar_la-xv.Plo@am__quote@
@@ -1357,6 +1578,20 @@ python/python_zbar_la-symbol.lo: python/symbol.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(python_zbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o python/python_zbar_la-symbol.lo `test -f 'python/symbol.c' || echo '$(srcdir)/'`python/symbol.c
 
+python/python_zbar_la-symbolset.lo: python/symbolset.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(python_zbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT python/python_zbar_la-symbolset.lo -MD -MP -MF python/$(DEPDIR)/python_zbar_la-symbolset.Tpo -c -o python/python_zbar_la-symbolset.lo `test -f 'python/symbolset.c' || echo '$(srcdir)/'`python/symbolset.c
+@am__fastdepCC_TRUE@	mv -f python/$(DEPDIR)/python_zbar_la-symbolset.Tpo python/$(DEPDIR)/python_zbar_la-symbolset.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='python/symbolset.c' object='python/python_zbar_la-symbolset.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(python_zbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o python/python_zbar_la-symbolset.lo `test -f 'python/symbolset.c' || echo '$(srcdir)/'`python/symbolset.c
+
+python/python_zbar_la-symboliter.lo: python/symboliter.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(python_zbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT python/python_zbar_la-symboliter.lo -MD -MP -MF python/$(DEPDIR)/python_zbar_la-symboliter.Tpo -c -o python/python_zbar_la-symboliter.lo `test -f 'python/symboliter.c' || echo '$(srcdir)/'`python/symboliter.c
+@am__fastdepCC_TRUE@	mv -f python/$(DEPDIR)/python_zbar_la-symboliter.Tpo python/$(DEPDIR)/python_zbar_la-symboliter.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='python/symboliter.c' object='python/python_zbar_la-symboliter.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(python_zbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o python/python_zbar_la-symboliter.lo `test -f 'python/symboliter.c' || echo '$(srcdir)/'`python/symboliter.c
+
 python/python_zbar_la-image.lo: python/image.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(python_zbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT python/python_zbar_la-image.lo -MD -MP -MF python/$(DEPDIR)/python_zbar_la-image.Tpo -c -o python/python_zbar_la-image.lo `test -f 'python/image.c' || echo '$(srcdir)/'`python/image.c
 @am__fastdepCC_TRUE@	mv -f python/$(DEPDIR)/python_zbar_la-image.Tpo python/$(DEPDIR)/python_zbar_la-image.Plo
@@ -1427,12 +1662,26 @@ zbar/zbar_libzbar_la-convert.lo: zbar/convert.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/zbar_libzbar_la-convert.lo `test -f 'zbar/convert.c' || echo '$(srcdir)/'`zbar/convert.c
 
-zbar/zbar_libzbar_la-logo.lo: zbar/logo.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/zbar_libzbar_la-logo.lo -MD -MP -MF zbar/$(DEPDIR)/zbar_libzbar_la-logo.Tpo -c -o zbar/zbar_libzbar_la-logo.lo `test -f 'zbar/logo.c' || echo '$(srcdir)/'`zbar/logo.c
-@am__fastdepCC_TRUE@	mv -f zbar/$(DEPDIR)/zbar_libzbar_la-logo.Tpo zbar/$(DEPDIR)/zbar_libzbar_la-logo.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/logo.c' object='zbar/zbar_libzbar_la-logo.lo' libtool=yes @AMDEPBACKSLASH@
+zbar/zbar_libzbar_la-processor.lo: zbar/processor.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/zbar_libzbar_la-processor.lo -MD -MP -MF zbar/$(DEPDIR)/zbar_libzbar_la-processor.Tpo -c -o zbar/zbar_libzbar_la-processor.lo `test -f 'zbar/processor.c' || echo '$(srcdir)/'`zbar/processor.c
+@am__fastdepCC_TRUE@	mv -f zbar/$(DEPDIR)/zbar_libzbar_la-processor.Tpo zbar/$(DEPDIR)/zbar_libzbar_la-processor.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/processor.c' object='zbar/zbar_libzbar_la-processor.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/zbar_libzbar_la-logo.lo `test -f 'zbar/logo.c' || echo '$(srcdir)/'`zbar/logo.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/zbar_libzbar_la-processor.lo `test -f 'zbar/processor.c' || echo '$(srcdir)/'`zbar/processor.c
+
+zbar/processor/zbar_libzbar_la-lock.lo: zbar/processor/lock.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/processor/zbar_libzbar_la-lock.lo -MD -MP -MF zbar/processor/$(DEPDIR)/zbar_libzbar_la-lock.Tpo -c -o zbar/processor/zbar_libzbar_la-lock.lo `test -f 'zbar/processor/lock.c' || echo '$(srcdir)/'`zbar/processor/lock.c
+@am__fastdepCC_TRUE@	mv -f zbar/processor/$(DEPDIR)/zbar_libzbar_la-lock.Tpo zbar/processor/$(DEPDIR)/zbar_libzbar_la-lock.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/processor/lock.c' object='zbar/processor/zbar_libzbar_la-lock.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/processor/zbar_libzbar_la-lock.lo `test -f 'zbar/processor/lock.c' || echo '$(srcdir)/'`zbar/processor/lock.c
+
+zbar/zbar_libzbar_la-refcnt.lo: zbar/refcnt.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/zbar_libzbar_la-refcnt.lo -MD -MP -MF zbar/$(DEPDIR)/zbar_libzbar_la-refcnt.Tpo -c -o zbar/zbar_libzbar_la-refcnt.lo `test -f 'zbar/refcnt.c' || echo '$(srcdir)/'`zbar/refcnt.c
+@am__fastdepCC_TRUE@	mv -f zbar/$(DEPDIR)/zbar_libzbar_la-refcnt.Tpo zbar/$(DEPDIR)/zbar_libzbar_la-refcnt.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/refcnt.c' object='zbar/zbar_libzbar_la-refcnt.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/zbar_libzbar_la-refcnt.lo `test -f 'zbar/refcnt.c' || echo '$(srcdir)/'`zbar/refcnt.c
 
 zbar/zbar_libzbar_la-window.lo: zbar/window.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/zbar_libzbar_la-window.lo -MD -MP -MF zbar/$(DEPDIR)/zbar_libzbar_la-window.Tpo -c -o zbar/zbar_libzbar_la-window.lo `test -f 'zbar/window.c' || echo '$(srcdir)/'`zbar/window.c
@@ -1469,13 +1718,6 @@ zbar/zbar_libzbar_la-decoder.lo: zbar/decoder.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/zbar_libzbar_la-decoder.lo `test -f 'zbar/decoder.c' || echo '$(srcdir)/'`zbar/decoder.c
 
-zbar/zbar_libzbar_la-processor.lo: zbar/processor.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/zbar_libzbar_la-processor.lo -MD -MP -MF zbar/$(DEPDIR)/zbar_libzbar_la-processor.Tpo -c -o zbar/zbar_libzbar_la-processor.lo `test -f 'zbar/processor.c' || echo '$(srcdir)/'`zbar/processor.c
-@am__fastdepCC_TRUE@	mv -f zbar/$(DEPDIR)/zbar_libzbar_la-processor.Tpo zbar/$(DEPDIR)/zbar_libzbar_la-processor.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/processor.c' object='zbar/zbar_libzbar_la-processor.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/zbar_libzbar_la-processor.lo `test -f 'zbar/processor.c' || echo '$(srcdir)/'`zbar/processor.c
-
 zbar/decoder/zbar_libzbar_la-ean.lo: zbar/decoder/ean.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/decoder/zbar_libzbar_la-ean.lo -MD -MP -MF zbar/decoder/$(DEPDIR)/zbar_libzbar_la-ean.Tpo -c -o zbar/decoder/zbar_libzbar_la-ean.lo `test -f 'zbar/decoder/ean.c' || echo '$(srcdir)/'`zbar/decoder/ean.c
 @am__fastdepCC_TRUE@	mv -f zbar/decoder/$(DEPDIR)/zbar_libzbar_la-ean.Tpo zbar/decoder/$(DEPDIR)/zbar_libzbar_la-ean.Plo
@@ -1511,6 +1753,76 @@ zbar/decoder/zbar_libzbar_la-pdf417.lo: zbar/decoder/pdf417.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/decoder/zbar_libzbar_la-pdf417.lo `test -f 'zbar/decoder/pdf417.c' || echo '$(srcdir)/'`zbar/decoder/pdf417.c
 
+zbar/decoder/zbar_libzbar_la-qr_finder.lo: zbar/decoder/qr_finder.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/decoder/zbar_libzbar_la-qr_finder.lo -MD -MP -MF zbar/decoder/$(DEPDIR)/zbar_libzbar_la-qr_finder.Tpo -c -o zbar/decoder/zbar_libzbar_la-qr_finder.lo `test -f 'zbar/decoder/qr_finder.c' || echo '$(srcdir)/'`zbar/decoder/qr_finder.c
+@am__fastdepCC_TRUE@	mv -f zbar/decoder/$(DEPDIR)/zbar_libzbar_la-qr_finder.Tpo zbar/decoder/$(DEPDIR)/zbar_libzbar_la-qr_finder.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/decoder/qr_finder.c' object='zbar/decoder/zbar_libzbar_la-qr_finder.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/decoder/zbar_libzbar_la-qr_finder.lo `test -f 'zbar/decoder/qr_finder.c' || echo '$(srcdir)/'`zbar/decoder/qr_finder.c
+
+zbar/qrcode/zbar_libzbar_la-qrdec.lo: zbar/qrcode/qrdec.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/qrcode/zbar_libzbar_la-qrdec.lo -MD -MP -MF zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-qrdec.Tpo -c -o zbar/qrcode/zbar_libzbar_la-qrdec.lo `test -f 'zbar/qrcode/qrdec.c' || echo '$(srcdir)/'`zbar/qrcode/qrdec.c
+@am__fastdepCC_TRUE@	mv -f zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-qrdec.Tpo zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-qrdec.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/qrcode/qrdec.c' object='zbar/qrcode/zbar_libzbar_la-qrdec.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/qrcode/zbar_libzbar_la-qrdec.lo `test -f 'zbar/qrcode/qrdec.c' || echo '$(srcdir)/'`zbar/qrcode/qrdec.c
+
+zbar/qrcode/zbar_libzbar_la-qrdectxt.lo: zbar/qrcode/qrdectxt.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/qrcode/zbar_libzbar_la-qrdectxt.lo -MD -MP -MF zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-qrdectxt.Tpo -c -o zbar/qrcode/zbar_libzbar_la-qrdectxt.lo `test -f 'zbar/qrcode/qrdectxt.c' || echo '$(srcdir)/'`zbar/qrcode/qrdectxt.c
+@am__fastdepCC_TRUE@	mv -f zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-qrdectxt.Tpo zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-qrdectxt.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/qrcode/qrdectxt.c' object='zbar/qrcode/zbar_libzbar_la-qrdectxt.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/qrcode/zbar_libzbar_la-qrdectxt.lo `test -f 'zbar/qrcode/qrdectxt.c' || echo '$(srcdir)/'`zbar/qrcode/qrdectxt.c
+
+zbar/qrcode/zbar_libzbar_la-rs.lo: zbar/qrcode/rs.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/qrcode/zbar_libzbar_la-rs.lo -MD -MP -MF zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-rs.Tpo -c -o zbar/qrcode/zbar_libzbar_la-rs.lo `test -f 'zbar/qrcode/rs.c' || echo '$(srcdir)/'`zbar/qrcode/rs.c
+@am__fastdepCC_TRUE@	mv -f zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-rs.Tpo zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-rs.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/qrcode/rs.c' object='zbar/qrcode/zbar_libzbar_la-rs.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/qrcode/zbar_libzbar_la-rs.lo `test -f 'zbar/qrcode/rs.c' || echo '$(srcdir)/'`zbar/qrcode/rs.c
+
+zbar/qrcode/zbar_libzbar_la-isaac.lo: zbar/qrcode/isaac.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/qrcode/zbar_libzbar_la-isaac.lo -MD -MP -MF zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-isaac.Tpo -c -o zbar/qrcode/zbar_libzbar_la-isaac.lo `test -f 'zbar/qrcode/isaac.c' || echo '$(srcdir)/'`zbar/qrcode/isaac.c
+@am__fastdepCC_TRUE@	mv -f zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-isaac.Tpo zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-isaac.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/qrcode/isaac.c' object='zbar/qrcode/zbar_libzbar_la-isaac.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/qrcode/zbar_libzbar_la-isaac.lo `test -f 'zbar/qrcode/isaac.c' || echo '$(srcdir)/'`zbar/qrcode/isaac.c
+
+zbar/qrcode/zbar_libzbar_la-bch15_5.lo: zbar/qrcode/bch15_5.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/qrcode/zbar_libzbar_la-bch15_5.lo -MD -MP -MF zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-bch15_5.Tpo -c -o zbar/qrcode/zbar_libzbar_la-bch15_5.lo `test -f 'zbar/qrcode/bch15_5.c' || echo '$(srcdir)/'`zbar/qrcode/bch15_5.c
+@am__fastdepCC_TRUE@	mv -f zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-bch15_5.Tpo zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-bch15_5.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/qrcode/bch15_5.c' object='zbar/qrcode/zbar_libzbar_la-bch15_5.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/qrcode/zbar_libzbar_la-bch15_5.lo `test -f 'zbar/qrcode/bch15_5.c' || echo '$(srcdir)/'`zbar/qrcode/bch15_5.c
+
+zbar/qrcode/zbar_libzbar_la-binarize.lo: zbar/qrcode/binarize.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/qrcode/zbar_libzbar_la-binarize.lo -MD -MP -MF zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-binarize.Tpo -c -o zbar/qrcode/zbar_libzbar_la-binarize.lo `test -f 'zbar/qrcode/binarize.c' || echo '$(srcdir)/'`zbar/qrcode/binarize.c
+@am__fastdepCC_TRUE@	mv -f zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-binarize.Tpo zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-binarize.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/qrcode/binarize.c' object='zbar/qrcode/zbar_libzbar_la-binarize.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/qrcode/zbar_libzbar_la-binarize.lo `test -f 'zbar/qrcode/binarize.c' || echo '$(srcdir)/'`zbar/qrcode/binarize.c
+
+zbar/qrcode/zbar_libzbar_la-util.lo: zbar/qrcode/util.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/qrcode/zbar_libzbar_la-util.lo -MD -MP -MF zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-util.Tpo -c -o zbar/qrcode/zbar_libzbar_la-util.lo `test -f 'zbar/qrcode/util.c' || echo '$(srcdir)/'`zbar/qrcode/util.c
+@am__fastdepCC_TRUE@	mv -f zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-util.Tpo zbar/qrcode/$(DEPDIR)/zbar_libzbar_la-util.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/qrcode/util.c' object='zbar/qrcode/zbar_libzbar_la-util.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/qrcode/zbar_libzbar_la-util.lo `test -f 'zbar/qrcode/util.c' || echo '$(srcdir)/'`zbar/qrcode/util.c
+
+zbar/processor/zbar_libzbar_la-win.lo: zbar/processor/win.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/processor/zbar_libzbar_la-win.lo -MD -MP -MF zbar/processor/$(DEPDIR)/zbar_libzbar_la-win.Tpo -c -o zbar/processor/zbar_libzbar_la-win.lo `test -f 'zbar/processor/win.c' || echo '$(srcdir)/'`zbar/processor/win.c
+@am__fastdepCC_TRUE@	mv -f zbar/processor/$(DEPDIR)/zbar_libzbar_la-win.Tpo zbar/processor/$(DEPDIR)/zbar_libzbar_la-win.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/processor/win.c' object='zbar/processor/zbar_libzbar_la-win.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/processor/zbar_libzbar_la-win.lo `test -f 'zbar/processor/win.c' || echo '$(srcdir)/'`zbar/processor/win.c
+
+zbar/processor/zbar_libzbar_la-posix.lo: zbar/processor/posix.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/processor/zbar_libzbar_la-posix.lo -MD -MP -MF zbar/processor/$(DEPDIR)/zbar_libzbar_la-posix.Tpo -c -o zbar/processor/zbar_libzbar_la-posix.lo `test -f 'zbar/processor/posix.c' || echo '$(srcdir)/'`zbar/processor/posix.c
+@am__fastdepCC_TRUE@	mv -f zbar/processor/$(DEPDIR)/zbar_libzbar_la-posix.Tpo zbar/processor/$(DEPDIR)/zbar_libzbar_la-posix.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/processor/posix.c' object='zbar/processor/zbar_libzbar_la-posix.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/processor/zbar_libzbar_la-posix.lo `test -f 'zbar/processor/posix.c' || echo '$(srcdir)/'`zbar/processor/posix.c
+
 zbar/video/zbar_libzbar_la-v4l1.lo: zbar/video/v4l1.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/video/zbar_libzbar_la-v4l1.lo -MD -MP -MF zbar/video/$(DEPDIR)/zbar_libzbar_la-v4l1.Tpo -c -o zbar/video/zbar_libzbar_la-v4l1.lo `test -f 'zbar/video/v4l1.c' || echo '$(srcdir)/'`zbar/video/v4l1.c
 @am__fastdepCC_TRUE@	mv -f zbar/video/$(DEPDIR)/zbar_libzbar_la-v4l1.Tpo zbar/video/$(DEPDIR)/zbar_libzbar_la-v4l1.Plo
@@ -1525,6 +1837,13 @@ zbar/video/zbar_libzbar_la-v4l2.lo: zbar/video/v4l2.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/video/zbar_libzbar_la-v4l2.lo `test -f 'zbar/video/v4l2.c' || echo '$(srcdir)/'`zbar/video/v4l2.c
 
+zbar/video/zbar_libzbar_la-vfw.lo: zbar/video/vfw.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/video/zbar_libzbar_la-vfw.lo -MD -MP -MF zbar/video/$(DEPDIR)/zbar_libzbar_la-vfw.Tpo -c -o zbar/video/zbar_libzbar_la-vfw.lo `test -f 'zbar/video/vfw.c' || echo '$(srcdir)/'`zbar/video/vfw.c
+@am__fastdepCC_TRUE@	mv -f zbar/video/$(DEPDIR)/zbar_libzbar_la-vfw.Tpo zbar/video/$(DEPDIR)/zbar_libzbar_la-vfw.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/video/vfw.c' object='zbar/video/zbar_libzbar_la-vfw.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/video/zbar_libzbar_la-vfw.lo `test -f 'zbar/video/vfw.c' || echo '$(srcdir)/'`zbar/video/vfw.c
+
 zbar/video/zbar_libzbar_la-null.lo: zbar/video/null.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/video/zbar_libzbar_la-null.lo -MD -MP -MF zbar/video/$(DEPDIR)/zbar_libzbar_la-null.Tpo -c -o zbar/video/zbar_libzbar_la-null.lo `test -f 'zbar/video/null.c' || echo '$(srcdir)/'`zbar/video/null.c
 @am__fastdepCC_TRUE@	mv -f zbar/video/$(DEPDIR)/zbar_libzbar_la-null.Tpo zbar/video/$(DEPDIR)/zbar_libzbar_la-null.Plo
@@ -1538,6 +1857,13 @@ zbar/zbar_libzbar_la-jpeg.lo: zbar/jpeg.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/jpeg.c' object='zbar/zbar_libzbar_la-jpeg.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/zbar_libzbar_la-jpeg.lo `test -f 'zbar/jpeg.c' || echo '$(srcdir)/'`zbar/jpeg.c
+
+zbar/processor/zbar_libzbar_la-x.lo: zbar/processor/x.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/processor/zbar_libzbar_la-x.lo -MD -MP -MF zbar/processor/$(DEPDIR)/zbar_libzbar_la-x.Tpo -c -o zbar/processor/zbar_libzbar_la-x.lo `test -f 'zbar/processor/x.c' || echo '$(srcdir)/'`zbar/processor/x.c
+@am__fastdepCC_TRUE@	mv -f zbar/processor/$(DEPDIR)/zbar_libzbar_la-x.Tpo zbar/processor/$(DEPDIR)/zbar_libzbar_la-x.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/processor/x.c' object='zbar/processor/zbar_libzbar_la-x.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/processor/zbar_libzbar_la-x.lo `test -f 'zbar/processor/x.c' || echo '$(srcdir)/'`zbar/processor/x.c
 
 zbar/window/zbar_libzbar_la-x.lo: zbar/window/x.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/window/zbar_libzbar_la-x.lo -MD -MP -MF zbar/window/$(DEPDIR)/zbar_libzbar_la-x.Tpo -c -o zbar/window/zbar_libzbar_la-x.lo `test -f 'zbar/window/x.c' || echo '$(srcdir)/'`zbar/window/x.c
@@ -1560,12 +1886,40 @@ zbar/window/zbar_libzbar_la-xv.lo: zbar/window/xv.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/window/zbar_libzbar_la-xv.lo `test -f 'zbar/window/xv.c' || echo '$(srcdir)/'`zbar/window/xv.c
 
+zbar/window/zbar_libzbar_la-win.lo: zbar/window/win.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/window/zbar_libzbar_la-win.lo -MD -MP -MF zbar/window/$(DEPDIR)/zbar_libzbar_la-win.Tpo -c -o zbar/window/zbar_libzbar_la-win.lo `test -f 'zbar/window/win.c' || echo '$(srcdir)/'`zbar/window/win.c
+@am__fastdepCC_TRUE@	mv -f zbar/window/$(DEPDIR)/zbar_libzbar_la-win.Tpo zbar/window/$(DEPDIR)/zbar_libzbar_la-win.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/window/win.c' object='zbar/window/zbar_libzbar_la-win.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/window/zbar_libzbar_la-win.lo `test -f 'zbar/window/win.c' || echo '$(srcdir)/'`zbar/window/win.c
+
+zbar/window/zbar_libzbar_la-dib.lo: zbar/window/dib.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/window/zbar_libzbar_la-dib.lo -MD -MP -MF zbar/window/$(DEPDIR)/zbar_libzbar_la-dib.Tpo -c -o zbar/window/zbar_libzbar_la-dib.lo `test -f 'zbar/window/dib.c' || echo '$(srcdir)/'`zbar/window/dib.c
+@am__fastdepCC_TRUE@	mv -f zbar/window/$(DEPDIR)/zbar_libzbar_la-dib.Tpo zbar/window/$(DEPDIR)/zbar_libzbar_la-dib.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/window/dib.c' object='zbar/window/zbar_libzbar_la-dib.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/window/zbar_libzbar_la-dib.lo `test -f 'zbar/window/dib.c' || echo '$(srcdir)/'`zbar/window/dib.c
+
+zbar/processor/zbar_libzbar_la-null.lo: zbar/processor/null.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/processor/zbar_libzbar_la-null.lo -MD -MP -MF zbar/processor/$(DEPDIR)/zbar_libzbar_la-null.Tpo -c -o zbar/processor/zbar_libzbar_la-null.lo `test -f 'zbar/processor/null.c' || echo '$(srcdir)/'`zbar/processor/null.c
+@am__fastdepCC_TRUE@	mv -f zbar/processor/$(DEPDIR)/zbar_libzbar_la-null.Tpo zbar/processor/$(DEPDIR)/zbar_libzbar_la-null.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/processor/null.c' object='zbar/processor/zbar_libzbar_la-null.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/processor/zbar_libzbar_la-null.lo `test -f 'zbar/processor/null.c' || echo '$(srcdir)/'`zbar/processor/null.c
+
 zbar/window/zbar_libzbar_la-null.lo: zbar/window/null.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/window/zbar_libzbar_la-null.lo -MD -MP -MF zbar/window/$(DEPDIR)/zbar_libzbar_la-null.Tpo -c -o zbar/window/zbar_libzbar_la-null.lo `test -f 'zbar/window/null.c' || echo '$(srcdir)/'`zbar/window/null.c
 @am__fastdepCC_TRUE@	mv -f zbar/window/$(DEPDIR)/zbar_libzbar_la-null.Tpo zbar/window/$(DEPDIR)/zbar_libzbar_la-null.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/window/null.c' object='zbar/window/zbar_libzbar_la-null.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/window/zbar_libzbar_la-null.lo `test -f 'zbar/window/null.c' || echo '$(srcdir)/'`zbar/window/null.c
+
+zbar/zbar_libzbar_la-svg.lo: zbar/svg.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbar/zbar_libzbar_la-svg.lo -MD -MP -MF zbar/$(DEPDIR)/zbar_libzbar_la-svg.Tpo -c -o zbar/zbar_libzbar_la-svg.lo `test -f 'zbar/svg.c' || echo '$(srcdir)/'`zbar/svg.c
+@am__fastdepCC_TRUE@	mv -f zbar/$(DEPDIR)/zbar_libzbar_la-svg.Tpo zbar/$(DEPDIR)/zbar_libzbar_la-svg.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbar/svg.c' object='zbar/zbar_libzbar_la-svg.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbar_libzbar_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbar/zbar_libzbar_la-svg.lo `test -f 'zbar/svg.c' || echo '$(srcdir)/'`zbar/svg.c
 
 test/test_test_decode-test_decode.o: test/test_decode.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_test_decode_CFLAGS) $(CFLAGS) -MT test/test_test_decode-test_decode.o -MD -MP -MF test/$(DEPDIR)/test_test_decode-test_decode.Tpo -c -o test/test_test_decode-test_decode.o `test -f 'test/test_decode.c' || echo '$(srcdir)/'`test/test_decode.c
@@ -1622,6 +1976,20 @@ test/test_test_qt-scan_video.obj: test/scan_video.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='test/scan_video.c' object='test/test_test_qt-scan_video.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_test_qt_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o test/test_test_qt-scan_video.obj `if test -f 'test/scan_video.c'; then $(CYGPATH_W) 'test/scan_video.c'; else $(CYGPATH_W) '$(srcdir)/test/scan_video.c'; fi`
+
+zbarimg/zbarimg_zbarimg-zbarimg.o: zbarimg/zbarimg.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbarimg_zbarimg_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbarimg/zbarimg_zbarimg-zbarimg.o -MD -MP -MF zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Tpo -c -o zbarimg/zbarimg_zbarimg-zbarimg.o `test -f 'zbarimg/zbarimg.c' || echo '$(srcdir)/'`zbarimg/zbarimg.c
+@am__fastdepCC_TRUE@	mv -f zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Tpo zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbarimg/zbarimg.c' object='zbarimg/zbarimg_zbarimg-zbarimg.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbarimg_zbarimg_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbarimg/zbarimg_zbarimg-zbarimg.o `test -f 'zbarimg/zbarimg.c' || echo '$(srcdir)/'`zbarimg/zbarimg.c
+
+zbarimg/zbarimg_zbarimg-zbarimg.obj: zbarimg/zbarimg.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbarimg_zbarimg_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT zbarimg/zbarimg_zbarimg-zbarimg.obj -MD -MP -MF zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Tpo -c -o zbarimg/zbarimg_zbarimg-zbarimg.obj `if test -f 'zbarimg/zbarimg.c'; then $(CYGPATH_W) 'zbarimg/zbarimg.c'; else $(CYGPATH_W) '$(srcdir)/zbarimg/zbarimg.c'; fi`
+@am__fastdepCC_TRUE@	mv -f zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Tpo zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='zbarimg/zbarimg.c' object='zbarimg/zbarimg_zbarimg-zbarimg.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbarimg_zbarimg_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o zbarimg/zbarimg_zbarimg-zbarimg.obj `if test -f 'zbarimg/zbarimg.c'; then $(CYGPATH_W) 'zbarimg/zbarimg.c'; else $(CYGPATH_W) '$(srcdir)/zbarimg/zbarimg.c'; fi`
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -1703,20 +2071,6 @@ test/test_test_qt-test_qt.obj: test/test_qt.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_test_qt_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o test/test_test_qt-test_qt.obj `if test -f 'test/test_qt.cpp'; then $(CYGPATH_W) 'test/test_qt.cpp'; else $(CYGPATH_W) '$(srcdir)/test/test_qt.cpp'; fi`
 
-zbarimg/zbarimg_zbarimg-zbarimg.o: zbarimg/zbarimg.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbarimg_zbarimg_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT zbarimg/zbarimg_zbarimg-zbarimg.o -MD -MP -MF zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Tpo -c -o zbarimg/zbarimg_zbarimg-zbarimg.o `test -f 'zbarimg/zbarimg.cpp' || echo '$(srcdir)/'`zbarimg/zbarimg.cpp
-@am__fastdepCXX_TRUE@	mv -f zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Tpo zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='zbarimg/zbarimg.cpp' object='zbarimg/zbarimg_zbarimg-zbarimg.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbarimg_zbarimg_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o zbarimg/zbarimg_zbarimg-zbarimg.o `test -f 'zbarimg/zbarimg.cpp' || echo '$(srcdir)/'`zbarimg/zbarimg.cpp
-
-zbarimg/zbarimg_zbarimg-zbarimg.obj: zbarimg/zbarimg.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbarimg_zbarimg_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT zbarimg/zbarimg_zbarimg-zbarimg.obj -MD -MP -MF zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Tpo -c -o zbarimg/zbarimg_zbarimg-zbarimg.obj `if test -f 'zbarimg/zbarimg.cpp'; then $(CYGPATH_W) 'zbarimg/zbarimg.cpp'; else $(CYGPATH_W) '$(srcdir)/zbarimg/zbarimg.cpp'; fi`
-@am__fastdepCXX_TRUE@	mv -f zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Tpo zbarimg/$(DEPDIR)/zbarimg_zbarimg-zbarimg.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='zbarimg/zbarimg.cpp' object='zbarimg/zbarimg_zbarimg-zbarimg.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(zbarimg_zbarimg_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o zbarimg/zbarimg_zbarimg-zbarimg.obj `if test -f 'zbarimg/zbarimg.cpp'; then $(CYGPATH_W) 'zbarimg/zbarimg.cpp'; else $(CYGPATH_W) '$(srcdir)/zbarimg/zbarimg.cpp'; fi`
-
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -1730,6 +2084,8 @@ clean-libtool:
 	-rm -rf test/.libs test/_libs
 	-rm -rf zbar/.libs zbar/_libs
 	-rm -rf zbar/decoder/.libs zbar/decoder/_libs
+	-rm -rf zbar/processor/.libs zbar/processor/_libs
+	-rm -rf zbar/qrcode/.libs zbar/qrcode/_libs
 	-rm -rf zbar/video/.libs zbar/video/_libs
 	-rm -rf zbar/window/.libs zbar/window/_libs
 	-rm -rf zbarcam/.libs zbarcam/_libs
@@ -1815,6 +2171,23 @@ uninstall-pkgconfigDATA:
 	  f=$(am__strip_dir) \
 	  echo " rm -f '$(DESTDIR)$(pkgconfigdir)/$$f'"; \
 	  rm -f "$(DESTDIR)$(pkgconfigdir)/$$f"; \
+	done
+install-pkgdataDATA: $(pkgdata_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(pkgdatadir)" || $(MKDIR_P) "$(DESTDIR)$(pkgdatadir)"
+	@list='$(pkgdata_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(pkgdataDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(pkgdatadir)/$$f'"; \
+	  $(pkgdataDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(pkgdatadir)/$$f"; \
+	done
+
+uninstall-pkgdataDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(pkgdata_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(pkgdatadir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(pkgdatadir)/$$f"; \
 	done
 install-includeHEADERS: $(include_HEADERS)
 	@$(NORMAL_INSTALL)
@@ -2029,15 +2402,17 @@ distcleancheck: distclean
 	  || { echo "ERROR: files left in build directory after distclean:" ; \
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
+@HAVE_MAGICK_FALSE@check-local:
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
+	$(MAKE) $(AM_MAKEFLAGS) check-local
 check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(MANS) $(DATA) $(HEADERS)
 install-binPROGRAMS: install-libLTLIBRARIES
 
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pyexecdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(includedir)" "$(DESTDIR)$(zincludedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pyexecdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(pkgdatadir)" "$(DESTDIR)$(includedir)" "$(DESTDIR)$(zincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -2078,6 +2453,10 @@ distclean-generic:
 	-rm -f zbar/$(am__dirstamp)
 	-rm -f zbar/decoder/$(DEPDIR)/$(am__dirstamp)
 	-rm -f zbar/decoder/$(am__dirstamp)
+	-rm -f zbar/processor/$(DEPDIR)/$(am__dirstamp)
+	-rm -f zbar/processor/$(am__dirstamp)
+	-rm -f zbar/qrcode/$(DEPDIR)/$(am__dirstamp)
+	-rm -f zbar/qrcode/$(am__dirstamp)
 	-rm -f zbar/video/$(DEPDIR)/$(am__dirstamp)
 	-rm -f zbar/video/$(am__dirstamp)
 	-rm -f zbar/window/$(DEPDIR)/$(am__dirstamp)
@@ -2100,7 +2479,7 @@ clean-am: clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf gtk/$(DEPDIR) plugin/$(DEPDIR) pygtk/$(DEPDIR) python/$(DEPDIR) qt/$(DEPDIR) test/$(DEPDIR) zbar/$(DEPDIR) zbar/decoder/$(DEPDIR) zbar/video/$(DEPDIR) zbar/window/$(DEPDIR) zbarcam/$(DEPDIR) zbarimg/$(DEPDIR)
+	-rm -rf gtk/$(DEPDIR) plugin/$(DEPDIR) pygtk/$(DEPDIR) python/$(DEPDIR) qt/$(DEPDIR) test/$(DEPDIR) zbar/$(DEPDIR) zbar/decoder/$(DEPDIR) zbar/processor/$(DEPDIR) zbar/qrcode/$(DEPDIR) zbar/video/$(DEPDIR) zbar/window/$(DEPDIR) zbarcam/$(DEPDIR) zbarimg/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-tags
@@ -2118,7 +2497,8 @@ info: info-am
 info-am:
 
 install-data-am: install-dist_docDATA install-includeHEADERS \
-	install-man install-pkgconfigDATA install-zincludeHEADERS
+	install-man install-pkgconfigDATA install-pkgdataDATA \
+	install-zincludeHEADERS
 
 install-dvi: install-dvi-am
 
@@ -2140,7 +2520,7 @@ installcheck-am: installcheck-binPROGRAMS
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf gtk/$(DEPDIR) plugin/$(DEPDIR) pygtk/$(DEPDIR) python/$(DEPDIR) qt/$(DEPDIR) test/$(DEPDIR) zbar/$(DEPDIR) zbar/decoder/$(DEPDIR) zbar/video/$(DEPDIR) zbar/window/$(DEPDIR) zbarcam/$(DEPDIR) zbarimg/$(DEPDIR)
+	-rm -rf gtk/$(DEPDIR) plugin/$(DEPDIR) pygtk/$(DEPDIR) python/$(DEPDIR) qt/$(DEPDIR) test/$(DEPDIR) zbar/$(DEPDIR) zbar/decoder/$(DEPDIR) zbar/processor/$(DEPDIR) zbar/qrcode/$(DEPDIR) zbar/video/$(DEPDIR) zbar/window/$(DEPDIR) zbarcam/$(DEPDIR) zbarimg/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -2159,15 +2539,15 @@ ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-dist_docDATA \
 	uninstall-includeHEADERS uninstall-libLTLIBRARIES \
-	uninstall-man uninstall-pkgconfigDATA \
+	uninstall-man uninstall-pkgconfigDATA uninstall-pkgdataDATA \
 	uninstall-pyexecLTLIBRARIES uninstall-zincludeHEADERS
 
 uninstall-man: uninstall-man1
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS all all-am am--refresh check check-am clean \
-	clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
+.PHONY: CTAGS GTAGS all all-am am--refresh check check-am check-local \
+	clean clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
 	clean-libLTLIBRARIES clean-libtool clean-pyexecLTLIBRARIES \
 	ctags dist dist-all dist-bzip2 dist-gzip dist-lzma dist-shar \
 	dist-tarZ dist-zip distcheck distclean distclean-compile \
@@ -2179,18 +2559,27 @@ uninstall-man: uninstall-man1
 	install-exec-am install-html install-html-am \
 	install-includeHEADERS install-info install-info-am \
 	install-libLTLIBRARIES install-man install-man1 install-pdf \
-	install-pdf-am install-pkgconfigDATA install-ps install-ps-am \
-	install-pyexecLTLIBRARIES install-strip \
-	install-zincludeHEADERS installcheck installcheck-am \
-	installcheck-binPROGRAMS installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-dist_docDATA uninstall-includeHEADERS \
-	uninstall-libLTLIBRARIES uninstall-man uninstall-man1 \
-	uninstall-pkgconfigDATA uninstall-pyexecLTLIBRARIES \
+	install-pdf-am install-pkgconfigDATA install-pkgdataDATA \
+	install-ps install-ps-am install-pyexecLTLIBRARIES \
+	install-strip install-zincludeHEADERS installcheck \
+	installcheck-am installcheck-binPROGRAMS installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-dist_docDATA \
+	uninstall-includeHEADERS uninstall-libLTLIBRARIES \
+	uninstall-man uninstall-man1 uninstall-pkgconfigDATA \
+	uninstall-pkgdataDATA uninstall-pyexecLTLIBRARIES \
 	uninstall-zincludeHEADERS
 
+
+@HAVE_MAGICK_TRUE@check-local:
+@HAVE_MAGICK_TRUE@	$(PYTHON) $(srcdir)/test/barcodetest.py
+
+@HAVE_MAGICK_TRUE@regress:
+@HAVE_MAGICK_TRUE@	suite='$(ZBAR_TESTS)'; \
+@HAVE_MAGICK_TRUE@	if test "x$$suite" = "x"; then suite='http://zbar.sf.net/test'; fi ; \
+@HAVE_MAGICK_TRUE@	$(PYTHON) $(srcdir)/test/barcodetest.py $$suite
 
 @HAVE_GTK_TRUE@%.h: %.list
 @HAVE_GTK_TRUE@	$(GLIB_GENMARSHAL) --g-fatal-warnings --prefix=zbar_marshal \
@@ -2242,6 +2631,27 @@ $(man_stamp): $(DOCSOURCES)
 	@touch $(man_stamp).tmp
 	$(XMLTO) $(doc_path) $(XMLTOFLAGS) -o doc/man man $<
 	@mv $(man_stamp).tmp $(man_stamp)
+
+@WIN32_TRUE@%-rc.o: %.rc
+@WIN32_TRUE@	$(RC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+@WIN32_TRUE@	$(AM_CPPFLAGS) $(CPPFLAGS) -o $@ $<
+@WIN32_TRUE@%-rc.lo: %.rc
+@WIN32_TRUE@	$(LIBTOOL) --tag=RC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+@WIN32_TRUE@	--mode=compile $(RC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+@WIN32_TRUE@	$(AM_CPPFLAGS) $(CPPFLAGS) -o $@ $<
+
+# install to tmp dest and run NSIS to generate installer
+@WIN32_TRUE@dist-nsis: html-local
+@WIN32_TRUE@	test ! -e _nsis || test -d _nsis && rm -rf _nsis
+@WIN32_TRUE@	mkdir _nsis
+@WIN32_TRUE@	tmpinst=`cd _nsis && pwd | sed -e 's,^[^:\\/]:[\\/],/,'` \
+@WIN32_TRUE@	  && $(MAKE) $(AM_MAKEFLAGS) DESTDIR=$$tmpinst prefix=/ install
+@WIN32_TRUE@	cp zbar/.libs/libzbar-0.dll.def _nsis/lib/libzbar-0.def
+@WIN32_TRUE@	cp -r doc/html _nsis/share/doc/zbar/
+@WIN32_TRUE@	$(WINEXEC) lib.exe /machine:x86 /def:_nsis/lib/libzbar-0.def /out:_nsis/lib/libzbar-0.lib
+@WIN32_TRUE@	cd _nsis && \
+@WIN32_TRUE@	  makensis -NOCD -V2 -DVERSION=$(VERSION) $(abs_srcdir)/zbar.nsi
+@WIN32_TRUE@	@ls -l _nsis/zbar-$(VERSION)-setup.exe
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

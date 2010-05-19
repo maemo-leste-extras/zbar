@@ -22,34 +22,24 @@
  *------------------------------------------------------------------------*/
 
 #include "window.h"
+#include "x.h"
+#include "image.h"
 
 static int ximage_cleanup (zbar_window_t *w)
 {
-    if(w->img.x)
-        free(w->img.x);
-    w->img.x = NULL;
+    window_state_t *x = w->state;
+    if(x->img.x)
+        free(x->img.x);
+    x->img.x = NULL;
     return(0);
 }
 
 static inline int ximage_init (zbar_window_t *w,
-                               zbar_image_t *img)
+                               zbar_image_t *img,
+                               int format_change)
 {
-    if(w->img.x) {
-        free(w->img.x);
-        w->img.x = NULL;
-    }
-    if(w->src_format != img->format &&
-       w->format != img->format) {
-        _zbar_best_format(img->format, &w->format, w->formats);
-        if(!w->format) {
-            err_capture_int(w, SEV_ERROR, ZBAR_ERR_UNSUPPORTED, __func__,
-                            "no conversion from %x to supported formats",
-                            img->format);
-            return(-1);
-        }
-        w->src_format = img->format;
-    }
-    XImage *ximg = w->img.x = calloc(1, sizeof(XImage));
+    ximage_cleanup(w);
+    XImage *ximg = w->state->img.x = calloc(1, sizeof(XImage));
     ximg->width = img->width;
     ximg->height = img->height;
     ximg->format = ZPixmap;
@@ -80,6 +70,13 @@ static inline int ximage_init (zbar_window_t *w,
         return(err_capture_int(w, SEV_ERROR, ZBAR_ERR_XPROTO, __func__,
                                "unable to init XImage for format %x",
                                w->format));
+
+    w->dst_width = img->width;
+    w->dst_height = img->height;
+
+    /* FIXME implement some basic scaling */
+    w->scale_num = w->scale_den = 1;
+
     zprintf(3, "new XImage %.4s(%08" PRIx32 ") %dx%d"
             " from %.4s(%08" PRIx32 ") %dx%d\n",
             (char*)&w->format, w->format, ximg->width, ximg->height,
@@ -92,61 +89,29 @@ static inline int ximage_init (zbar_window_t *w,
 static int ximage_draw (zbar_window_t *w,
                         zbar_image_t *img)
 {
-    XImage *ximg = w->img.x;
-    if(!ximg ||
-       (w->src_format != img->format &&
-        w->format != img->format) ||
-       ximg->width != img->width ||
-       ximg->height != img->height) {
-        if(ximage_init(w, img))
-            return(-1);
-        ximg = w->img.x;
-    }
-    if(img->format != w->format) {
-        /* save *converted* image for redraw */
-        w->image = zbar_image_convert(img, w->format);
-        zbar_image_destroy(img);
-        img = w->image;
-    }
-
+    window_state_t *x = w->state;
+    XImage *ximg = x->img.x;
+    assert(ximg);
     ximg->data = (void*)img->data;
 
-    int screen = DefaultScreen(w->display);
-    XSetForeground(w->display, w->gc, WhitePixel(w->display, screen));
+    point_t src = { 0, 0 };
+    point_t dst = w->scaled_offset;
+    if(dst.x < 0) {
+        src.x = -dst.x;
+        dst.x = 0;
+    }
+    if(dst.y < 0) {
+        src.y = -dst.y;
+        dst.y = 0;
+    }
+    point_t size = w->scaled_size;
+    if(size.x > w->width)
+        size.x = w->width;
+    if(size.y > w->height)
+        size.y = w->height;
 
-    /* FIXME implement some basic scaling */
-    unsigned height = img->height;
-    unsigned src_y = 0, dst_y = 0;
-    if(w->height < img->height) {
-        height = w->height;
-        src_y = (img->height - w->height) >> 1;
-    }
-    else if(w->height != img->height) {
-        dst_y = (w->height - img->height) >> 1;
-        /* fill border */
-        XFillRectangle(w->display, w->xwin, w->gc,
-                       0, 0, w->width, dst_y);
-        XFillRectangle(w->display, w->xwin, w->gc,
-                       0, dst_y + img->height, w->width, dst_y);
-    }
-
-    unsigned width = img->width;
-    unsigned src_x = 0, dst_x = 0;
-    if(w->width < img->width) {
-        width = w->width;
-        src_x = (img->width - w->width) >> 1;
-    }
-    else if(w->width != img->width) {
-        dst_x = (w->width - img->width) >> 1;
-        /* fill border */
-        XFillRectangle(w->display, w->xwin, w->gc,
-                       0, dst_y, dst_x, img->height);
-        XFillRectangle(w->display, w->xwin, w->gc,
-                       img->width + dst_x, dst_y, dst_x, img->height);
-    }
-
-    XPutImage(w->display, w->xwin, w->gc, ximg,
-              src_x, src_y, dst_x, dst_y, width, height);
+    XPutImage(w->display, w->xwin, x->gc, ximg,
+              src.x, src.y, dst.x, dst.y, size.x, size.y);
     ximg->data = NULL;
     return(0);
 }
@@ -247,6 +212,7 @@ int _zbar_window_probe_ximage (zbar_window_t *w)
         return(err_capture(w, SEV_ERROR, ZBAR_ERR_UNSUPPORTED, __func__,
                            "no usable XImage formats found"));
 
+    w->init = ximage_init;
     w->draw_image = ximage_draw;
     w->cleanup = ximage_cleanup;
     return(0);

@@ -35,6 +35,7 @@ static char *exc_names[] = {
     "zbar.X11DisplayError",
     "zbar.X11ProtocolError",
     "zbar.WindowClosed",
+    "zbar.WinAPIError",
 };
 
 int
@@ -102,7 +103,7 @@ static PyMethodDef zbar_functions[] = {
 };
 
 PyMODINIT_FUNC
-initzbar ()
+initzbar (void)
 {
     /* initialize constant containers */
     config_enum = zbarEnum_New();
@@ -119,6 +120,7 @@ initzbar ()
        PyType_Ready(&zbarEnum_Type) < 0 ||
        PyType_Ready(&zbarImage_Type) < 0 ||
        PyType_Ready(&zbarSymbol_Type) < 0 ||
+       PyType_Ready(&zbarSymbolSet_Type) < 0 ||
        PyType_Ready(&zbarSymbolIter_Type) < 0 ||
        PyType_Ready(&zbarProcessor_Type) < 0 ||
        PyType_Ready(&zbarImageScanner_Type) < 0 ||
@@ -150,6 +152,7 @@ initzbar ()
     PyModule_AddObject(mod, "Image", (PyObject*)&zbarImage_Type);
     PyModule_AddObject(mod, "Config", (PyObject*)config_enum);
     PyModule_AddObject(mod, "Symbol", (PyObject*)&zbarSymbol_Type);
+    PyModule_AddObject(mod, "SymbolSet", (PyObject*)&zbarSymbolSet_Type);
     PyModule_AddObject(mod, "SymbolIter", (PyObject*)&zbarSymbolIter_Type);
     PyModule_AddObject(mod, "Processor", (PyObject*)&zbarProcessor_Type);
     PyModule_AddObject(mod, "ImageScanner", (PyObject*)&zbarImageScanner_Type);
@@ -173,12 +176,13 @@ initzbar ()
     zbarEnum_Add(config_enum, ZBAR_CFG_ASCII,      "ASCII");
     zbarEnum_Add(config_enum, ZBAR_CFG_MIN_LEN,    "MIN_LEN");
     zbarEnum_Add(config_enum, ZBAR_CFG_MAX_LEN,    "MAX_LEN");
+    zbarEnum_Add(config_enum, ZBAR_CFG_X_DENSITY,  "POSITION");
     zbarEnum_Add(config_enum, ZBAR_CFG_X_DENSITY,  "X_DENSITY");
     zbarEnum_Add(config_enum, ZBAR_CFG_Y_DENSITY,  "Y_DENSITY");
 
     PyObject *tp_dict = zbarSymbol_Type.tp_dict;
     symbol_NONE =
-        zbarEnumItem_New(tp_dict, symbol_enum, ZBAR_NONE,    "NONE");
+        zbarEnumItem_New(tp_dict, symbol_enum, ZBAR_NONE, "NONE");
     zbarEnumItem_New(tp_dict, symbol_enum, ZBAR_PARTIAL, "PARTIAL");
     zbarEnumItem_New(tp_dict, symbol_enum, ZBAR_EAN8,    "EAN8");
     zbarEnumItem_New(tp_dict, symbol_enum, ZBAR_UPCE,    "UPCE");
@@ -189,5 +193,6 @@ initzbar ()
     zbarEnumItem_New(tp_dict, symbol_enum, ZBAR_I25,     "I25");
     zbarEnumItem_New(tp_dict, symbol_enum, ZBAR_CODE39,  "CODE39");
     zbarEnumItem_New(tp_dict, symbol_enum, ZBAR_PDF417,  "PDF417");
+    zbarEnumItem_New(tp_dict, symbol_enum, ZBAR_QRCODE,  "QRCODE");
     zbarEnumItem_New(tp_dict, symbol_enum, ZBAR_CODE128, "CODE128");
 }

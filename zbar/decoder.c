@@ -29,8 +29,9 @@
 #include <zbar.h>
 #include "decoder.h"
 
-#if defined(DEBUG_DECODER) || defined(DEBUG_EAN) || defined(DEBUG_CODE128) || \
-    defined(DEBUG_CODE39) || defined(DEBUG_I25) || \
+#if defined(DEBUG_DECODER) || defined(DEBUG_EAN) ||             \
+    defined(DEBUG_CODE39) || defined(DEBUG_I25) ||              \
+    defined(DEBUG_CODE128) || defined(DEBUG_QR_FINDER) ||       \
     (defined(DEBUG_PDF417) && (DEBUG_PDF417 >= 4))
 # define DEBUG_LEVEL 1
 #endif
@@ -39,8 +40,8 @@
 zbar_decoder_t *zbar_decoder_create ()
 {
     zbar_decoder_t *dcode = calloc(1, sizeof(zbar_decoder_t));
-    dcode->buflen = BUFFER_MIN;
-    dcode->buf = malloc(dcode->buflen);
+    dcode->buf_alloc = BUFFER_MIN;
+    dcode->buf = malloc(dcode->buf_alloc);
 
     /* initialize default configs */
 #ifdef ENABLE_EAN
@@ -68,6 +69,9 @@ zbar_decoder_t *zbar_decoder_create ()
 #ifdef ENABLE_PDF417
     dcode->pdf417.config = 1 << ZBAR_CFG_ENABLE;
 #endif
+#ifdef ENABLE_QRCODE
+    dcode->qrf.config = 1 << ZBAR_CFG_ENABLE;
+#endif
 
     zbar_decoder_reset(dcode);
     return(dcode);
@@ -82,7 +86,7 @@ void zbar_decoder_destroy (zbar_decoder_t *dcode)
 
 void zbar_decoder_reset (zbar_decoder_t *dcode)
 {
-    memset(dcode, 0, (long)&dcode->buf - (long)dcode);
+    memset(dcode, 0, (long)&dcode->buf_alloc - (long)dcode);
 #ifdef ENABLE_EAN
     ean_reset(&dcode->ean);
 #endif
@@ -97,6 +101,9 @@ void zbar_decoder_reset (zbar_decoder_t *dcode)
 #endif
 #ifdef ENABLE_PDF417
     pdf417_reset(&dcode->pdf417);
+#endif
+#ifdef ENABLE_QRCODE
+    qr_finder_reset(&dcode->qrf);
 #endif
 }
 
@@ -121,6 +128,9 @@ void zbar_decoder_new_scan (zbar_decoder_t *dcode)
 #ifdef ENABLE_PDF417
     pdf417_reset(&dcode->pdf417);
 #endif
+#ifdef ENABLE_QRCODE
+    qr_finder_reset(&dcode->qrf);
+#endif
 }
 
 
@@ -132,6 +142,11 @@ zbar_color_t zbar_decoder_get_color (const zbar_decoder_t *dcode)
 const char *zbar_decoder_get_data (const zbar_decoder_t *dcode)
 {
     return((char*)dcode->buf);
+}
+
+unsigned int zbar_decoder_get_data_length (const zbar_decoder_t *dcode)
+{
+    return(dcode->buflen);
 }
 
 zbar_decoder_handler_t *
@@ -191,6 +206,11 @@ zbar_symbol_type_t zbar_decode_width (zbar_decoder_t *dcode,
 #ifdef ENABLE_PDF417
     if(TEST_CFG(dcode->pdf417.config, ZBAR_CFG_ENABLE) &&
        (sym = _zbar_decode_pdf417(dcode)) > ZBAR_PARTIAL)
+        dcode->type = sym;
+#endif
+#ifdef ENABLE_QRCODE
+    if(TEST_CFG(dcode->qrf.config, ZBAR_CFG_ENABLE) &&
+       (sym = _zbar_find_qr(dcode)) > ZBAR_PARTIAL)
         dcode->type = sym;
 #endif
 
@@ -258,6 +278,12 @@ static inline int decoder_set_config_bool (zbar_decoder_t *dcode,
 #ifdef ENABLE_PDF417
     case ZBAR_PDF417:
         config = &dcode->pdf417.config;
+        break;
+#endif
+
+#ifdef ENABLE_QRCODE
+    case ZBAR_QRCODE:
+        config = &dcode->qrf.config;
         break;
 #endif
 
@@ -339,6 +365,7 @@ int zbar_decoder_set_config (zbar_decoder_t *dcode,
         zbar_decoder_set_config(dcode, ZBAR_CODE39, cfg, val);
         zbar_decoder_set_config(dcode, ZBAR_CODE128, cfg, val);
         zbar_decoder_set_config(dcode, ZBAR_PDF417, cfg, val);
+        zbar_decoder_set_config(dcode, ZBAR_QRCODE, cfg, val);
         return(0);
     }
 
@@ -352,15 +379,17 @@ int zbar_decoder_set_config (zbar_decoder_t *dcode,
 
 
 static char *decoder_dump = NULL;
+static unsigned decoder_dumplen = 0;
 
 const char *_zbar_decoder_buf_dump (unsigned char *buf,
                                     unsigned int buflen)
 {
     int dumplen = (buflen * 3) + 12;
-    if(!decoder_dump || dumplen > strlen(decoder_dump)) {
+    if(!decoder_dump || dumplen > decoder_dumplen) {
         if(decoder_dump)
             free(decoder_dump);
         decoder_dump = malloc(dumplen);
+        decoder_dumplen = dumplen;
     }
     char *p = decoder_dump +
         snprintf(decoder_dump, 12, "buf[%04x]=",

@@ -119,7 +119,8 @@ static inline signed char aux_end (zbar_decoder_t *dcode,
     unsigned s = calc_s(dcode, 4 + fwd, 4);
 
     /* check quiet zone */
-    if(!fwd && (get_width(dcode, 0) * 14 + 1) / s < 3) {
+    unsigned qz = get_width(dcode, 0);
+    if(!fwd && qz && qz < s * 3 / 4) {
         dprintf(2, " [invalid quiet]");
         return(-1);
     }
@@ -157,7 +158,8 @@ static inline signed char aux_start (zbar_decoder_t *dcode)
 
     if(get_color(dcode) == ZBAR_BAR) {
         /* check for quiet-zone */
-        if((get_width(dcode, 7) * 14 + 1) / dcode->ean.s4 >= 3) {
+        unsigned qz = get_width(dcode, 7);
+        if(!qz || qz >= dcode->ean.s4 * 3 / 4) {
             if(!E1) {
                 dprintf(2, " [valid normal]");
                 return(0); /* normal symbol start */
@@ -592,6 +594,7 @@ static inline void postprocess (zbar_decoder_t *dcode,
     if(sym & ZBAR_ADDON)
         for(i = 13; ean->buf[i] >= 0; i++, j++)
             dcode->buf[j] = ean->buf[i] + '0';
+    dcode->buflen = j;
     dcode->buf[j] = '\0';
 }
 
@@ -623,10 +626,10 @@ zbar_symbol_type_t _zbar_decode_ean (zbar_decoder_t *dcode)
                     dcode->ean.pass[0].state = dcode->ean.pass[1].state = -1;
                     dcode->ean.pass[2].state = dcode->ean.pass[3].state = -1;
                     if(sym > ZBAR_PARTIAL) {
-                        if(!get_lock(dcode))
+                        if(!get_lock(dcode, ZBAR_EAN13))
                             postprocess(dcode, sym);
                         else {
-                            dprintf(1, " [locked]");
+                            dprintf(1, " [locked %d]", dcode->lock);
                             sym = ZBAR_PARTIAL;
                         }
                     }

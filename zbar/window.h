@@ -29,24 +29,12 @@
 #endif
 #include <stdlib.h>
 
-#ifdef HAVE_X
-# include <X11/Xlib.h>
-# include <X11/Xutil.h>
-# ifdef HAVE_X11_EXTENSIONS_XSHM_H
-#  include <X11/extensions/XShm.h>
-# endif
-#ifdef HAVE_X11_EXTENSIONS_XVLIB_H
-#  include <X11/extensions/Xvlib.h>
-#endif
-#endif
-
-#ifdef HAVE_PTHREAD_H
-# include <pthread.h>
-#endif
-
 #include <zbar.h>
-#include "image.h"
+#include "symbol.h"
 #include "error.h"
+#include "mutex.h"
+
+typedef struct window_state_s window_state_t;
 
 struct zbar_window_s {
     errinfo_t err;              /* error reporting */
@@ -59,55 +47,35 @@ struct zbar_window_s {
     unsigned width, height;     /* current output size */
     unsigned max_width, max_height;
 
-    uint32_t *formats;          /* supported formats (zero terminated) */
-
-    /* interface dependent methods */
-    int (*draw_image)(zbar_window_t*, zbar_image_t*);
-    int (*cleanup)(zbar_window_t*);
-
-#ifdef HAVE_X
-    Display *display;           /* display connection */
-    Drawable xwin;              /* platform window handle */
-    GC gc;                      /* graphics context */
-    union {
-        XImage *x;
-#ifdef HAVE_X11_EXTENSIONS_XVLIB_H
-        XvImage *xv;
-#endif
-    } img;
     uint32_t src_format;        /* current input format */
     unsigned src_width;         /* last displayed image size */
     unsigned src_height;
+
     unsigned dst_width;         /* conversion target */
-    XID img_port;               /* current format port */
+    unsigned dst_height;
 
-    XID *xv_ports;              /* best port for format */
-    int num_xv_adaptors;        /* number of adaptors */
-    XID *xv_adaptors;           /* port grabbed for each adaptor */
+    unsigned scale_num;         /* output scaling */
+    unsigned scale_den;
 
-# ifdef HAVE_X11_EXTENSIONS_XSHM_H
-    XShmSegmentInfo shm;        /* shared memory segment */
-# endif
+    point_t scaled_offset;      /* output position and size */
+    point_t scaled_size;
 
-    unsigned long colors[8];    /* pre-allocated colors */
+    uint32_t *formats;          /* supported formats (zero terminated) */
 
-    Region exposed;
+    zbar_mutex_t imglock;       /* lock displayed image */
 
-    /* pre-calculated logo geometries */
-    int logo_scale;
-    unsigned long logo_colors[2];
-    Region logo_zbars;
-    XPoint logo_z[4];
-    XRectangle logo_bars[5];
-#endif
+    void *display;
+    unsigned long xwin;
+    unsigned long time;         /* last image display in milliseconds */
+    unsigned long time_avg;     /* average of inter-frame times */
 
-#ifdef HAVE_LIBPTHREAD
-    pthread_mutex_t imglock;    /* lock displayed image */
-#endif
+    window_state_t *state;      /* platform/interface specific state */
+
+    /* interface dependent methods */
+    int (*init)(zbar_window_t*, zbar_image_t*, int);
+    int (*draw_image)(zbar_window_t*, zbar_image_t*);
+    int (*cleanup)(zbar_window_t*);
 };
-
-
-#ifdef HAVE_LIBPTHREAD
 
 /* window.draw has to be thread safe wrt/other apis
  * FIXME should be a semaphore
@@ -115,7 +83,7 @@ struct zbar_window_s {
 static inline int window_lock (zbar_window_t *w)
 {
     int rc = 0;
-    if((rc = pthread_mutex_lock(&w->imglock))) {
+    if((rc = _zbar_mutex_lock(&w->imglock))) {
         err_capture(w, SEV_FATAL, ZBAR_ERR_LOCKING, __func__,
                     "unable to acquire lock");
         w->err.errnum = rc;
@@ -127,7 +95,7 @@ static inline int window_lock (zbar_window_t *w)
 static inline int window_unlock (zbar_window_t *w)
 {
     int rc = 0;
-    if((rc = pthread_mutex_unlock(&w->imglock))) {
+    if((rc = _zbar_mutex_unlock(&w->imglock))) {
         err_capture(w, SEV_FATAL, ZBAR_ERR_LOCKING, __func__,
                     "unable to release lock");
         w->err.errnum = rc;
@@ -136,13 +104,8 @@ static inline int window_unlock (zbar_window_t *w)
     return(0);
 }
 
-#else
-# define window_lock(...) (0)
-# define window_unlock(...) (0)
-#endif
-
 static inline int _zbar_window_add_format (zbar_window_t *w,
-                                            uint32_t fmt)
+                                           uint32_t fmt)
 {
     int i;
     for(i = 0; w->formats && w->formats[i]; i++)
@@ -155,26 +118,27 @@ static inline int _zbar_window_add_format (zbar_window_t *w,
     return(i);
 }
 
-extern int _zbar_window_probe_ximage(zbar_window_t*);
-extern int _zbar_window_probe_xshm(zbar_window_t*);
-extern int _zbar_window_probe_xv(zbar_window_t*);
+static inline point_t window_scale_pt (zbar_window_t *w,
+                                       point_t p)
+{
+    p.x = ((long)p.x * w->scale_num + w->scale_den - 1) / w->scale_den;
+    p.y = ((long)p.y * w->scale_num + w->scale_den - 1) / w->scale_den;
+    return(p);
+}
 
-extern int _zbar_window_attach(zbar_window_t*,
-                               void*,
-                               unsigned long);
-extern int _zbar_window_resize(zbar_window_t *w);
 
+/* PAL interface */
+extern int _zbar_window_attach(zbar_window_t*, void*, unsigned long);
+extern int _zbar_window_expose(zbar_window_t*, int, int, int, int);
+extern int _zbar_window_resize(zbar_window_t*);
 extern int _zbar_window_clear(zbar_window_t*);
-
-extern int _zbar_window_draw_marker(zbar_window_t*, uint32_t,
-                                    const point_t*);
-#if 0
-extern int _zbar_window_draw_line(zbar_window_t*, uint32_t,
-                                  const point_t*, const point_t*);
-extern int _zbar_window_draw_outline(zbar_window_t*, uint32_t,
-                                     const symbol_t*);
+extern int _zbar_window_begin(zbar_window_t*);
+extern int _zbar_window_end(zbar_window_t*);
+extern int _zbar_window_draw_marker(zbar_window_t*, uint32_t, point_t);
+extern int _zbar_window_draw_polygon(zbar_window_t*, uint32_t, const point_t*, int);
 extern int _zbar_window_draw_text(zbar_window_t*, uint32_t,
-                                  const point_t*, const char*);
-#endif
+                                  point_t, const char*);
+extern int _zbar_window_fill_rect(zbar_window_t*, uint32_t, point_t, point_t);
+extern int _zbar_window_draw_logo(zbar_window_t*);
 
 #endif

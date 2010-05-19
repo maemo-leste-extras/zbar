@@ -45,6 +45,9 @@
 #ifdef ENABLE_PDF417
 # include "decoder/pdf417.h"
 #endif
+#ifdef ENABLE_QRCODE
+# include "decoder/qr_finder.h"
+#endif
 
 /* size of bar width history (implementation assumes power of two) */
 #ifndef DECODE_WINDOW
@@ -76,11 +79,12 @@ struct zbar_decoder_s {
     unsigned char idx;                  /* current width index */
     unsigned w[DECODE_WINDOW];          /* window of last N bar widths */
     zbar_symbol_type_t type;            /* type of last decoded data */
-    unsigned lock : 1;                  /* buffer lock */
+    zbar_symbol_type_t lock;            /* buffer lock */
 
     /* everything above here is automatically reset */
+    unsigned buf_alloc;                 /* dynamic buffer allocation */
+    unsigned buflen;                    /* binary data length */
     unsigned char *buf;                 /* decoded characters */
-    unsigned buflen;                    /* dynamic buffer allocation */
     void *userdata;                     /* application data */
     zbar_decoder_handler_t *handler;    /* application callback */
 
@@ -99,6 +103,9 @@ struct zbar_decoder_s {
 #endif
 #ifdef ENABLE_PDF417
     pdf417_decoder_t pdf417;            /* PDF417 decode state */
+#endif
+#ifdef ENABLE_QRCODE
+    qr_finder_t qrf;                    /* QR Code finder state */
 #endif
 };
 
@@ -161,11 +168,12 @@ static inline int decode_e (unsigned e,
 }
 
 /* acquire shared state lock */
-static inline char get_lock (zbar_decoder_t *dcode)
+static inline char get_lock (zbar_decoder_t *dcode,
+                             zbar_symbol_type_t req)
 {
     if(dcode->lock)
         return(1);
-    dcode->lock = 1;
+    dcode->lock = req;
     return(0);
 }
 
@@ -173,13 +181,13 @@ static inline char get_lock (zbar_decoder_t *dcode)
 static inline char size_buf (zbar_decoder_t *dcode,
                              unsigned len)
 {
-    if(len < dcode->buflen)
+    if(len < dcode->buf_alloc)
         /* FIXME size reduction heuristic? */
         return(0);
     if(len > BUFFER_MAX)
         return(1);
-    if(len < dcode->buflen + BUFFER_INCR) {
-        len = dcode->buflen + BUFFER_INCR;
+    if(len < dcode->buf_alloc + BUFFER_INCR) {
+        len = dcode->buf_alloc + BUFFER_INCR;
         if(len > BUFFER_MAX)
             len = BUFFER_MAX;
     }
@@ -187,7 +195,7 @@ static inline char size_buf (zbar_decoder_t *dcode,
     if(!buf)
         return(1);
     dcode->buf = buf;
-    dcode->buflen = len;
+    dcode->buf_alloc = len;
     return(0);
 }
 
