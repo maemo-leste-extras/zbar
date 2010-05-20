@@ -76,7 +76,8 @@ Description: scanning and decoding bar codes (GTK+ bindings)
 Package: libzbargtk-dev
 Section: libdevel
 Architecture: any
-Depends: libzbargtk0 (= ${binary:Version}), ${misc:Depends}, libgtk2.0-dev
+Depends: libzbargtk0 (= ${binary:Version}), ${misc:Depends}, libgtk2.0-dev,
+ libzbar-dev (= ${binary:Version})
 Description: scanning and decoding bar codes (GTK+ bindings development)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports EAN,
@@ -97,7 +98,8 @@ Description: scanning and decoding bar codes (Qt bindings)
 Package: libzbarqt-dev
 Section: libdevel
 Architecture: any
-Depends: libzbarqt0 (= ${binary:Version}), ${misc:Depends}, libqt4-dev
+Depends: libzbarqt0 (= ${binary:Version}), ${misc:Depends}, libqt4-dev,
+ libzbar-dev (= ${binary:Version})
 Description: scanning and decoding bar codes (Qt bindings development)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports EAN,
