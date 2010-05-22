@@ -1,3 +1,19 @@
+zbar (0.10+dfsg-1) unstable; urgency=low
+
+  * QA Upload.
+
+    I might adopt the package later, but for now an update to the
+    latest upstream version is more important. Also I do not want to
+    set myself as maintainer without bringing the packaging into
+    a good shape.
+
+  * [154213cf] Adding git-buildpackage config.
+  * [c89b1ccb] Merge commit 'upstream/0.10+dfsg'
+  * [5565931e] Adding debian/source/format, format 1.0.
+  * [9080fcb7] Updating patch.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Thu, 20 May 2010 01:58:52 +0200
+
 zbar (0.8+dfsg-4) unstable; urgency=low
 
   * QA upload.
