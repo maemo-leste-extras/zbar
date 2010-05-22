@@ -1,6 +1,6 @@
 Name: zbar
 Summary: bar code scanning and decoding
-Version: 0.7
+Version: 0.8
 Release: 1
 License: LGPL
 Group: Development/Libraries
