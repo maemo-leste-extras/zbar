@@ -1,3 +1,18 @@
+zbar (0.10+doc-1~1.gbpddfdb3) UNRELEASED; urgency=low
+
+  ** SNAPSHOT build @ddfdb3db7c82d0ea63e77e891aea6afe2bf264cb **
+
+  * [d3e7838d] gbp.conf: Remove filter option for git-import-orig.
+    Upstream clarified the license for the doc folder, the documentation
+    is (and was) under the same license as the rest of the zbar project.
+    The former package maintainer just did not bother to ask.
+    (http://zbar.hg.sourceforge.net/hgweb/zbar/zbar/rev/a400dd46fb4a)
+  * [d9f0f3bd] Remove quilt - no patches necesary anymore.
+  * [8e9b2f81] Adding watch file.
+  * [ddfdb3db] Merge commit 'upstream/0.10+doc'
+
+ -- Bernd Zeimetz <bzed@debian.org>  Sat, 22 May 2010 14:16:02 +0200
+
 zbar (0.10+dfsg-1) unstable; urgency=low
 
   * QA Upload.
