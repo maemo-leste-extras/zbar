@@ -9,48 +9,71 @@ else
 	CROSS= --build $(DEB_BUILD_GNU_TYPE)
 endif
 
-upstream:
-	rm -rf doc # unlicensed files
+SRCDIR := $(CURDIR)
+CONFIGURE = $(SRCDIR)/configure $(CROSS) --prefix=/usr --mandir=/usr/share/man CFLAGS="$(CFLAGS)"
+
+PYVERS = $(shell pyversions -rv)
 
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp
 	rm -f config.guess config.sub
-
-	[ ! -f Makefile ] || $(MAKE) distclean
-
+	rm -rf $(CURDIR)/build-python* $(CURDIR)/build-nopython
+	rm -rf $(CURDIR)/debian/tmp_*
 	dh_clean
 
-
-config.status: configure
-	dh_testdir
-
+autotools-dev: autotools-dev-stamp
+autotools-dev-stamp:
 ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess config.guess
 endif
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
 	cp -f /usr/share/misc/config.sub config.sub
 endif
+	touch $@
 
-	./configure $(CROSS) --prefix=/usr --mandir=\$${prefix}/share/man CFLAGS="$(CFLAGS)"
-
-build: build-stamp
-build-stamp: config.status
+configure: build-nopython/configure-stamp $(PYVERS:%=build-python%/configure-stamp) $(PYVERS:%=build-python%-dbg/configure-stamp)
+build-nopython/configure-stamp: autotools-dev-stamp
 	dh_testdir
 
-	$(MAKE)
+	mkdir -p build-nopython
+	cd build-nopython && $(CONFIGURE) --without-python
+	touch $@
 
-	touch build-stamp
+build-python%/configure-stamp: autotools-dev-stamp
+	dh_testdir
+	mkdir -p build-python$*
+	set -e ;\
+		cd build-python$* ;\
+		export PYTHON=/usr/bin/python$* ;\
+		$(CONFIGURE) PYTHON_CONFIG=/usr/bin/python$*-config
+	touch $@
+
+build: build-nopython/build-stamp $(PYVERS:%=build-python%/build-stamp) $(PYVERS:%=build-python%-dbg/build-stamp)
+build-nopython/build-stamp: build-nopython/configure-stamp
+	dh_testdir
+	$(MAKE) -C build-nopython
+	touch $@
+
+build-python%/build-stamp: build-python%/configure-stamp
+	dh_testdir
+	$(MAKE) -C build-python$* gtk/zbarmarshal.h
+	$(MAKE) -C build-python$* python/zbar.la
+	$(MAKE) -C build-python$* pygtk/zbarpygtk.la
+	touch $@
 
 install: build
 	dh_testdir
 	dh_testroot
 	dh_prep
-
-	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
-
-	rm -rf debian/tmp/usr/share/doc
+	$(MAKE) -C build-nopython install DESTDIR=$(CURDIR)/debian/tmp
+	set -e; for i in $(PYVERS); do \
+		$(MAKE) -C build-python$${i} install-pyexecLTLIBRARIES DESTDIR=$(CURDIR)/debian/tmp ;\
+		$(MAKE) -C build-python$${i}-dbg install-pyexecLTLIBRARIES DESTDIR=$(CURDIR)/debian/tmp_pydbg ;\
+	done
+	set -e; for i in `find $(CURDIR)/debian/tmp_pydbg -name '*.so'`; do \
+		mv $$i `echo $$i | sed 's,\.so$$,_d.so,'`; \
+	done
 
 binary: binary-arch
 
@@ -59,7 +82,8 @@ binary-arch: install
 	dh_testroot
 	dh_installchangelogs ChangeLog
 	dh_installdocs
-	dh_install --fail-missing
+	dh_install --fail-missing -Nzbar-dbg
+	dh_install --sourcedir=debian/tmp_pydbg -pzbar-dbg
 	dh_pysupport
 	dh_strip --dbg-package=zbar-dbg
 	dh_compress
@@ -73,4 +97,4 @@ binary-arch: install
 
 binary-indep:
 
-.PHONY: clean build install binary binary-arch binary-indep
+.PHONY: configure clean build install binary binary-arch binary-indep

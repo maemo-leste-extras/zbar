@@ -2,9 +2,10 @@ Source: zbar
 Section: libs
 Priority: optional
 Maintainer: Bernd Zeimetz <bzed@debian.org>
-Build-Depends: debhelper (>= 7), autotools-dev, libgtk2.0-dev, libmagick++-dev, libqt4-dev, libx11-dev, pkg-config, python-all-dev, python-gtk2-dev, python-support
+Build-Depends: debhelper (>= 7), autotools-dev, libgtk2.0-dev, libmagick++-dev, libqt4-dev, libx11-dev, pkg-config, python-all-dev, python-all-dbg, python-gtk2-dev, python-support
 Standards-Version: 3.8.4
 Homepage: http://zbar.sourceforge.net/
+XS-Python-Version: all
 
 Package: zbar-tools
 Section: graphics
@@ -22,7 +23,16 @@ Package: zbar-dbg
 Priority: extra
 Section: debug
 Architecture: any
-Depends: zbar-tools (= ${binary:Version}), libzbar0 (= ${binary:Version}), libzbar-dev (= ${binary:Version}), python-zbarpygtk (= ${binary:Version}), libzbargtk0 (= ${binary:Version}), libzbargtk-dev (= ${binary:Version}), libzbarqt0 (= ${binary:Version}), libzbarqt-dev (= ${binary:Version}), ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
+Recommends: zbar-tools (= ${binary:Version}),
+ libzbar0 (= ${binary:Version}),
+ libzbar-dev (= ${binary:Version}),
+ python-zbarpygtk (= ${binary:Version}),
+ python-zbar (= ${binary:Version}),
+ libzbargtk0 (= ${binary:Version}),
+ libzbargtk-dev (= ${binary:Version}),
+ libzbarqt0 (= ${binary:Version}),
+ libzbarqt-dev (= ${binary:Version})
 Description: scanning and decoding bar codes (debug)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports EAN,
