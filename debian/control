@@ -2,7 +2,7 @@ Source: zbar
 Section: libs
 Priority: optional
 Maintainer: Bernd Zeimetz <bzed@debian.org>
-Build-Depends: debhelper (>= 7), quilt, autotools-dev, libgtk2.0-dev, libmagick++-dev, libqt4-dev, libx11-dev, pkg-config, python-all-dev, python-gtk2-dev, python-support
+Build-Depends: debhelper (>= 7), autotools-dev, libgtk2.0-dev, libmagick++-dev, libqt4-dev, libx11-dev, pkg-config, python-all-dev, python-gtk2-dev, python-support
 Standards-Version: 3.8.4
 Homepage: http://zbar.sourceforge.net/
 

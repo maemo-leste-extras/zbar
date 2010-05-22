@@ -1,7 +1,5 @@
 #!/usr/bin/make -f
 
-include /usr/share/quilt/quilt.make
-
 DEB_HOST_GNU_TYPE	?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE	?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
@@ -14,7 +12,7 @@ endif
 upstream:
 	rm -rf doc # unlicensed files
 
-clean: unpatch
+clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp
@@ -24,7 +22,8 @@ clean: unpatch
 
 	dh_clean
 
-config.status: configure patch
+
+config.status: configure
 	dh_testdir
 
 ifneq "$(wildcard /usr/share/misc/config.guess)" ""
