@@ -1,1 +1,2 @@
-/usr/lib/libzbargtk.so.*
+/usr/lib/libzbargtk.so.0.*
+/usr/lib/libzbargtk.so.0

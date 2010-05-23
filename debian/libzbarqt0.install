@@ -1,1 +1,2 @@
-/usr/lib/libzbarqt.so.*
+/usr/lib/libzbarqt.so.0
+/usr/lib/libzbarqt.so.0.*
