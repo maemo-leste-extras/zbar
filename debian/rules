@@ -14,6 +14,9 @@ CONFIGURE = $(SRCDIR)/configure $(CROSS) --prefix=/usr --mandir=/usr/share/man C
 
 PYVERS = $(shell pyversions -rv)
 
+LDFLAGS_NOPYTHON = $(LDFLAGS) -Wl,-z,defs
+LDFLAGS_PYTHON = $(LDFLAGS) `find $(CURDIR)/build-nopython -name '*.so' -printf "-L%h "`
+
 clean:
 	dh_testdir
 	dh_testroot
@@ -37,7 +40,7 @@ build-nopython/configure-stamp: autotools-dev-stamp
 	dh_testdir
 
 	mkdir -p build-nopython
-	cd build-nopython && $(CONFIGURE) --without-python
+	cd build-nopython && $(CONFIGURE) --without-python LDFLAGS="$(LDFLAGS_NOPYTHON)"
 	touch $@
 
 build-python%/configure-stamp: autotools-dev-stamp
@@ -46,7 +49,7 @@ build-python%/configure-stamp: autotools-dev-stamp
 	set -e ;\
 		cd build-python$* ;\
 		export PYTHON=/usr/bin/python$* ;\
-		$(CONFIGURE) PYTHON_CONFIG=/usr/bin/python$*-config
+		$(CONFIGURE) PYTHON_CONFIG=/usr/bin/python$*-config LDFLAGS="$(LDFLAGS_PYTHON)"
 	touch $@
 
 build: build-nopython/build-stamp $(PYVERS:%=build-python%/build-stamp) $(PYVERS:%=build-python%-dbg/build-stamp)
@@ -55,7 +58,7 @@ build-nopython/build-stamp: build-nopython/configure-stamp
 	$(MAKE) -C build-nopython
 	touch $@
 
-build-python%/build-stamp: build-python%/configure-stamp
+build-python%/build-stamp: build-python%/configure-stamp build-nopython/build-stamp
 	dh_testdir
 	$(MAKE) -C build-python$* gtk/zbarmarshal.h
 	$(MAKE) -C build-python$* python/zbar.la
