@@ -82,7 +82,7 @@ binary-arch: install
 	dh_testroot
 	dh_installchangelogs ChangeLog
 	dh_installdocs
-	dh_install --fail-missing -Nzbar-dbg
+	dh_install -Nzbar-dbg
 	dh_install --sourcedir=debian/tmp_pydbg -pzbar-dbg
 	dh_installman
 	dh_pysupport
