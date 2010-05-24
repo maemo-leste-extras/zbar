@@ -9,13 +9,18 @@ else
 	CROSS= --build $(DEB_BUILD_GNU_TYPE)
 endif
 
+PERL        ?= /usr/bin/perl
+PERL_PACKAGE = $(shell dh_listpackages| grep perl)
+PERL_TMP     = $(CURDIR)/debian/$(PERL_PACKAGE)
+
+
 SRCDIR := $(CURDIR)
 CONFIGURE = $(SRCDIR)/configure $(CROSS) --prefix=/usr --mandir=/usr/share/man CFLAGS="$(CFLAGS)"
 
 PYVERS = $(shell pyversions -rv)
 
-LDFLAGS_NOPYTHON = $(LDFLAGS) -Wl,-z,defs
-LDFLAGS_PYTHON = $(LDFLAGS) `find $(CURDIR)/build-nopython -name '*.so' -printf "-L%h "`
+LDFLAGS_DEFAULT = $(LDFLAGS) -Wl,-z,defs
+LDFLAGS_BINDINGS = $(LDFLAGS) `find $(CURDIR)/build-nopython -name '*.so' -printf "-L%h "`
 
 clean:
 	dh_testdir
@@ -23,6 +28,7 @@ clean:
 	rm -f config.guess config.sub
 	rm -rf $(CURDIR)/build-python* $(CURDIR)/build-nopython
 	rm -rf $(CURDIR)/debian/tmp_*
+	[ ! -f $(CURDIR)/perl/Makefile ] || $(MAKE) -C perl realclean
 	dh_clean
 
 autotools-dev: autotools-dev-stamp
@@ -35,12 +41,12 @@ ifneq "$(wildcard /usr/share/misc/config.sub)" ""
 endif
 	touch $@
 
-configure: build-nopython/configure-stamp $(PYVERS:%=build-python%/configure-stamp) $(PYVERS:%=build-python%-dbg/configure-stamp)
+configure: build-nopython/configure-stamp $(PYVERS:%=build-python%/configure-stamp) $(PYVERS:%=build-python%-dbg/configure-stamp) perl/Makefile
 build-nopython/configure-stamp: autotools-dev-stamp
 	dh_testdir
 
 	mkdir -p build-nopython
-	cd build-nopython && $(CONFIGURE) --without-python LDFLAGS="$(LDFLAGS_NOPYTHON)"
+	cd build-nopython && $(CONFIGURE) --without-python LDFLAGS="$(LDFLAGS_DEFAULT)"
 	touch $@
 
 build-python%/configure-stamp: autotools-dev-stamp
@@ -49,10 +55,13 @@ build-python%/configure-stamp: autotools-dev-stamp
 	set -e ;\
 		cd build-python$* ;\
 		export PYTHON=/usr/bin/python$* ;\
-		$(CONFIGURE) PYTHON_CONFIG=/usr/bin/python$*-config LDFLAGS="$(LDFLAGS_PYTHON)"
+		$(CONFIGURE) PYTHON_CONFIG=/usr/bin/python$*-config LDFLAGS="$(LDFLAGS_BINDINGS)"
 	touch $@
 
-build: build-nopython/build-stamp $(PYVERS:%=build-python%/build-stamp) $(PYVERS:%=build-python%-dbg/build-stamp)
+perl/Makefile:
+	cd $(CURDIR)/perl && $(PERL) Makefile.PL INSTALLDIRS=vendor
+
+build: build-nopython/build-stamp $(PYVERS:%=build-python%/build-stamp) $(PYVERS:%=build-python%-dbg/build-stamp) build-perl-stamp
 build-nopython/build-stamp: build-nopython/configure-stamp
 	dh_testdir
 	$(MAKE) -C build-nopython
@@ -65,11 +74,17 @@ build-python%/build-stamp: build-python%/configure-stamp build-nopython/build-st
 	$(MAKE) -C build-python$* pygtk/zbarpygtk.la
 	touch $@
 
+build-perl-stamp: perl/Makefile build-nopython/build-stamp
+	$(MAKE) -C perl OTHERLDFLAGS="$(LDFLAGS_BINDINGS)"
+	touch $@
+
 install: build
 	dh_testdir
 	dh_testroot
 	dh_prep
 	$(MAKE) -C build-nopython install DESTDIR=$(CURDIR)/debian/tmp
+	$(MAKE) -C perl install DESTDIR=$(PERL_TMP) PREFIX=/usr
+
 	set -e; for i in $(PYVERS); do \
 		$(MAKE) -C build-python$${i} install-pyexecLTLIBRARIES DESTDIR=$(CURDIR)/debian/tmp ;\
 		$(MAKE) -C build-python$${i}-dbg install-pyexecLTLIBRARIES DESTDIR=$(CURDIR)/debian/tmp_pydbg ;\
@@ -77,6 +92,7 @@ install: build
 	set -e; for i in `find $(CURDIR)/debian/tmp_pydbg -name '*.so'`; do \
 		mv $$i `echo $$i | sed 's,\.so$$,_d.so,'`; \
 	done
+
 
 binary: binary-arch
 
