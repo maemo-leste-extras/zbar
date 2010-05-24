@@ -109,6 +109,7 @@ binary-arch: install
 	dh_install --sourcedir=debian/tmp_pydbg -pzbar-dbg
 	dh_installman
 	dh_pysupport
+	dh_perl
 	dh_strip --dbg-package=zbar-dbg
 	dh_compress
 	dh_fixperms
