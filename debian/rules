@@ -20,7 +20,7 @@ CONFIGURE = $(SRCDIR)/configure $(CROSS) --prefix=/usr --mandir=/usr/share/man C
 PYVERS = $(shell pyversions -rv)
 
 LDFLAGS_DEFAULT = $(LDFLAGS) -Wl,-z,defs
-LDFLAGS_BINDINGS = $(LDFLAGS) `find $(CURDIR)/build-nopython -name '*.so' -printf "-L%h "`
+LDFLAGS_BINDINGS = $(strip $(LDFLAGS) $(shell find $(CURDIR)/build-nopython -name '*.so' -printf "-L%h "))
 
 clean:
 	dh_testdir
@@ -59,7 +59,11 @@ build-python%/configure-stamp: autotools-dev-stamp
 	touch $@
 
 perl/Makefile:
-	cd $(CURDIR)/perl && $(PERL) Makefile.PL INSTALLDIRS=vendor
+	cd $(CURDIR)/perl && $(PERL) Makefile.PL \
+		INSTALLDIRS=vendor \
+		INC="-I$(CURDIR)/include" \
+		LIBS="$(LDFLAGS_BINDINGS) -lzbar"
+	test -f $(CURDIR)/perl/Makefile
 
 build: build-nopython/build-stamp $(PYVERS:%=build-python%/build-stamp) $(PYVERS:%=build-python%-dbg/build-stamp) build-perl-stamp
 build-nopython/build-stamp: build-nopython/configure-stamp
@@ -75,7 +79,7 @@ build-python%/build-stamp: build-python%/configure-stamp build-nopython/build-st
 	touch $@
 
 build-perl-stamp: perl/Makefile build-nopython/build-stamp
-	$(MAKE) -C perl OTHERLDFLAGS="$(LDFLAGS_BINDINGS)"
+	$(MAKE) -C perl OTHERLDFLAGS="$(LDFLAGS_BINDINGS)" LD_RUN_PATH=''
 	touch $@
 
 install: build
