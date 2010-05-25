@@ -97,7 +97,7 @@ install: build
 		$(MAKE) -C build-python$${i} install-pyexecLTLIBRARIES DESTDIR=$(CURDIR)/debian/tmp ;\
 		$(MAKE) -C build-python$${i}-dbg install-pyexecLTLIBRARIES DESTDIR=$(CURDIR)/debian/tmp_pydbg ;\
 	done
-	set -e; for i in `find $(CURDIR)/debian/tmp_pydbg -name '*.so'`; do \
+	set -e; for i in `find $(CURDIR)/debian/tmp_pydbg -name '*[^d].so'`; do \
 		mv $$i `echo $$i | sed 's,\.so$$,_d.so,'`; \
 	done
 
