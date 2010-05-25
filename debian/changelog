@@ -1,17 +1,50 @@
-zbar (0.10+doc-1~1.gbpddfdb3) UNRELEASED; urgency=low
+zbar (0.10+doc-1) unstable; urgency=low
 
-  ** SNAPSHOT build @ddfdb3db7c82d0ea63e77e891aea6afe2bf264cb **
+  * Import full upstream source including the doc folder and drop
+    the dfsg part in the version (using +doc now as we need a version
+    greater than 0.10+dfsg. See the changelog below and debian/copyright
+    for details
 
+  * [1f9232b1] Add missing dependencies to libzbar-dev.
+  * [577bae53] Tidy .docs files - one debian/docs is enough.
+  * [b77a29e5] Python-related packages: Fix dependencies and build
+    python-zbar.
+  * [6a336b40] Adopt package (Closes: #543881)
   * [d3e7838d] gbp.conf: Remove filter option for git-import-orig.
     Upstream clarified the license for the doc folder, the documentation
     is (and was) under the same license as the rest of the zbar project.
     The former package maintainer just did not bother to ask.
     (http://zbar.hg.sourceforge.net/hgweb/zbar/zbar/rev/a400dd46fb4a)
-  * [d9f0f3bd] Remove quilt - no patches necesary anymore.
+  * [d9f0f3bd] Remove quilt - no patches necessary anymore.
   * [8e9b2f81] Adding watch file.
   * [ddfdb3db] Merge commit 'upstream/0.10+doc'
+  * [4c547f3a] Build zbar for all supported Python versions. Also build
+    debug extensions.
+  * [c6dbc26d] Ensure proper sonames while installing libraries.
+  * [74e55643] Update supported codes in descriptions.
+  * [54969382] Install README file into docs.
+  * [3d97e382] Updating copyright file.
+  * [71bfc1fe] Install manpages for zbar-tools.
+  * [9de7a34a] Remove --fail-missing from dh_install call.
+  * [39a37679] Add symbol files for libraries.
+  * [418ee09b] Be paranoid about symbol files - pass -c4 to dpkg-
+    gensymbols.
+  * [a1527ed7] Use -L to link against previously built libs.
+  * [c672ecc8] Don't include symbols, which are removed by strip, in
+    symbols file.
+  * [9b93453e] Build Perl bindings into libbarcode-zbar-perl.
+  * [76b32218] According to lintian zbar-dbg needs to Depend on all
+    packages.
+  * [2cb6d478] python-zbar needs to conflict/replace older versions of
+    python-zbarpygtk.
+  * [bca1a7dc] Better wording for short description.
+  * [4f6fdf16] Ensure perl bindings are built without rpath.
+  * [df98e89f] Add missing dh_perl call.
+  * [18539f50] Add comment about licenses of doc/* to debian/copyright.
+  * [2bb4fb29] zbar-dbg needs to depend on python-gtk2-dbg.
+  * [3da1a01e] Add VCS information.
 
- -- Bernd Zeimetz <bzed@debian.org>  Sat, 22 May 2010 14:16:02 +0200
+ -- Bernd Zeimetz <bzed@debian.org>  Tue, 25 May 2010 02:09:41 +0200
 
 zbar (0.10+dfsg-1) unstable; urgency=low
 
