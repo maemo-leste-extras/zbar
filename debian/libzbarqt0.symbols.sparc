@@ -79,6 +79,7 @@ libzbarqt.so.0 libzbarqt0 #MINVER#
  _ZN4zbar9ExceptionD0Ev@Base 0.10
  _ZN4zbar9ExceptionD1Ev@Base 0.10
  _ZN4zbar9SymbolSetD1Ev@Base 0.10
+ _ZN5QListIP6QEventE6appendERKS1_@Base 0.10+doc-1
  _ZN5QListIP6QEventED1Ev@Base 0.10
  _ZN7QStringD1Ev@Base 0.10
  _ZNK4zbar11FormatError4whatEv@Base 0.10
@@ -142,9 +143,15 @@ libzbarqt.so.0 libzbarqt0 #MINVER#
  _ZTVN4zbar5QZBarE@Base 0.10
  _ZTVN4zbar9BusyErrorE@Base 0.10
  _ZTVN4zbar9ExceptionE@Base 0.10
- _ZThn16_N4zbar11QZBarThread14image_callbackERNS_5ImageE@Base 0.10
- _ZThn16_N4zbar11QZBarThreadD0Ev@Base 0.10
- _ZThn16_N4zbar11QZBarThreadD1Ev@Base 0.10
- _ZThn16_N4zbar5QZBarD0Ev@Base 0.10
- _ZThn16_N4zbar5QZBarD1Ev@Base 0.10
- _ZThn16_NK4zbar5QZBar11paintEngineEv@Base 0.10
+#MISSING: 0.10+doc-1# _ZThn16_N4zbar11QZBarThread14image_callbackERNS_5ImageE@Base 0.10
+#MISSING: 0.10+doc-1# _ZThn16_N4zbar11QZBarThreadD0Ev@Base 0.10
+#MISSING: 0.10+doc-1# _ZThn16_N4zbar11QZBarThreadD1Ev@Base 0.10
+#MISSING: 0.10+doc-1# _ZThn16_N4zbar5QZBarD0Ev@Base 0.10
+#MISSING: 0.10+doc-1# _ZThn16_N4zbar5QZBarD1Ev@Base 0.10
+#MISSING: 0.10+doc-1# _ZThn16_NK4zbar5QZBar11paintEngineEv@Base 0.10
+ _ZThn8_N4zbar11QZBarThread14image_callbackERNS_5ImageE@Base 0.10+doc-1
+ _ZThn8_N4zbar11QZBarThreadD0Ev@Base 0.10+doc-1
+ _ZThn8_N4zbar11QZBarThreadD1Ev@Base 0.10+doc-1
+ _ZThn8_N4zbar5QZBarD0Ev@Base 0.10+doc-1
+ _ZThn8_N4zbar5QZBarD1Ev@Base 0.10+doc-1
+ _ZThn8_NK4zbar5QZBar11paintEngineEv@Base 0.10+doc-1
