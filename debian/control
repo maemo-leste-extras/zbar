@@ -6,6 +6,8 @@ Build-Depends: debhelper (>= 7), autotools-dev, libgtk2.0-dev, libmagick++-dev, 
 Standards-Version: 3.8.4
 Homepage: http://zbar.sourceforge.net/
 XS-Python-Version: all
+Vcs-Git: git://git.recluse.de/debian/pkg-zbar.git
+Vcs-Browser: http://git.recluse.de/?p=debian/pkg-zbar.git;a=summary
 
 Package: zbar-tools
 Section: graphics
