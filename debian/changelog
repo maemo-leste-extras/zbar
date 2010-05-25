@@ -2,7 +2,7 @@ zbar (0.10+doc-2) unstable; urgency=low
 
   * [1806e6cd] Copy libzbarqt0.symbols for each architecture.
   * [8d172f95] Disable video support on kfreebsd.
-  * [63b87cf4] Don't list binaries for zbar-tools explicitely. zbarvideo
+  * [63b87cf4] Don't list binaries for zbar-tools explicitly. zbarvideo
     is not being built on kfreebsd, so we should not try to install it
     there.
   * [14e36c30] Don't rename debug extensions if they were renamed
