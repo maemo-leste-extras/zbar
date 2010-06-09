@@ -65,7 +65,7 @@ build-python%/configure-stamp: autotools-dev-stamp
 		$(CONFIGURE) PYTHON_CONFIG=/usr/bin/python$*-config LDFLAGS="$(LDFLAGS_BINDINGS)"
 	touch $@
 
-perl/Makefile:
+perl/Makefile: build-nopython/build-stamp
 	cd $(CURDIR)/perl && $(PERL) Makefile.PL \
 		INSTALLDIRS=vendor \
 		INC="-I$(CURDIR)/include" \
