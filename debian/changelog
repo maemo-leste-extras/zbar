@@ -1,3 +1,19 @@
+zbar (0.10+doc-3) unstable; urgency=low
+
+  * [6b190c39] Enable VfL only on Linux instead of excluding kfreebsd
+    only. (Closes: #585082) - thanks to Samuel Thibault
+  * [da42c117] Update libzbarqt0 symbol files to newer dpkg-dev
+    features. As symbols seem to appear/disappear depending on the
+    version of QT and/or the compiler, I've relaxed the check for
+    changed symbols to stop complaining at all for libzbarqt0. I'll
+    update the symbols files manually when needed. (Closes: #584773) -
+    thanks to Loïc Minier
+  * [94ac49b6] Add missing dependency to the perl/Makefile target in
+    debian/rules. This should allow to build with -j again. (Closes:
+    #584758) - thanks to Loïc Minier
+
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 09 Jun 2010 17:08:07 +0200
+
 zbar (0.10+doc-2build1) maverick; urgency=low
 
   * Release for Ubuntu. 0.10+doc-2 FTBFS there due to default LDFLAGS
