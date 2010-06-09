@@ -17,7 +17,7 @@ PERL_TMP     = $(CURDIR)/debian/$(PERL_PACKAGE)
 
 SRCDIR := $(CURDIR)
 CONFIGURE = $(SRCDIR)/configure $(CROSS) --prefix=/usr --mandir=/usr/share/man CFLAGS="$(CFLAGS)"
-ifneq (,$(findstring kfreebsd,$(DEB_HOST_ARCH_OS)))
+ifeq (,$(findstring linux,$(DEB_HOST_ARCH_OS)))
   CONFIGURE += --disable-video
 endif
 
