@@ -26,16 +26,17 @@ Priority: extra
 Section: debug
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends},
- zbar-tools (= ${binary:Version}),
- libzbar0 (= ${binary:Version}),
- libzbar-dev (= ${binary:Version}),
- python-zbarpygtk (= ${binary:Version}),
- python-zbar (= ${binary:Version}), python-gtk2-dbg,
- libzbargtk0 (= ${binary:Version}),
- libzbargtk-dev (= ${binary:Version}),
- libzbarqt0 (= ${binary:Version}),
- libzbarqt-dev (= ${binary:Version}),
+ zbar-tools (= ${binary:Version}) |
+ libzbar0 (= ${binary:Version}) |
+ libzbar-dev (= ${binary:Version}) |
+ python-zbarpygtk (= ${binary:Version}) |
+ python-zbar (= ${binary:Version}) |
+ libzbargtk0 (= ${binary:Version}) |
+ libzbargtk-dev (= ${binary:Version}) |
+ libzbarqt0 (= ${binary:Version}) |
+ libzbarqt-dev (= ${binary:Version}) |
  libbarcode-zbar-perl (= ${binary:Version})
+Recommends: python-gtk2-dbg
 Description: bar code scanner and decoder (debug)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports
