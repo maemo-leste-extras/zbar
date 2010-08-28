@@ -1,3 +1,14 @@
+zbar (0.10+doc-4) unstable; urgency=low
+
+  * [abdd6f9f] Use better dependencies for zbar-dbg.
+  * [5c639854] Remove conflicts of libzbar-dev. libzbar replaced zebra
+    in directory names by zbar, so clashes with quagga and libpacklib1-
+    dev are avoided. So there is no need to conflict against the
+    packages anymore.
+  * [75f615f2] Use Breaks instead of Conflicts as suggested by lintian.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Sat, 28 Aug 2010 15:01:46 +0200
+
 zbar (0.10+doc-3) unstable; urgency=low
 
   * [6b190c39] Enable VfL only on Linux instead of excluding kfreebsd
