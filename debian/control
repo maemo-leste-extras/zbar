@@ -69,7 +69,7 @@ Package: python-zbar
 Section: python
 Architecture: any
 Replaces: python-zbarpygtk (<< 0.10+doc)
-Conflicts: python-zbarpygtk (<< 0.10+doc)
+Breaks: python-zbarpygtk (<< 0.10+doc)
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends},
  libzbar0 (= ${binary:Version})
 Description: bar code scanner and decoder (Python bindings)
