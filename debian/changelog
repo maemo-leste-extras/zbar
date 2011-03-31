@@ -1,3 +1,20 @@
+zbar (0.10+doc-5) unstable; urgency=low
+
+  * [2801e55f] Use the new dh_authtoolsdev-* helper to update config.*
+  * [906f5a10] Use dh-autoreconf to rebuild configure and friends.
+    Thanks to Peter Fritzsche (Closes: #558539)
+  * [a3042424] Use quilt to apply patches.
+  * [35182c3a] Description: Linux 2.6.38 and later do not support the v4l1 API.
+    Add patch to migrate to using the libv4l library to abstract the
+    access to Linux video devices, instead.
+    Patch taken from the upstream bug tracker.
+    Also add libv4l-dev as build-dependency.
+    Thanks to Steve Langasek (Closes: #620220)
+  * [425b9ce6] Fixing typo in the long description of python-zbar.
+    Thanks to Davide Prina (Closes: #617942)
+
+ -- Bernd Zeimetz <bzed@debian.org>  Fri, 01 Apr 2011 01:05:18 +0200
+
 zbar (0.10+doc-4) unstable; urgency=low
 
   * [abdd6f9f] Use better dependencies for zbar-dbg.
