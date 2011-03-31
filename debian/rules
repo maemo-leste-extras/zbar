@@ -34,6 +34,7 @@ clean:
 	dh_testroot
 	dh_autoreconf_clean
 	dh_autotools-dev_restoreconfig
+	dh_quilt_unpatch
 	rm -rf $(CURDIR)/build-python* $(CURDIR)/build-nopython
 	rm -rf $(CURDIR)/debian/tmp_*
 	[ ! -f $(CURDIR)/perl/Makefile ] || $(MAKE) -C perl realclean
@@ -41,6 +42,7 @@ clean:
 
 autotools-dev: autotools-dev-stamp
 autotools-dev-stamp:
+	dh_quilt_patch
 	dh_autotools-dev_updateconfig
 	dh_autoreconf
 	touch $@
