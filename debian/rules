@@ -32,7 +32,7 @@ LDFLAGS_BINDINGS = $(strip $(LDFLAGS) $(LDFLAGS_LIB_SEARCHPATH))
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f config.guess config.sub
+	dh_autotools-dev_restoreconfig
 	rm -rf $(CURDIR)/build-python* $(CURDIR)/build-nopython
 	rm -rf $(CURDIR)/debian/tmp_*
 	[ ! -f $(CURDIR)/perl/Makefile ] || $(MAKE) -C perl realclean
@@ -40,12 +40,7 @@ clean:
 
 autotools-dev: autotools-dev-stamp
 autotools-dev-stamp:
-ifneq "$(wildcard /usr/share/misc/config.guess)" ""
-	cp -f /usr/share/misc/config.guess config.guess
-endif
-ifneq "$(wildcard /usr/share/misc/config.sub)" ""
-	cp -f /usr/share/misc/config.sub config.sub
-endif
+	dh_autotools-dev_updateconfig
 	touch $@
 
 configure: build-nopython/configure-stamp $(PYVERS:%=build-python%/configure-stamp) $(PYVERS:%=build-python%-dbg/configure-stamp) perl/Makefile
