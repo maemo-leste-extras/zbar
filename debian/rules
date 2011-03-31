@@ -32,6 +32,7 @@ LDFLAGS_BINDINGS = $(strip $(LDFLAGS) $(LDFLAGS_LIB_SEARCHPATH))
 clean:
 	dh_testdir
 	dh_testroot
+	dh_autoreconf_clean
 	dh_autotools-dev_restoreconfig
 	rm -rf $(CURDIR)/build-python* $(CURDIR)/build-nopython
 	rm -rf $(CURDIR)/debian/tmp_*
@@ -41,6 +42,7 @@ clean:
 autotools-dev: autotools-dev-stamp
 autotools-dev-stamp:
 	dh_autotools-dev_updateconfig
+	dh_autoreconf
 	touch $@
 
 configure: build-nopython/configure-stamp $(PYVERS:%=build-python%/configure-stamp) $(PYVERS:%=build-python%-dbg/configure-stamp) perl/Makefile
