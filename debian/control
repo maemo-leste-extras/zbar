@@ -2,10 +2,10 @@ Source: zbar
 Section: libs
 Priority: optional
 Maintainer: Bernd Zeimetz <bzed@debian.org>
-Build-Depends: debhelper (>= 7), autotools-dev (>= 20100122.1~), libgtk2.0-dev, libmagick++-dev, libqt4-dev, libx11-dev, pkg-config, python-all-dev, python-all-dbg, python-gtk2-dev, python-support, perl, dpkg-dev (>= 1.15.6), dh-autoreconf, quilt (>= 0.46-7~), libv4l-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386]
+Build-Depends: debhelper (>= 7), autotools-dev (>= 20100122.1~), libgtk2.0-dev, libmagick++-dev, libqt4-dev, libx11-dev, pkg-config, python-all-dev (>= 2.6.6-3~), python-all-dbg (>= 2.6.6-3~), python-gtk2-dev, perl, dpkg-dev (>= 1.15.6), dh-autoreconf, quilt (>= 0.46-7~), libv4l-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386]
 Standards-Version: 3.8.4
 Homepage: http://zbar.sourceforge.net/
-XS-Python-Version: all
+XS-Python-Version: >= 2.4
 Vcs-Git: git://git.recluse.de/debian/pkg-zbar.git
 Vcs-Browser: http://git.recluse.de/?p=debian/pkg-zbar.git;a=summary
 
