@@ -2,7 +2,7 @@ Source: zbar
 Section: libs
 Priority: optional
 Maintainer: Bernd Zeimetz <bzed@debian.org>
-Build-Depends: debhelper (>= 7), autotools-dev (>= 20100122.1~), libgtk2.0-dev, libmagick++-dev, libqt4-dev, libx11-dev, pkg-config, python-all-dev, python-all-dbg, python-gtk2-dev, python-support, perl, dpkg-dev (>= 1.15.6), dh-autoreconf, quilt (>= 0.46-7~), libv4l-dev
+Build-Depends: debhelper (>= 7), autotools-dev (>= 20100122.1~), libgtk2.0-dev, libmagick++-dev, libqt4-dev, libx11-dev, pkg-config, python-all-dev, python-all-dbg, python-gtk2-dev, python-support, perl, dpkg-dev (>= 1.15.6), dh-autoreconf, quilt (>= 0.46-7~), libv4l-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386]
 Standards-Version: 3.8.4
 Homepage: http://zbar.sourceforge.net/
 XS-Python-Version: all
