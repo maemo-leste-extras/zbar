@@ -1,3 +1,10 @@
+zbar (0.10+doc-6) unstable; urgency=low
+
+  * [3b98a217] Require v4l as build-dependency on linux only.
+  * [5f635649] Migrate to dh_python2 instead of python-support.
+
+ -- Bernd Zeimetz <bzed@debian.org>  Wed, 27 Apr 2011 22:34:12 +0200
+
 zbar (0.10+doc-5) unstable; urgency=low
 
   * [2801e55f] Use the new dh_authtoolsdev-* helper to update config.*
