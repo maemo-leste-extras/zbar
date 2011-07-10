@@ -1,5 +1,4 @@
 /usr/include/zbar/QZBar*.h
-/usr/lib/libzbarqt.la
 /usr/lib/libzbarqt.a
 /usr/lib/libzbarqt.so
 /usr/lib/pkgconfig/zbar-qt.pc
