@@ -9,6 +9,5 @@
 /usr/include/zbar/Video.h
 /usr/include/zbar/Window.h
 /usr/lib/libzbar.a
-/usr/lib/libzbar.la
 /usr/lib/libzbar.so
 /usr/lib/pkgconfig/zbar.pc
