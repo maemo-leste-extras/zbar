@@ -1,3 +1,11 @@
+zbar (0.10+doc-7) unstable; urgency=low
+
+  * [48425c37] Ack'ing NMU.
+    Thanks to Mehdi Dogguy (Closes: #625584)
+  * [ce18efe2] Don't install .la files. (Closes: #633271)
+
+ -- Bernd Zeimetz <bzed@debian.org>  Sun, 10 Jul 2011 14:17:11 +0200
+
 zbar (0.10+doc-6.1) unstable; urgency=high
 
   * Non-maintainer upload.
