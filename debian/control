@@ -57,7 +57,7 @@ Description: bar code scanner and decoder (library)
 Package: libzbar-dev
 Section: libdevel
 Architecture: any
-Depends: libzbar0 (= ${binary:Version}), ${misc:Depends}, libmagick++9-dev, libx11-dev
+Depends: libzbar0 (= ${binary:Version}), ${misc:Depends}, libmagick++-dev, libx11-dev
 Description: bar code scanner and decoder (development)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports

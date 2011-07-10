@@ -1,3 +1,11 @@
+zbar (0.10+doc-6.1) unstable; urgency=high
+
+  * Non-maintainer upload.
+  * libzbar-dev depend on libmagick++-dev instead of libmagick++9-dev.
+    (Closes: #625584).
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Sun, 26 Jun 2011 15:04:36 +0200
+
 zbar (0.10+doc-6) unstable; urgency=low
 
   * [3b98a217] Require v4l as build-dependency on linux only.
