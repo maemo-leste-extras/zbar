@@ -1,3 +1,15 @@
+zbar (0.10+doc-8) unstable; urgency=low
+
+  * [5c38da40] Use [linux-any] instead of [!kfreebsd-*].
+    Thanks to Robert Millan (Closes: #634774)
+  * [1f15f52e] Add sentinel to PyGetSetDef imagescanner_getset[].
+    Ensure that the loop is terminated which reads the
+    imagescanner_getset[] array on import - otherwise we'll run into
+    a segfault, at least on arm.
+    Thanks to Anton Gladky and Peter Green (Closes: #702499)
+
+ -- Bernd Zeimetz <bzed@debian.org>  Sun, 17 Mar 2013 22:46:47 +0100
+
 zbar (0.10+doc-7) unstable; urgency=low
 
   * [48425c37] Ack'ing NMU.
