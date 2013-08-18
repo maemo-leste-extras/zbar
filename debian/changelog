@@ -1,3 +1,10 @@
+zbar (0.10+doc-9) unstable; urgency=low
+
+  * [2c641cc9] Fix configure.ac to build with newer autotools.
+    Thanks to Lucas Nussbaum (Closes: #713332)
+
+ -- Bernd Zeimetz <bzed@debian.org>  Sun, 18 Aug 2013 12:26:59 +0200
+
 zbar (0.10+doc-8) unstable; urgency=low
 
   * [5c38da40] Use [linux-any] instead of [!kfreebsd-*].
