@@ -89,7 +89,7 @@ Description: bar code scanner and decoder (PyGTK bindings)
  such as video streams, image files or raw intensity sensors. It supports
  EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
  .
- This packagein contains the PyGTK bindings.
+ This package contains the PyGTK bindings.
 
 Package: libzbargtk0
 Architecture: any
@@ -144,4 +144,4 @@ Description: bar code scanner and decoder (Perl bindings)
  such as video streams, image files or raw intensity sensors. It supports
  EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
  .
- This packagein contains the Perl bindings.
+ This package contains the Perl bindings.
