@@ -1,3 +1,12 @@
+zbar (0.10+doc-10) unstable; urgency=medium
+
+  * [d3eba6e2] Add support for Python GIL / asynchronous scanning.
+    Thanks to Jonathan McDowell (Closes: #766089)
+  * [fd5fd7f1] Fix typo in package description.
+    Thanks to Pascal De Vuyst (Closes: #697516, #715178)
+
+ -- Bernd Zeimetz <bzed@debian.org>  Mon, 20 Oct 2014 22:04:56 +0200
+
 zbar (0.10+doc-9) unstable; urgency=low
 
   * [2c641cc9] Fix configure.ac to build with newer autotools.
