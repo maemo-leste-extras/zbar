@@ -1,3 +1,21 @@
+zbar (0.10+doc-10.1) unstable; urgency=low
+
+  * Non-maintainer upload with maintainer permission.
+
+  [ Francois Gouget ]
+  * Add missing versioned Build-Depends for automake
+  * Convert most binary packages to Multi-Arch (Closes: #777202)
+  * Switch to 3.0 (quilt) format, in order to use dh-exec
+
+  [ Thorsten Glaser ]
+  * Add missing versioned Build-Depends for autoconf
+  * Build-Depends: dh-python (as requested by dh_python)
+  * Make zbar-dbg M-A: same (as pointed out by lintian)
+  * Add missing required build-{arch,indep} targets (lintian)
+  * Mention Perl module name in long package description (lintian)
+
+ -- Thorsten Glaser <tg@mirbsd.de>  Mon, 02 Jan 2017 17:16:01 +0100
+
 zbar (0.10+doc-10) unstable; urgency=medium
 
   * [d3eba6e2] Add support for Python GIL / asynchronous scanning.
