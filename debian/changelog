@@ -13,8 +13,10 @@ zbar (0.10+doc-11) unstable; urgency=medium
     + Enable full hardening.
     + Minor adjust to debhelper sequences to suit debhelper compat
       v12.
+  * debian/gbp.conf: Update instructions to fit current git repo
+    setup.
 
- -- Boyuan Yang <byang@debian.org>  Sat, 09 Feb 2019 13:45:32 -0500
+ -- Boyuan Yang <byang@debian.org>  Sat, 09 Feb 2019 13:51:39 -0500
 
 zbar (0.10+doc-10.1) unstable; urgency=low
 
