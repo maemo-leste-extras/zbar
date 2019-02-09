@@ -11,8 +11,10 @@ zbar (0.10+doc-11) unstable; urgency=medium
     - Do not build Qt4 library anymore. (Closes: #875246)
   * debian/rules:
     + Enable full hardening.
+    + Minor adjust to debhelper sequences to suit debhelper compat
+      v12.
 
- -- Boyuan Yang <byang@debian.org>  Fri, 11 Jan 2019 17:25:09 -0500
+ -- Boyuan Yang <byang@debian.org>  Sat, 09 Feb 2019 13:45:32 -0500
 
 zbar (0.10+doc-10.1) unstable; urgency=low
 
