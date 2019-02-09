@@ -41,8 +41,7 @@ LDFLAGS_BINDINGS = $(strip $(LDFLAGS) $(LDFLAGS_LIB_SEARCHPATH))
 clean:
 	dh_testdir
 	dh_testroot
-	dh_autoreconf_clean
-	dh_autotools-dev_restoreconfig
+	dh_auto_clean
 	rm -rf $(CURDIR)/build-python* $(CURDIR)/build-nopython
 	rm -rf $(CURDIR)/debian/tmp_*
 	[ ! -f $(CURDIR)/perl/Makefile ] || $(MAKE) -C perl realclean
@@ -50,7 +49,7 @@ clean:
 
 autotools-dev: autotools-dev-stamp
 autotools-dev-stamp:
-	dh_autotools-dev_updateconfig
+	dh_update_autotools_config
 	dh_autoreconf
 	touch $@
 
