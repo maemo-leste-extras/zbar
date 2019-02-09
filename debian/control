@@ -2,7 +2,19 @@ Source: zbar
 Section: libs
 Priority: optional
 Maintainer: Debian QA Group <packages@qa.debian.org>
-Build-Depends: debhelper-compat (= 12), dh-exec (>= 0.3), dh-python, libgtk2.0-dev, libmagick++-dev, libx11-dev, pkg-config, python-all-dev (>= 2.6.6-3~), python-all-dbg (>= 2.6.6-3~), python-gtk2-dev, perl, libv4l-dev [linux-any]
+Build-Depends:
+ debhelper-compat (= 12),
+ dh-exec (>= 0.3),
+ dh-python,
+ libgtk2.0-dev,
+ libmagick++-dev,
+ libv4l-dev [linux-any],
+ libx11-dev,
+ perl,
+ pkg-config,
+ python-all-dbg (>= 2.6.6-3~),
+ python-all-dev (>= 2.6.6-3~),
+ python-gtk2-dev,
 Rules-Requires-Root: no
 Standards-Version: 4.3.0
 Homepage: http://zbar.sourceforge.net/
@@ -10,58 +22,29 @@ XS-Python-Version: >= 2.4
 Vcs-Git: https://salsa.debian.org/debian/zbar.git
 Vcs-Browser: https://salsa.debian.org/debian/zbar
 
-Package: zbar-tools
-Section: graphics
+Package: libbarcode-zbar-perl
+Section: perl
 Architecture: any
-Multi-Arch: foreign
-Depends: ${shlibs:Depends}, ${misc:Depends}, libzbar0 (= ${binary:Version})
-Description: bar code scanner and decoder (utilities)
+Depends:
+ ${misc:Depends},
+ ${perl:Depends},
+ ${shlibs:Depends},
+Description: bar code scanner and decoder (Perl bindings)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports
  EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
  .
- This package contains basic applications for decoding captured bar code images
- and using a video4linux device (e.g. webcam) as a bar code scanner.
-
-Package: zbar-dbg
-Priority: optional
-Section: debug
-Architecture: any
-Multi-Arch: same
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends},
- zbar-tools (= ${binary:Version}) |
- libzbar0 (= ${binary:Version}) |
- libzbar-dev (= ${binary:Version}) |
- python-zbarpygtk (= ${binary:Version}) |
- python-zbar (= ${binary:Version}) |
- libzbargtk0 (= ${binary:Version}) |
- libzbargtk-dev (= ${binary:Version}) |
- libbarcode-zbar-perl (= ${binary:Version})
-Recommends: python-gtk2-dbg
-Description: bar code scanner and decoder (debug)
- ZBar is a library for scanning and decoding bar codes from various sources
- such as video streams, image files or raw intensity sensors. It supports
- EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
- .
- This package contains the debugging symbols and Python debug extensions.
-
-Package: libzbar0
-Architecture: any
-Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: bar code scanner and decoder (library)
- ZBar is a library for scanning and decoding bar codes from various sources
- such as video streams, image files or raw intensity sensors. It supports
- EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
- .
- This package contains the library.
+ This package contains the Perl bindings and the Barcode::Zbar module.
 
 Package: libzbar-dev
 Section: libdevel
 Architecture: any
 Multi-Arch: same
-Depends: libzbar0 (= ${binary:Version}), ${misc:Depends}, libmagick++-dev, libx11-dev
+Depends:
+ libmagick++-dev,
+ libx11-dev,
+ libzbar0 (= ${binary:Version}),
+ ${misc:Depends},
 Description: bar code scanner and decoder (development)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports
@@ -69,13 +52,65 @@ Description: bar code scanner and decoder (development)
  .
  This package contains the development files.
 
+Package: libzbar0
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: bar code scanner and decoder (library)
+ ZBar is a library for scanning and decoding bar codes from various sources
+ such as video streams, image files or raw intensity sensors. It supports
+ EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
+ .
+ This package contains the library.
+
+Package: libzbargtk-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends:
+ libgtk2.0-dev,
+ libzbar-dev (= ${binary:Version}),
+ libzbargtk0 (= ${binary:Version}),
+ ${misc:Depends},
+Description: bar code scanner and decoder (GTK+ bindings development)
+ ZBar is a library for scanning and decoding bar codes from various sources
+ such as video streams, image files or raw intensity sensors. It supports
+ EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
+ .
+ This package contains the development files for the GTK+ bindings.
+
+Package: libzbargtk0
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ libzbar0 (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: bar code scanner and decoder (GTK+ bindings)
+ ZBar is a library for scanning and decoding bar codes from various sources
+ such as video streams, image files or raw intensity sensors. It supports
+ EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
+ .
+ This package contains the GTK+ bindings.
+
 Package: python-zbar
 Section: python
 Architecture: any
-Replaces: python-zbarpygtk (<< 0.10+doc)
-Breaks: python-zbarpygtk (<< 0.10+doc)
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends},
- libzbar0 (= ${binary:Version})
+Replaces:
+ python-zbarpygtk (<< 0.10+doc),
+Breaks:
+ python-zbarpygtk (<< 0.10+doc),
+Depends:
+ libzbar0 (= ${binary:Version}),
+ ${misc:Depends},
+ ${python:Depends},
+ ${shlibs:Depends},
 Description: bar code scanner and decoder (Python bindings)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports
@@ -86,8 +121,12 @@ Description: bar code scanner and decoder (Python bindings)
 Package: python-zbarpygtk
 Section: python
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends},
- libzbar0 (= ${binary:Version}), python-gtk2
+Depends:
+ libzbar0 (= ${binary:Version}),
+ python-gtk2,
+ ${misc:Depends},
+ ${python:Depends},
+ ${shlibs:Depends},
 Description: bar code scanner and decoder (PyGTK bindings)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports
@@ -95,38 +134,37 @@ Description: bar code scanner and decoder (PyGTK bindings)
  .
  This package contains the PyGTK bindings.
 
-Package: libzbargtk0
+Package: zbar-dbg
+Priority: optional
+Section: debug
 Architecture: any
 Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
-Depends: ${shlibs:Depends}, ${misc:Depends}, libzbar0 (= ${binary:Version})
-Description: bar code scanner and decoder (GTK+ bindings)
+Depends:
+ zbar-tools (= ${binary:Version}) | libzbar0 (= ${binary:Version}) | libzbar-dev (= ${binary:Version}) | python-zbarpygtk (= ${binary:Version}) | python-zbar (= ${binary:Version}) | libzbargtk0 (= ${binary:Version}) | libzbargtk-dev (= ${binary:Version}) | libbarcode-zbar-perl (= ${binary:Version}),
+ ${misc:Depends},
+ ${python:Depends},
+ ${shlibs:Depends},
+Recommends:
+ python-gtk2-dbg,
+Description: bar code scanner and decoder (debug)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports
  EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
  .
- This package contains the GTK+ bindings.
+ This package contains the debugging symbols and Python debug extensions.
 
-Package: libzbargtk-dev
-Section: libdevel
+Package: zbar-tools
+Section: graphics
 Architecture: any
-Multi-Arch: same
-Depends: libzbargtk0 (= ${binary:Version}), ${misc:Depends}, libgtk2.0-dev,
- libzbar-dev (= ${binary:Version})
-Description: bar code scanner and decoder (GTK+ bindings development)
+Multi-Arch: foreign
+Depends:
+ libzbar0 (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: bar code scanner and decoder (utilities)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports
  EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
  .
- This package contains the development files for the GTK+ bindings.
-
-Package: libbarcode-zbar-perl
-Section: perl
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${perl:Depends}
-Description: bar code scanner and decoder (Perl bindings)
- ZBar is a library for scanning and decoding bar codes from various sources
- such as video streams, image files or raw intensity sensors. It supports
- EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
- .
- This package contains the Perl bindings and the Barcode::Zbar module.
+ This package contains basic applications for decoding captured bar code images
+ and using a video4linux device (e.g. webcam) as a bar code scanner.
