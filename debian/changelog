@@ -9,6 +9,7 @@ zbar (0.10+doc-11) unstable; urgency=medium
     + Use Rules-Requires-Root: no.
     + Replace obsoleted Priority: extra with optional.
     - Do not build Qt4 library anymore. (Closes: #875246)
+  * debian/symbols: Add Build-Depends-Package field. (lintian)
   * debian/rules:
     + Enable full hardening.
     + Minor adjust to debhelper sequences to suit debhelper compat
@@ -19,7 +20,7 @@ zbar (0.10+doc-11) unstable; urgency=medium
     + Add a patch to rename custom dprintf macro to zbar_dprintf
       to prevent naming conflict.
 
- -- Boyuan Yang <byang@debian.org>  Sun, 10 Feb 2019 12:01:23 -0500
+ -- Boyuan Yang <byang@debian.org>  Sun, 10 Feb 2019 14:26:34 -0500
 
 zbar (0.10+doc-10.1) unstable; urgency=low
 
