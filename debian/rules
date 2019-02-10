@@ -127,7 +127,6 @@ binary-arch: install
 	dh_strip_nondeterminism
 	dh_compress
 	dh_fixperms
-	dh_dwz
 	dh_strip --dbg-package=zbar-dbg
 	dh_makeshlibs -- -c4
 	dh_shlibdeps
