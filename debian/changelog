@@ -15,8 +15,11 @@ zbar (0.10+doc-11) unstable; urgency=medium
       v12.
   * debian/gbp.conf: Update instructions to fit current git repo
     setup.
+  * debian/patches:
+    + Add a patch to rename custom dprintf macro to zbar_dprintf
+      to prevent naming conflict.
 
- -- Boyuan Yang <byang@debian.org>  Sat, 09 Feb 2019 13:51:39 -0500
+ -- Boyuan Yang <byang@debian.org>  Sun, 10 Feb 2019 12:01:23 -0500
 
 zbar (0.10+doc-10.1) unstable; urgency=low
 

@@ -1,0 +1,1044 @@
+From: Boyuan Yang <byang@debian.org>
+Date: Sun, 10 Feb 2019 12:00:24 -0500
+Subject: src: Replace dprintf macro with zbar_dprintf to avoid naming
+ conflict
+
+---
+ zbar/debug.h             |  8 +++---
+ zbar/decoder.c           |  2 +-
+ zbar/decoder/code128.c   | 46 +++++++++++++++----------------
+ zbar/decoder/code39.c    | 38 +++++++++++++-------------
+ zbar/decoder/ean.c       | 70 ++++++++++++++++++++++++------------------------
+ zbar/decoder/i25.c       | 36 ++++++++++++-------------
+ zbar/decoder/pdf417.c    | 28 +++++++++----------
+ zbar/decoder/qr_finder.c | 14 +++++-----
+ zbar/scanner.c           | 18 ++++++-------
+ 9 files changed, 130 insertions(+), 130 deletions(-)
+
+diff --git a/zbar/debug.h b/zbar/debug.h
+index 482ca8d..4f11e08 100644
+--- a/zbar/debug.h
++++ b/zbar/debug.h
+@@ -27,10 +27,10 @@
+ 
+ # ifdef __GNUC__
+     /* older versions of gcc (< 2.95) require a named varargs parameter */
+-#  define dprintf(args...)
++#  define zbar_dprintf(args...)
+ # else
+     /* unfortunately named vararg parameter is a gcc-specific extension */
+-#  define dprintf(...)
++#  define zbar_dprintf(...)
+ # endif
+ 
+ #else
+@@ -38,11 +38,11 @@
+ # include <stdio.h>
+ 
+ # ifdef __GNUC__
+-#  define dprintf(level, args...) \
++#  define zbar_dprintf(level, args...) \
+     if((level) <= DEBUG_LEVEL)    \
+         fprintf(stderr, args)
+ # else
+-#  define dprintf(level, ...)     \
++#  define zbar_dprintf(level, ...)     \
+     if((level) <= DEBUG_LEVEL)    \
+         fprintf(stderr, __VA_ARGS__)
+ # endif
+diff --git a/zbar/decoder.c b/zbar/decoder.c
+index 07a6262..60c2015 100644
+--- a/zbar/decoder.c
++++ b/zbar/decoder.c
+@@ -178,7 +178,7 @@ zbar_symbol_type_t zbar_decode_width (zbar_decoder_t *dcode,
+                                       unsigned w)
+ {
+     dcode->w[dcode->idx & (DECODE_WINDOW - 1)] = w;
+-    dprintf(1, "    decode[%x]: w=%d (%g)\n", dcode->idx, w, (w / 32.));
++    zbar_dprintf(1, "    decode[%x]: w=%d (%g)\n", dcode->idx, w, (w / 32.));
+ 
+     /* each decoder processes width stream in parallel */
+     zbar_symbol_type_t sym = dcode->type = ZBAR_NONE;
+diff --git a/zbar/decoder/code128.c b/zbar/decoder/code128.c
+index 8674854..2dbcbd3 100644
+--- a/zbar/decoder/code128.c
++++ b/zbar/decoder/code128.c
+@@ -135,7 +135,7 @@ static inline signed char decode_lo (int sig)
+     zassert(idx <= 0x50, -1, "sig=%x offset=%x base=%x idx=%x\n",
+             sig, offset, base, idx);
+     unsigned char c = characters[idx];
+-    dprintf(2, " %02x(%x(%02x)/%x(%02x)) => %02x",
++    zbar_dprintf(2, " %02x(%x(%02x)/%x(%02x)) => %02x",
+             idx, base, lo_base[base], offset, lo_offset[offset],
+             (unsigned char)c);
+     return(c);
+@@ -149,7 +149,7 @@ static inline signed char decode_hi (int sig)
+                ((sig >>  4) & 0x00f0) |
+                ((sig <<  4) & 0x0f00) |
+                ((sig << 12) & 0xf000));
+-    dprintf(2, " rev=%x", rev != 0);
++    zbar_dprintf(2, " rev=%x", rev != 0);
+ 
+     unsigned char idx;
+     switch(sig) {
+@@ -172,7 +172,7 @@ static inline signed char decode_hi (int sig)
+     if(rev)
+         idx += 0xe;
+     unsigned char c = characters[0x51 + idx];
+-    dprintf(2, " %02x => %02x", idx, c);
++    zbar_dprintf(2, " %02x => %02x", idx, c);
+     return(c);
+ }
+ 
+@@ -192,7 +192,7 @@ static inline signed char decode6 (zbar_decoder_t *dcode)
+ {
+     /* build edge signature of character */
+     unsigned s = dcode->code128.s6;
+-    dprintf(2, " s=%d", s);
++    zbar_dprintf(2, " s=%d", s);
+     if(s < 5)
+         return(-1);
+     /* calculate similar edge measurements */
+@@ -207,7 +207,7 @@ static inline signed char decode6 (zbar_decoder_t *dcode)
+            (decode_e(get_width(dcode, 2) + get_width(dcode, 1), s, 11)));
+     if(sig < 0)
+         return(-1);
+-    dprintf(2, " sig=%04x", sig);
++    zbar_dprintf(2, " sig=%04x", sig);
+     /* lookup edge signature */
+     signed char c = (sig & 0x4444) ? decode_hi(sig) : decode_lo(sig);
+     if(c == -1)
+@@ -219,7 +219,7 @@ static inline signed char decode6 (zbar_decoder_t *dcode)
+         : (get_width(dcode, 1) + get_width(dcode, 3) + get_width(dcode, 5));
+     bars = bars * 11 * 4 / s;
+     unsigned char chk = calc_check(c);
+-    dprintf(2, " bars=%d chk=%d", bars, chk);
++    zbar_dprintf(2, " bars=%d chk=%d", bars, chk);
+     if(chk - 7 > bars || bars > chk + 7)
+         return(-1);
+ 
+@@ -259,10 +259,10 @@ static inline unsigned char validate_checksum (zbar_decoder_t *dcode)
+     /* and compare to check character */
+     idx = (dcode128->direction) ? 1 : dcode128->character - 2;
+     unsigned char check = dcode->buf[idx];
+-    dprintf(2, " chk=%02x(%02x)", sum, check);
++    zbar_dprintf(2, " chk=%02x(%02x)", sum, check);
+     unsigned char err = (sum != check);
+     if(err)
+-        dprintf(1, " [checksum error]\n");
++        zbar_dprintf(1, " [checksum error]\n");
+     return(err);
+ }
+ 
+@@ -318,12 +318,12 @@ static inline unsigned postprocess_c (zbar_decoder_t *dcode,
+ static inline unsigned char postprocess (zbar_decoder_t *dcode)
+ {
+     code128_decoder_t *dcode128 = &dcode->code128;
+-    dprintf(2, "\n    postproc len=%d", dcode128->character);
++    zbar_dprintf(2, "\n    postproc len=%d", dcode128->character);
+     unsigned i, j;
+     unsigned char code = 0;
+     if(dcode128->direction) {
+         /* reverse buffer */
+-        dprintf(2, " (rev)");
++        zbar_dprintf(2, " (rev)");
+         for(i = 0; i < dcode128->character / 2; i++) {
+             unsigned j = dcode128->character - 1 - i;
+             code = dcode->buf[i];
+@@ -345,7 +345,7 @@ static inline unsigned char postprocess (zbar_decoder_t *dcode)
+ 
+     unsigned char charset = code - START_A;
+     unsigned cexp = (code == START_C) ? 1 : 0;
+-    dprintf(2, " start=%c", 'A' + charset);
++    zbar_dprintf(2, " start=%c", 'A' + charset);
+ 
+     for(i = 1, j = 0; i < dcode128->character - 2; i++) {
+         unsigned char code = dcode->buf[i];
+@@ -368,7 +368,7 @@ static inline unsigned char postprocess (zbar_decoder_t *dcode)
+                 charset &= 0x7f;
+         }
+         else {
+-            dprintf(2, " %02x", code);
++            zbar_dprintf(2, " %02x", code);
+             if(charset & 0x2) {
+                 /* expand character set C to ASCII */
+                 zassert(cexp, 1, "i=%x j=%x code=%02x charset=%x cexp=%x %s\n",
+@@ -391,7 +391,7 @@ static inline unsigned char postprocess (zbar_decoder_t *dcode)
+             else if(code == FNC1)
+                 /* FIXME FNC1 - Code 128 subsets or ASCII 0x1d */;
+             else if(code >= START_A) {
+-                dprintf(1, " [truncated]\n");
++                zbar_dprintf(1, " [truncated]\n");
+                 return(1);
+             }
+             else {
+@@ -439,25 +439,25 @@ zbar_symbol_type_t _zbar_decode_code128 (zbar_decoder_t *dcode)
+         return(0);
+     dcode128->element = 0;
+ 
+-    dprintf(2, "      code128[%c%02d+%x]:",
++    zbar_dprintf(2, "      code128[%c%02d+%x]:",
+             (dcode128->direction) ? '<' : '>',
+             dcode128->character, dcode128->element);
+ 
+     signed char c = decode6(dcode);
+     if(dcode128->character < 0) {
+-        dprintf(2, " c=%02x", c);
++        zbar_dprintf(2, " c=%02x", c);
+         if(c < START_A || c > STOP_REV || c == STOP_FWD) {
+-            dprintf(2, " [invalid]\n");
++            zbar_dprintf(2, " [invalid]\n");
+             return(0);
+         }
+         unsigned qz = get_width(dcode, 6);
+         if(qz && qz < (dcode->code128.s6 * 3) / 4) {
+-            dprintf(2, " [invalid qz %d]\n", qz);
++            zbar_dprintf(2, " [invalid qz %d]\n", qz);
+             return(0);
+         }
+         /* lock shared resources */
+         if(get_lock(dcode, ZBAR_CODE128)) {
+-            dprintf(2, " [locked %d]\n", dcode->lock);
++            zbar_dprintf(2, " [locked %d]\n", dcode->lock);
+             dcode128->character = -1;
+             return(0);
+         }
+@@ -470,12 +470,12 @@ zbar_symbol_type_t _zbar_decode_code128 (zbar_decoder_t *dcode)
+         }
+         else
+             dcode128->direction = ZBAR_SPACE;
+-        dprintf(2, " dir=%x [valid start]", dcode128->direction);
++        zbar_dprintf(2, " dir=%x [valid start]", dcode128->direction);
+     }
+     else if((c < 0) ||
+             ((dcode128->character >= BUFFER_MIN) &&
+              size_buf(dcode, dcode128->character + 1))) {
+-        dprintf(1, (c < 0) ? " [aborted]\n" : " [overflow]\n");
++        zbar_dprintf(1, (c < 0) ? " [aborted]\n" : " [overflow]\n");
+         dcode->lock = 0;
+         dcode128->character = -1;
+         return(0);
+@@ -499,17 +499,17 @@ zbar_symbol_type_t _zbar_decode_code128 (zbar_decoder_t *dcode)
+         else if(dcode128->character < CFG(*dcode128, ZBAR_CFG_MIN_LEN) ||
+                 (CFG(*dcode128, ZBAR_CFG_MAX_LEN) > 0 &&
+                  dcode128->character > CFG(*dcode128, ZBAR_CFG_MAX_LEN))) {
+-            dprintf(2, " [invalid len]\n");
++            zbar_dprintf(2, " [invalid len]\n");
+             sym = ZBAR_NONE;
+         }
+         else
+-            dprintf(2, " [valid end]\n");
++            zbar_dprintf(2, " [valid end]\n");
+         dcode128->character = -1;
+         if(!sym)
+             dcode->lock = 0;
+         return(sym);
+     }
+ 
+-    dprintf(2, "\n");
++    zbar_dprintf(2, "\n");
+     return(0);
+ }
+diff --git a/zbar/decoder/code39.c b/zbar/decoder/code39.c
+index da60db8..1211544 100644
+--- a/zbar/decoder/code39.c
++++ b/zbar/decoder/code39.c
+@@ -136,10 +136,10 @@ static inline unsigned char code39_decode1 (unsigned char enc,
+     enc <<= 1;
+     if(E > 2) {
+         enc |= 1;
+-        dprintf(2, "1");
++        zbar_dprintf(2, "1");
+     }
+     else
+-        dprintf(2, "0");
++        zbar_dprintf(2, "0");
+     return(enc);
+ }
+ 
+@@ -147,7 +147,7 @@ static inline signed char code39_decode9 (zbar_decoder_t *dcode)
+ {
+     code39_decoder_t *dcode39 = &dcode->code39;
+ 
+-    dprintf(2, " s=%d ", dcode39->s9);
++    zbar_dprintf(2, " s=%d ", dcode39->s9);
+     if(dcode39->s9 < 9)
+         return(-1);
+ 
+@@ -181,7 +181,7 @@ static inline signed char code39_decode9 (zbar_decoder_t *dcode)
+     zassert(idx < 0x2c, -1, " idx=%x enc=%x s9=%x\n", idx, enc, dcode39->s9);
+ 
+     const char39_t *c = &code39_encodings[idx];
+-    dprintf(2, " i=%02x chk=%02x c=%02x/%02x", idx, c->chk, c->fwd, c->rev);
++    zbar_dprintf(2, " i=%02x chk=%02x c=%02x/%02x", idx, c->chk, c->fwd, c->rev);
+     if(enc != c->chk)
+         return(-1);
+ 
+@@ -197,20 +197,20 @@ static inline signed char code39_decode_start (zbar_decoder_t *dcode)
+     if(c == 0x19)
+         dcode39->direction ^= 1;
+     else if(c != 0x2b) {
+-        dprintf(2, "\n");
++        zbar_dprintf(2, "\n");
+         return(ZBAR_NONE);
+     }
+ 
+     /* check leading quiet zone - spec is 10x */
+     unsigned quiet = get_width(dcode, 9);
+     if(quiet && quiet < dcode39->s9 / 2) {
+-        dprintf(2, " [invalid quiet]\n");
++        zbar_dprintf(2, " [invalid quiet]\n");
+         return(ZBAR_NONE);
+     }
+ 
+     dcode39->element = 9;
+     dcode39->character = 0;
+-    dprintf(1, " dir=%x [valid start]\n", dcode39->direction);
++    zbar_dprintf(1, " dir=%x [valid start]\n", dcode39->direction);
+     return(ZBAR_PARTIAL);
+ }
+ 
+@@ -220,7 +220,7 @@ static inline void code39_postprocess (zbar_decoder_t *dcode)
+     int i;
+     if(dcode39->direction) {
+         /* reverse buffer */
+-        dprintf(2, " (rev)");
++        zbar_dprintf(2, " (rev)");
+         for(i = 0; i < dcode39->character / 2; i++) {
+             unsigned j = dcode39->character - 1 - i;
+             char code = dcode->buf[i];
+@@ -247,14 +247,14 @@ zbar_symbol_type_t _zbar_decode_code39 (zbar_decoder_t *dcode)
+     if(dcode39->character < 0) {
+         if(get_color(dcode) != ZBAR_BAR)
+             return(ZBAR_NONE);
+-        dprintf(2, "      code39:");
++        zbar_dprintf(2, "      code39:");
+         return(code39_decode_start(dcode));
+     }
+ 
+     if(++dcode39->element < 9)
+         return(ZBAR_NONE);
+ 
+-    dprintf(2, "      code39[%c%02d+%x]",
++    zbar_dprintf(2, "      code39[%c%02d+%x]",
+             (dcode39->direction) ? '<' : '>',
+             dcode39->character, dcode39->element);
+ 
+@@ -268,19 +268,19 @@ zbar_symbol_type_t _zbar_decode_code39 (zbar_decoder_t *dcode)
+ 
+             /* trailing quiet zone check */
+             if(space && space < dcode39->width / 2) {
+-                dprintf(2, " [invalid qz]\n");
++                zbar_dprintf(2, " [invalid qz]\n");
+                 sym = ZBAR_NONE;
+             }
+             else if(dcode39->character < CFG(*dcode39, ZBAR_CFG_MIN_LEN) ||
+                     (CFG(*dcode39, ZBAR_CFG_MAX_LEN) > 0 &&
+                      dcode39->character > CFG(*dcode39, ZBAR_CFG_MAX_LEN))) {
+-                dprintf(2, " [invalid len]\n");
++                zbar_dprintf(2, " [invalid len]\n");
+                 sym = ZBAR_NONE;
+             }
+             else {
+                 /* FIXME checksum (needs config enable) */
+                 code39_postprocess(dcode);
+-                dprintf(2, " [valid end]\n");
++                zbar_dprintf(2, " [valid end]\n");
+             }
+             dcode39->character = -1;
+             if(!sym)
+@@ -291,34 +291,34 @@ zbar_symbol_type_t _zbar_decode_code39 (zbar_decoder_t *dcode)
+             /* inter-character space check failure */
+             dcode->lock = 0;
+             dcode39->character = -1;
+-            dprintf(2, " ics>%d [invalid ics]", dcode39->width);
++            zbar_dprintf(2, " ics>%d [invalid ics]", dcode39->width);
+         }
+         dcode39->element = 0;
+-        dprintf(2, "\n");
++        zbar_dprintf(2, "\n");
+         return(ZBAR_NONE);
+     }
+ 
+     signed char c = code39_decode9(dcode);
+-    dprintf(2, " c=%d", c);
++    zbar_dprintf(2, " c=%d", c);
+ 
+     /* lock shared resources */
+     if(!dcode39->character && get_lock(dcode, ZBAR_CODE39)) {
+         dcode39->character = -1;
+-        dprintf(1, " [locked %d]\n", dcode->lock);
++        zbar_dprintf(1, " [locked %d]\n", dcode->lock);
+         return(ZBAR_PARTIAL);
+     }
+ 
+     if(c < 0 ||
+        ((dcode39->character >= BUFFER_MIN) &&
+         size_buf(dcode, dcode39->character + 1))) {
+-        dprintf(1, (c < 0) ? " [aborted]\n" : " [overflow]\n");
++        zbar_dprintf(1, (c < 0) ? " [aborted]\n" : " [overflow]\n");
+         dcode->lock = 0;
+         dcode39->character = -1;
+         return(ZBAR_NONE);
+     }
+     else {
+         zassert(c < 0x2c, ZBAR_NONE, "c=%02x s9=%x\n", c, dcode39->s9);
+-        dprintf(2, "\n");
++        zbar_dprintf(2, "\n");
+     }
+ 
+     dcode->buf[dcode39->character++] = c;
+diff --git a/zbar/decoder/ean.c b/zbar/decoder/ean.c
+index dee0523..b446889 100644
+--- a/zbar/decoder/ean.c
++++ b/zbar/decoder/ean.c
+@@ -121,23 +121,23 @@ static inline signed char aux_end (zbar_decoder_t *dcode,
+     /* check quiet zone */
+     unsigned qz = get_width(dcode, 0);
+     if(!fwd && qz && qz < s * 3 / 4) {
+-        dprintf(2, " [invalid quiet]");
++        zbar_dprintf(2, " [invalid quiet]");
+         return(-1);
+     }
+ 
+-    dprintf(2, " (");
++    zbar_dprintf(2, " (");
+     signed char code = 0;
+     unsigned char i;
+     for(i = 1 - fwd; i < 3 + fwd; i++) {
+         unsigned e = get_width(dcode, i) + get_width(dcode, i + 1);
+-        dprintf(2, " %d", e);
++        zbar_dprintf(2, " %d", e);
+         code = (code << 2) | decode_e(e, s, 7);
+         if(code < 0) {
+-            dprintf(2, " [invalid end guard]");
++            zbar_dprintf(2, " [invalid end guard]");
+             return(-1);
+         }
+     }
+-    dprintf(2, ") s=%d aux=%x", s, code);
++    zbar_dprintf(2, ") s=%d aux=%x", s, code);
+     return(code);
+ }
+ 
+@@ -149,7 +149,7 @@ static inline signed char aux_start (zbar_decoder_t *dcode)
+     /* FIXME NB add-on has no guard in reverse */
+     unsigned e2 = get_width(dcode, 5) + get_width(dcode, 6);
+     if(decode_e(e2, dcode->ean.s4, 7)) {
+-        dprintf(2, " [invalid any]");
++        zbar_dprintf(2, " [invalid any]");
+         return(/*FIXME (get_color(dcode) == ZBAR_SPACE) ? STATE_ADDON : */-1);
+     }
+ 
+@@ -161,15 +161,15 @@ static inline signed char aux_start (zbar_decoder_t *dcode)
+         unsigned qz = get_width(dcode, 7);
+         if(!qz || qz >= dcode->ean.s4 * 3 / 4) {
+             if(!E1) {
+-                dprintf(2, " [valid normal]");
++                zbar_dprintf(2, " [valid normal]");
+                 return(0); /* normal symbol start */
+             }
+             else if(E1 == 1) {
+-                dprintf(2, " [valid add-on]");
++                zbar_dprintf(2, " [valid add-on]");
+                 return(STATE_ADDON); /* add-on symbol start */
+             }
+         }
+-        dprintf(2, " [invalid start]");
++        zbar_dprintf(2, " [invalid start]");
+         return(-1);
+     }
+ 
+@@ -177,11 +177,11 @@ static inline signed char aux_start (zbar_decoder_t *dcode)
+         /* attempting decode from SPACE => validate center guard */
+         unsigned e3 = get_width(dcode, 6) + get_width(dcode, 7);
+         if(!decode_e(e3, dcode->ean.s4, 7)) {
+-            dprintf(2, " [valid center]");
++            zbar_dprintf(2, " [valid center]");
+             return(0); /* start after center guard */
+         }
+     }
+-    dprintf(2, " [invalid center]");
++    zbar_dprintf(2, " [invalid center]");
+     return(/*STATE_ADDON*/-1);
+ }
+ 
+@@ -193,14 +193,14 @@ static inline signed char decode4 (zbar_decoder_t *dcode)
+                    ? get_width(dcode, 0) + get_width(dcode, 1)
+                    : get_width(dcode, 2) + get_width(dcode, 3));
+     unsigned e2 = get_width(dcode, 1) + get_width(dcode, 2);
+-    dprintf(2, "\n        e1=%d e2=%d", e1, e2);
++    zbar_dprintf(2, "\n        e1=%d e2=%d", e1, e2);
+ 
+     /* create compacted encoding for direct lookup */
+     signed char code = ((decode_e(e1, dcode->ean.s4, 7) << 2) |
+                         decode_e(e2, dcode->ean.s4, 7));
+     if(code < 0)
+         return(-1);
+-    dprintf(2, " code=%x", code);
++    zbar_dprintf(2, " code=%x", code);
+ 
+     /* 4 combinations require additional determinant (D2)
+        E1E2 == 34 (0110)
+@@ -220,9 +220,9 @@ static inline signed char decode4 (zbar_decoder_t *dcode)
+         unsigned char alt = d2 > (mid * dcode->ean.s4);
+         if(alt)
+             code = ((code >> 1) & 3) | 0x10; /* compress code space */
+-        dprintf(2, " (d2=%d(%d) alt=%d)", d2, mid * dcode->ean.s4, alt);
++        zbar_dprintf(2, " (d2=%d(%d) alt=%d)", d2, mid * dcode->ean.s4, alt);
+     }
+-    dprintf(2, " char=%02x", digits[(unsigned char)code]);
++    zbar_dprintf(2, " char=%02x", digits[(unsigned char)code]);
+     zassert(code < 0x14, -1, "code=%02x e1=%x e2=%x s4=%x color=%x\n",
+             code, e1, e2, dcode->ean.s4, get_color(dcode));
+     return(code);
+@@ -237,7 +237,7 @@ static inline zbar_symbol_type_t ean_part_end4 (ean_pass_t *pass,
+                          (pass->raw[3] & 0x10) >> 3 |
+                          (pass->raw[4] & 0x10) >> 4);
+ 
+-    dprintf(2, " par=%x", par);
++    zbar_dprintf(2, " par=%x", par);
+     if(par && par != 0xf)
+         /* invalid parity combination */
+         return(ZBAR_NONE);
+@@ -252,8 +252,8 @@ static inline zbar_symbol_type_t ean_part_end4 (ean_pass_t *pass,
+         pass->raw[3] = tmp;
+     }
+ 
+-    dprintf(2, "\n");
+-    dprintf(1, "decode4=%x%x%x%x\n",
++    zbar_dprintf(2, "\n");
++    zbar_dprintf(1, "decode4=%x%x%x%x\n",
+             pass->raw[1] & 0xf, pass->raw[2] & 0xf,
+             pass->raw[3] & 0xf, pass->raw[4] & 0xf);
+     if(!par)
+@@ -285,7 +285,7 @@ static inline zbar_symbol_type_t ean_part_end7 (ean_decoder_t *ean,
+     if(par & 1)
+         pass->raw[0] >>= 4;
+     pass->raw[0] &= 0xf;
+-    dprintf(2, " par=%02x(%x)", par, pass->raw[0]);
++    zbar_dprintf(2, " par=%02x(%x)", par, pass->raw[0]);
+ 
+     if(pass->raw[0] == 0xf)
+         /* invalid parity combination */
+@@ -301,8 +301,8 @@ static inline zbar_symbol_type_t ean_part_end7 (ean_decoder_t *ean,
+         }
+     }
+ 
+-    dprintf(2, "\n");
+-    dprintf(1, "decode=%x%x%x%x%x%x%x(%02x)\n",
++    zbar_dprintf(2, "\n");
++    zbar_dprintf(1, "decode=%x%x%x%x%x%x%x(%02x)\n",
+             pass->raw[0] & 0xf, pass->raw[1] & 0xf,
+             pass->raw[2] & 0xf, pass->raw[3] & 0xf,
+             pass->raw[4] & 0xf, pass->raw[5] & 0xf,
+@@ -332,7 +332,7 @@ static inline zbar_symbol_type_t decode_pass (zbar_decoder_t *dcode,
+        (idx == 0x10 || idx == 0x11) &&
+        TEST_CFG(dcode->ean.ean8_config, ZBAR_CFG_ENABLE) &&
+        !aux_end(dcode, fwd)) {
+-        dprintf(2, " fwd=%x", fwd);
++        zbar_dprintf(2, " fwd=%x", fwd);
+         zbar_symbol_type_t part = ean_part_end4(pass, fwd);
+         pass->state = -1;
+         return(part);
+@@ -352,10 +352,10 @@ static inline zbar_symbol_type_t decode_pass (zbar_decoder_t *dcode,
+         if(code < 0)
+             pass->state = -1;
+         else {
+-            dprintf(2, "\n        raw[%x]=%02x =>", idx >> 2,
++            zbar_dprintf(2, "\n        raw[%x]=%02x =>", idx >> 2,
+                     digits[(unsigned char)code]);
+             pass->raw[(idx >> 2) + 1] = digits[(unsigned char)code];
+-            dprintf(2, " raw=%d%d%d%d%d%d%d",
++            zbar_dprintf(2, " raw=%d%d%d%d%d%d%d",
+                     pass->raw[0] & 0xf, pass->raw[1] & 0xf,
+                     pass->raw[2] & 0xf, pass->raw[3] & 0xf,
+                     pass->raw[4] & 0xf, pass->raw[5] & 0xf,
+@@ -366,7 +366,7 @@ static inline zbar_symbol_type_t decode_pass (zbar_decoder_t *dcode,
+     if(get_color(dcode) == ZBAR_SPACE &&
+        (idx == 0x18 || idx == 0x19)) {
+         zbar_symbol_type_t part = ZBAR_NONE;
+-        dprintf(2, " fwd=%x", fwd);
++        zbar_dprintf(2, " fwd=%x", fwd);
+         if(!aux_end(dcode, fwd))
+             part = ean_part_end7(&dcode->ean, pass, fwd);
+         pass->state = -1;
+@@ -401,7 +401,7 @@ static inline signed char ean_verify_checksum (ean_decoder_t *ean,
+     zassert(d < 10, -1, "n=%x d=%x chk=%x %s\n", n, d, chk,
+             _zbar_decoder_buf_dump((void*)ean->buf, 18));
+     if(chk != d) {
+-        dprintf(1, "\nchecksum mismatch %d != %d (%s)\n",
++        zbar_dprintf(1, "\nchecksum mismatch %d != %d (%s)\n",
+                 chk, d, dsprintbuf(ean));
+         return(-1);
+     }
+@@ -455,7 +455,7 @@ static inline zbar_symbol_type_t integrate_partial (ean_decoder_t *ean,
+ {
+     /* copy raw data into holding buffer */
+     /* if same partial is not consistent, reset others */
+-    dprintf(2, " integrate part=%x (%s)", part, dsprintbuf(ean));
++    zbar_dprintf(2, " integrate part=%x (%s)", part, dsprintbuf(ean));
+     signed char i, j;
+     if(part & ZBAR_ADDON) {
+         /* FIXME TBD */
+@@ -473,7 +473,7 @@ static inline zbar_symbol_type_t integrate_partial (ean_decoder_t *ean,
+         if((ean->left && ((part & ZBAR_SYMBOL) != ean->left)) ||
+            (ean->right && ((part & ZBAR_SYMBOL) != ean->right))) {
+             /* partial mismatch - reset collected parts */
+-            dprintf(2, " rst(type %x %x)", ean->left, ean->right);
++            zbar_dprintf(2, " rst(type %x %x)", ean->left, ean->right);
+             ean->left = ean->right = ean->addon = ZBAR_NONE;
+         }
+ 
+@@ -484,7 +484,7 @@ static inline zbar_symbol_type_t integrate_partial (ean_decoder_t *ean,
+                 unsigned char digit = pass->raw[i] & 0xf;
+                 if(ean->right && ean->buf[j] != digit) {
+                     /* partial mismatch - reset collected parts */
+-                    dprintf(2, " rst(right)");
++                    zbar_dprintf(2, " rst(right)");
+                     ean->left = ean->right = ean->addon = ZBAR_NONE;
+                 }
+                 ean->buf[j] = digit;
+@@ -497,7 +497,7 @@ static inline zbar_symbol_type_t integrate_partial (ean_decoder_t *ean,
+                 unsigned char digit = pass->raw[i] & 0xf;
+                 if(ean->left && ean->buf[j] != digit) {
+                     /* partial mismatch - reset collected parts */
+-                    dprintf(2, " rst(left)");
++                    zbar_dprintf(2, " rst(left)");
+                     ean->left = ean->right = ean->addon = ZBAR_NONE;
+                 }
+                 ean->buf[j] = digit;
+@@ -556,7 +556,7 @@ static inline zbar_symbol_type_t integrate_partial (ean_decoder_t *ean,
+     if(part > ZBAR_PARTIAL)
+         part |= ean->addon;
+ 
+-    dprintf(2, " %x/%x=%x", ean->left, ean->right, part);
++    zbar_dprintf(2, " %x/%x=%x", ean->left, ean->right, part);
+     return(part);
+ }
+ 
+@@ -614,7 +614,7 @@ zbar_symbol_type_t _zbar_decode_ean (zbar_decoder_t *dcode)
+         if(pass->state >= 0 ||
+            i == pass_idx)
+         {
+-            dprintf(2, "      ean[%x/%x]: idx=%x st=%d s=%d",
++            zbar_dprintf(2, "      ean[%x/%x]: idx=%x st=%d s=%d",
+                     pass_idx, i, dcode->idx, pass->state, dcode->ean.s4);
+             zbar_symbol_type_t part = decode_pass(dcode, pass);
+             if(part) {
+@@ -622,20 +622,20 @@ zbar_symbol_type_t _zbar_decode_ean (zbar_decoder_t *dcode)
+                 sym = integrate_partial(&dcode->ean, pass, part);
+                 if(sym) {
+                     /* this pass valid => _reset_ all passes */
+-                    dprintf(2, " sym=%x", sym);
++                    zbar_dprintf(2, " sym=%x", sym);
+                     dcode->ean.pass[0].state = dcode->ean.pass[1].state = -1;
+                     dcode->ean.pass[2].state = dcode->ean.pass[3].state = -1;
+                     if(sym > ZBAR_PARTIAL) {
+                         if(!get_lock(dcode, ZBAR_EAN13))
+                             postprocess(dcode, sym);
+                         else {
+-                            dprintf(1, " [locked %d]", dcode->lock);
++                            zbar_dprintf(1, " [locked %d]", dcode->lock);
+                             sym = ZBAR_PARTIAL;
+                         }
+                     }
+                 }
+             }
+-            dprintf(2, "\n");
++            zbar_dprintf(2, "\n");
+         }
+     }
+     return(sym);
+diff --git a/zbar/decoder/i25.c b/zbar/decoder/i25.c
+index 903eb9d..86ab955 100644
+--- a/zbar/decoder/i25.c
++++ b/zbar/decoder/i25.c
+@@ -49,7 +49,7 @@ static inline unsigned char i25_decode10 (zbar_decoder_t *dcode,
+                                           unsigned char offset)
+ {
+     i25_decoder_t *dcode25 = &dcode->i25;
+-    dprintf(2, " s=%d", dcode25->s10);
++    zbar_dprintf(2, " s=%d", dcode25->s10);
+     if(dcode25->s10 < 10)
+         return(0xff);
+ 
+@@ -65,11 +65,11 @@ static inline unsigned char i25_decode10 (zbar_decoder_t *dcode,
+             par++;
+     }
+ 
+-    dprintf(2, " enc=%02x par=%x", enc, par);
++    zbar_dprintf(2, " enc=%02x par=%x", enc, par);
+ 
+     /* parity check */
+     if(par != 2) {
+-        dprintf(2, " [bad parity]");
++        zbar_dprintf(2, " [bad parity]");
+         return(0xff);
+     }
+ 
+@@ -79,12 +79,12 @@ static inline unsigned char i25_decode10 (zbar_decoder_t *dcode,
+         if(enc == 12)
+             enc = 0;
+         else if(--enc > 9) {
+-            dprintf(2, " [invalid encoding]");
++            zbar_dprintf(2, " [invalid encoding]");
+             return(0xff);
+         }
+     }
+ 
+-    dprintf(2, " => %x", enc);
++    zbar_dprintf(2, " => %x", enc);
+     return(enc);
+ }
+ 
+@@ -103,7 +103,7 @@ static inline signed char i25_decode_start (zbar_decoder_t *dcode)
+     if((get_color(dcode) == ZBAR_BAR)
+        ? enc != 4
+        : (enc = i25_decode1(enc, get_width(dcode, i++), dcode25->s10))) {
+-        dprintf(4, "      i25: s=%d enc=%x [invalid]\n", dcode25->s10, enc);
++        zbar_dprintf(4, "      i25: s=%d enc=%x [invalid]\n", dcode25->s10, enc);
+         return(ZBAR_NONE);
+     }
+ 
+@@ -113,7 +113,7 @@ static inline signed char i25_decode_start (zbar_decoder_t *dcode)
+      */
+     unsigned quiet = get_width(dcode, i++);
+     if(quiet && quiet < dcode25->s10 * 3 / 8) {
+-        dprintf(3, "      i25: s=%d enc=%x q=%d [invalid qz]\n",
++        zbar_dprintf(3, "      i25: s=%d enc=%x q=%d [invalid qz]\n",
+                 dcode25->s10, enc, quiet);
+         return(ZBAR_NONE);
+     }
+@@ -133,7 +133,7 @@ static inline signed char i25_decode_end (zbar_decoder_t *dcode)
+     if((quiet && quiet < dcode25->width * 3 / 8) ||
+        decode_e(get_width(dcode, 1), dcode25->width, 45) > 2 ||
+        decode_e(get_width(dcode, 2), dcode25->width, 45) > 2) {
+-        dprintf(3, " s=%d q=%d [invalid qz]\n", dcode25->width, quiet);
++        zbar_dprintf(3, " s=%d q=%d [invalid qz]\n", dcode25->width, quiet);
+         return(ZBAR_NONE);
+     }
+ 
+@@ -147,7 +147,7 @@ static inline signed char i25_decode_end (zbar_decoder_t *dcode)
+ 
+     if(dcode25->direction) {
+         /* reverse buffer */
+-        dprintf(2, " (rev)");
++        zbar_dprintf(2, " (rev)");
+         int i;
+         for(i = 0; i < dcode25->character / 2; i++) {
+             unsigned j = dcode25->character - 1 - i;
+@@ -160,7 +160,7 @@ static inline signed char i25_decode_end (zbar_decoder_t *dcode)
+     if(dcode25->character < CFG(*dcode25, ZBAR_CFG_MIN_LEN) ||
+        (CFG(*dcode25, ZBAR_CFG_MAX_LEN) > 0 &&
+         dcode25->character > CFG(*dcode25, ZBAR_CFG_MAX_LEN))) {
+-        dprintf(2, " [invalid len]\n");
++        zbar_dprintf(2, " [invalid len]\n");
+         dcode->lock = 0;
+         dcode25->character = -1;
+         return(ZBAR_NONE);
+@@ -168,7 +168,7 @@ static inline signed char i25_decode_end (zbar_decoder_t *dcode)
+ 
+     dcode->buflen = dcode25->character;
+     dcode->buf[dcode25->character] = '\0';
+-    dprintf(2, " [valid end]\n");
++    zbar_dprintf(2, " [valid end]\n");
+     dcode25->character = -1;
+     return(ZBAR_I25);
+ }
+@@ -193,24 +193,24 @@ zbar_symbol_type_t _zbar_decode_i25 (zbar_decoder_t *dcode)
+     /* FIXME check current character width against previous */
+     dcode25->width = dcode25->s10;
+ 
+-    dprintf(2, "      i25[%c%02d+%x]",
++    zbar_dprintf(2, "      i25[%c%02d+%x]",
+             (dcode25->direction) ? '<' : '>',
+             dcode25->character, dcode25->element);
+ 
+     /* lock shared resources */
+     if(!dcode25->character && get_lock(dcode, ZBAR_I25)) {
+         dcode25->character = -1;
+-        dprintf(2, " [locked %d]\n", dcode->lock);
++        zbar_dprintf(2, " [locked %d]\n", dcode->lock);
+         return(ZBAR_PARTIAL);
+     }
+ 
+     unsigned char c = i25_decode10(dcode, 1);
+-    dprintf(2, " c=%x", c);
++    zbar_dprintf(2, " c=%x", c);
+ 
+     if(c > 9 ||
+        ((dcode25->character >= BUFFER_MIN) &&
+         size_buf(dcode, dcode25->character + 2))) {
+-        dprintf(2, (c > 9) ? " [aborted]\n" : " [overflow]\n");
++        zbar_dprintf(2, (c > 9) ? " [aborted]\n" : " [overflow]\n");
+         dcode->lock = 0;
+         dcode25->character = -1;
+         return(ZBAR_NONE);
+@@ -218,15 +218,15 @@ zbar_symbol_type_t _zbar_decode_i25 (zbar_decoder_t *dcode)
+     dcode->buf[dcode25->character++] = c + '0';
+ 
+     c = i25_decode10(dcode, 0);
+-    dprintf(2, " c=%x", c);
++    zbar_dprintf(2, " c=%x", c);
+     if(c > 9) {
+-        dprintf(2, " [aborted]\n");
++        zbar_dprintf(2, " [aborted]\n");
+         dcode->lock = 0;
+         dcode25->character = -1;
+         return(ZBAR_NONE);
+     }
+     else
+-        dprintf(2, "\n");
++        zbar_dprintf(2, "\n");
+ 
+     dcode->buf[dcode25->character++] = c + '0';
+     dcode25->element = 10;
+diff --git a/zbar/decoder/pdf417.c b/zbar/decoder/pdf417.c
+index ac948e9..dfa7bd6 100644
+--- a/zbar/decoder/pdf417.c
++++ b/zbar/decoder/pdf417.c
+@@ -41,7 +41,7 @@ static inline signed short pdf417_decode8 (zbar_decoder_t *dcode)
+      * from similar edge measurements
+      */
+     unsigned s = dcode->pdf417.s8;
+-    dprintf(2, " s=%d ", s);
++    zbar_dprintf(2, " s=%d ", s);
+     if(s < 8)
+         return(-1);
+ 
+@@ -55,19 +55,19 @@ static inline signed short pdf417_decode8 (zbar_decoder_t *dcode)
+         else
+             e = decode_e(get_width(dcode, 7 - i) +
+                          get_width(dcode, 6 - i), s, 17);
+-        dprintf(4, "%x", e);
++        zbar_dprintf(4, "%x", e);
+         if(e < 0 || e > 8)
+             return(-1);
+         sig = (sig << 3) ^ e;
+     }
+-    dprintf(2, " sig=%06lx", sig);
++    zbar_dprintf(2, " sig=%06lx", sig);
+ 
+     /* determine cluster number */
+     int clst = ((sig & 7) - ((sig >> 3) & 7) +
+                 ((sig >> 12) & 7) - ((sig >> 15) & 7));
+     if(clst < 0)
+         clst += 9;
+-    dprintf(2, " k=%d", clst);
++    zbar_dprintf(2, " k=%d", clst);
+     zassert(clst >= 0 && clst < 9, -1, "dir=%x sig=%lx k=%x %s\n",
+             dcode->pdf417.direction, sig, clst,
+             _zbar_decoder_buf_dump(dcode->buf, dcode->pdf417.character));
+@@ -89,7 +89,7 @@ static inline signed short pdf417_decode8 (zbar_decoder_t *dcode)
+             _zbar_decoder_buf_dump(dcode->buf, dcode->pdf417.character));
+ 
+     unsigned short c = (g[0] + g[1] + g[2]) & PDF417_HASH_MASK;
+-    dprintf(2, " g0=%x g1=%x g2=%x c=%03d(%d)",
++    zbar_dprintf(2, " g0=%x g1=%x g2=%x c=%03d(%d)",
+             g[0], g[1], g[2], c & 0x3ff, c >> 10);
+     return(c);
+ }
+@@ -142,18 +142,18 @@ static inline signed char pdf417_decode_start(zbar_decoder_t *dcode)
+         ei = decode_e(get_width(dcode, 8) + get_width(dcode, 9), s, 17);
+     }
+ 
+-    dprintf(2, "      pdf417[%c]: s=%d",
++    zbar_dprintf(2, "      pdf417[%c]: s=%d",
+             (get_color(dcode)) ? '<' : '>', s);
+ 
+     /* check quiet zone */
+     if(ei >= 0 && ei < ex) {
+-        dprintf(2, " [invalid quiet]\n");
++        zbar_dprintf(2, " [invalid quiet]\n");
+         return(0);
+     }
+ 
+     /* lock shared resources */
+     if(get_lock(dcode, ZBAR_PDF417)) {
+-        dprintf(2, " [locked %d]\n", dcode->lock);
++        zbar_dprintf(2, " [locked %d]\n", dcode->lock);
+         return(0);
+     }
+ 
+@@ -162,7 +162,7 @@ static inline signed char pdf417_decode_start(zbar_decoder_t *dcode)
+     dcode417->element = 0;
+     dcode417->character = 0;
+ 
+-    dprintf(2, " [valid start]\n");
++    zbar_dprintf(2, " [valid start]\n");
+     return(ZBAR_PARTIAL);
+ }
+ 
+@@ -176,7 +176,7 @@ zbar_symbol_type_t _zbar_decode_pdf417 (zbar_decoder_t *dcode)
+ 
+     if(dcode417->character < 0) {
+         pdf417_decode_start(dcode);
+-        dprintf(4, "\n");
++        zbar_dprintf(4, "\n");
+         return(0);
+     }
+ 
+@@ -185,7 +185,7 @@ zbar_symbol_type_t _zbar_decode_pdf417 (zbar_decoder_t *dcode)
+         return(0);
+     dcode417->element = 0;
+ 
+-    dprintf(2, "      pdf417[%c%02d]:",
++    zbar_dprintf(2, "      pdf417[%c%02d]:",
+             (dcode417->direction) ? '<' : '>', dcode417->character);
+ 
+     if(get_color(dcode) != dcode417->direction) {
+@@ -202,7 +202,7 @@ zbar_symbol_type_t _zbar_decode_pdf417 (zbar_decoder_t *dcode)
+     if((c < 0) ||
+        ((dcode417->character >= BUFFER_MIN) &&
+         size_buf(dcode, dcode417->character + 1))) {
+-        dprintf(1, (c < 0) ? " [aborted]\n" : " [overflow]\n");
++        zbar_dprintf(1, (c < 0) ? " [aborted]\n" : " [overflow]\n");
+         dcode->lock = 0;
+         dcode417->character = -1;
+         return(0);
+@@ -211,12 +211,12 @@ zbar_symbol_type_t _zbar_decode_pdf417 (zbar_decoder_t *dcode)
+     /* FIXME TBD infer dimensions, save codewords */
+ 
+     if(c == PDF417_STOP) {
+-        dprintf(1, " [valid stop]");
++        zbar_dprintf(1, " [valid stop]");
+         /* FIXME check trailing bar and qz */
+         dcode->lock = 0;
+         dcode417->character = -1;
+     }
+ 
+-    dprintf(2, "\n");
++    zbar_dprintf(2, "\n");
+     return(0);
+ }
+diff --git a/zbar/decoder/qr_finder.c b/zbar/decoder/qr_finder.c
+index 27bf185..8ba86d9 100644
+--- a/zbar/decoder/qr_finder.c
++++ b/zbar/decoder/qr_finder.c
+@@ -29,25 +29,25 @@ zbar_symbol_type_t _zbar_find_qr (zbar_decoder_t *dcode)
+     if(get_color(dcode) != ZBAR_SPACE || s < 7)
+         return(0);
+ 
+-    dprintf(2, "    qrf: s=%d", s);
++    zbar_dprintf(2, "    qrf: s=%d", s);
+ 
+     int ei = decode_e(pair_width(dcode, 1), s, 7);
+-    dprintf(2, " %d", ei);
++    zbar_dprintf(2, " %d", ei);
+     if(ei)
+         goto invalid;
+ 
+     ei = decode_e(pair_width(dcode, 2), s, 7);
+-    dprintf(2, "%d", ei);
++    zbar_dprintf(2, "%d", ei);
+     if(ei != 2)
+         goto invalid;
+ 
+     ei = decode_e(pair_width(dcode, 3), s, 7);
+-    dprintf(2, "%d", ei);
++    zbar_dprintf(2, "%d", ei);
+     if(ei != 2)
+         goto invalid;
+ 
+     ei = decode_e(pair_width(dcode, 4), s, 7);
+-    dprintf(2, "%d", ei);
++    zbar_dprintf(2, "%d", ei);
+     if(ei)
+         goto invalid;
+ 
+@@ -63,13 +63,13 @@ zbar_symbol_type_t _zbar_find_qr (zbar_decoder_t *dcode)
+     w = get_width(dcode, 5);
+     qrf->line.boffs = qrf->line.pos[0] + get_width(dcode, 4) + (w + 1) / 2;
+ 
+-    dprintf(2, " boff=%d pos=%d len=%d eoff=%d [valid]\n",
++    zbar_dprintf(2, " boff=%d pos=%d len=%d eoff=%d [valid]\n",
+             qrf->line.boffs, qrf->line.pos[0], qrf->line.len,
+             qrf->line.eoffs);
+ 
+     return(ZBAR_QRCODE);
+ 
+ invalid:
+-    dprintf(2, " [invalid]\n");
++    zbar_dprintf(2, " [invalid]\n");
+     return(0);
+ }
+diff --git a/zbar/scanner.c b/zbar/scanner.c
+index 3e932ce..d90adb3 100644
+--- a/zbar/scanner.c
++++ b/zbar/scanner.c
+@@ -127,7 +127,7 @@ static inline unsigned calc_thresh (zbar_scanner_t *scn)
+     /* threshold 1st to improve noise rejection */
+     unsigned thresh = scn->y1_thresh;
+     if((thresh <= scn->y1_min_thresh) || !scn->width) {
+-        dprintf(1, " tmin=%d", scn->y1_min_thresh);
++        zbar_dprintf(1, " tmin=%d", scn->y1_min_thresh);
+         return(scn->y1_min_thresh);
+     }
+     /* slowly return threshold to min */
+@@ -135,7 +135,7 @@ static inline unsigned calc_thresh (zbar_scanner_t *scn)
+     unsigned long t = thresh * dx;
+     t /= scn->width;
+     t /= ZBAR_SCANNER_THRESH_FADE;
+-    dprintf(1, " thr=%d t=%ld x=%d last=%d.%d (%d)",
++    zbar_dprintf(1, " thr=%d t=%ld x=%d last=%d.%d (%d)",
+             thresh, t, scn->x, scn->last_edge >> ZBAR_FIXED,
+             scn->last_edge & ((1 << ZBAR_FIXED) - 1), dx);
+     if(thresh > t) {
+@@ -156,7 +156,7 @@ static inline zbar_symbol_type_t process_edge (zbar_scanner_t *scn,
+         scn->last_edge = scn->cur_edge;
+ 
+     scn->width = scn->cur_edge - scn->last_edge;
+-    dprintf(1, " sgn=%d cur=%d.%d w=%d (%s)\n",
++    zbar_dprintf(1, " sgn=%d cur=%d.%d w=%d (%s)\n",
+             scn->y1_sign, scn->cur_edge >> ZBAR_FIXED,
+             scn->cur_edge & ((1 << ZBAR_FIXED) - 1), scn->width,
+             ((y1 > 0) ? "SPACE" : "BAR"));
+@@ -180,7 +180,7 @@ inline zbar_symbol_type_t zbar_scanner_flush (zbar_scanner_t *scn)
+     unsigned x = (scn->x << ZBAR_FIXED) + ROUND;
+ 
+     if(scn->cur_edge != x || scn->y1_sign > 0) {
+-        dprintf(1, "flush0:");
++        zbar_dprintf(1, "flush0:");
+         zbar_symbol_type_t edge = process_edge(scn, -scn->y1_sign);
+         scn->cur_edge = x;
+         scn->y1_sign = -scn->y1_sign;
+@@ -240,7 +240,7 @@ zbar_symbol_type_t zbar_scan_y (zbar_scanner_t *scn,
+     register int y2_1 = y0_0 - (y0_1 * 2) + y0_2;
+     register int y2_2 = y0_1 - (y0_2 * 2) + y0_3;
+ 
+-    dprintf(1, "scan: x=%d y=%d y0=%d y1=%d y2=%d",
++    zbar_dprintf(1, "scan: x=%d y=%d y0=%d y1=%d y2=%d",
+             x, y, y0_1, y1_1, y2_1);
+ 
+     zbar_symbol_type_t edge = ZBAR_NONE;
+@@ -261,7 +261,7 @@ zbar_symbol_type_t zbar_scan_y (zbar_scanner_t *scn,
+             /* adaptive thresholding */
+             /* start at multiple of new min/max */
+             scn->y1_thresh = (abs(y1_1) * THRESH_INIT + ROUND) >> ZBAR_FIXED;
+-            dprintf(1, "\tthr=%d", scn->y1_thresh);
++            zbar_dprintf(1, "\tthr=%d", scn->y1_thresh);
+             if(scn->y1_thresh < scn->y1_min_thresh)
+                 scn->y1_thresh = scn->y1_min_thresh;
+ 
+@@ -274,11 +274,11 @@ zbar_symbol_type_t zbar_scan_y (zbar_scanner_t *scn,
+                 /* interpolate zero crossing */
+                 scn->cur_edge -= ((y2_1 << ZBAR_FIXED) + 1) / d;
+             scn->cur_edge += x << ZBAR_FIXED;
+-            dprintf(1, "\n");
++            zbar_dprintf(1, "\n");
+         }
+     }
+     else
+-        dprintf(1, "\n");
++        zbar_dprintf(1, "\n");
+     /* FIXME add fall-thru pass to decoder after heuristic "idle" period
+        (eg, 6-8 * last width) */
+     scn->x = x + 1;
+@@ -307,5 +307,5 @@ void zbar_scanner_get_state (const zbar_scanner_t *scn,
+     /* NB not quite accurate (uses updated x) */
+     zbar_scanner_t *mut_scn = (zbar_scanner_t*)scn;
+     if(y1_thresh) *y1_thresh = calc_thresh(mut_scn);
+-    dprintf(1, "\n");
++    zbar_dprintf(1, "\n");
+ }
