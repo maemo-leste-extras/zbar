@@ -10,8 +10,9 @@ zbar (0.21-1~exp1) experimental; urgency=medium
     + use override_dh_strip to generate automatic debug packages.
   * debian/patches:
     + Drop 0001-v4l1 patch, upstream is support v4l2 now.
+    + Drop patch for autotools system, merged upstream.
 
- -- Boyuan Yang <byang@debian.org>  Tue, 12 Feb 2019 17:01:53 -0500
+ -- Boyuan Yang <byang@debian.org>  Tue, 12 Feb 2019 17:03:10 -0500
 
 zbar (0.10+doc-11) unstable; urgency=medium
 
