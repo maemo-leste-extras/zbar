@@ -12,11 +12,26 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 # package maintainers to append LDFLAGS
 export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 
+# Introduce standard debhelper variables
 DPKG_EXPORT_BUILDFLAGS = 1
 include /usr/share/dpkg/default.mk
 
+
+# Properly set configure flags
+CONFIGURE_FLAGS =
+
+# We enable libv4l support only on Linux platforms.
+ifeq (,$(findstring linux,$(DEB_HOST_ARCH_OS)))
+    CONFIGURE_FLAGS += --disable-video
+endif
+
+
+
 %:
 	dh $@
+
+override_dh_auto_configure:
+	dh_auto_configure -- $(CONFIGURE_FLAGS)
 
 override_dh_missing:
 	dh_missing --fail-missing
