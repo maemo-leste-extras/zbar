@@ -1,3 +1,16 @@
+zbar (0.21-1~exp1) experimental; urgency=medium
+
+  * QA upload.
+  * New upstream release 0.21.
+  * debian/watch: Monitor new upstream on GitHub.
+  * debian/gbp.conf: Disable gbp-import-orig postimport hook,
+    it is useless now.
+  * debian/rules:
+    + Completely rewrite and use the dh sequencer.
+    + use override_dh_strip to generate automatic debug packages.
+
+ -- Boyuan Yang <byang@debian.org>  Tue, 12 Feb 2019 16:40:45 -0500
+
 zbar (0.10+doc-11) unstable; urgency=medium
 
   * QA upload.
