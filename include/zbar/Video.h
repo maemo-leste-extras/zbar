@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------
-//  Copyright 2007-2009 (c) Jeff Brown <spadix@users.sourceforge.net>
+//  Copyright 2007-2010 (c) Jeff Brown <spadix@users.sourceforge.net>
 //
 //  This file is part of the ZBar Bar Code Reader.
 //
@@ -92,7 +92,7 @@ public:
     /// see zbar_video_init()
     void init (std::string& format)
     {
-        unsigned int fourcc = *(unsigned int*)format.c_str();
+        unsigned int fourcc = zbar_fourcc_parse(format.c_str());
         if(zbar_video_init(_video, fourcc))
             throw_exception(_video);
     }
@@ -159,6 +159,55 @@ public:
     {
         if(zbar_video_request_iomode(_video, iomode))
             throw_exception(_video);
+    }
+
+    /// get the information about a control at a given index
+    /// see zbar_video_get_controls()
+    /// @since 0.11
+    struct video_controls_s *get_controls(int index)
+    {
+        return(zbar_video_get_controls(_video, index));
+    }
+
+    /// set the value on an integer control
+    /// see zbar_video_set_control_n()
+    /// @since 0.11
+    int set_control (const char *name,
+                     int value)
+    {
+        return zbar_video_set_control (_video, name, value);
+    }
+
+    /// set the value on a boolean control
+    /// see zbar_video_set_control_b()
+    /// @since 0.11
+    int set_control (const char *name,
+                     bool value)
+    {
+        return zbar_video_set_control (_video, name, value ? 1 : 0);
+    }
+
+    /// get the value on a boolean control
+    /// see zbar_video_get_control_b()
+    /// @since 0.11
+    int get_control (const char *name,
+                     int *value)
+    {
+        return zbar_video_get_control (_video, name, value);
+    }
+
+    /// get the value on an integer control
+    /// see zbar_video_get_control_n()
+    /// @since 0.11
+    int get_control (const char *name,
+                     bool *value)
+    {
+        int __value;
+        int ret = zbar_video_get_control (_video, name, &__value);
+
+        *value =  __value ? true : false;
+
+        return ret;
     }
 
 private:

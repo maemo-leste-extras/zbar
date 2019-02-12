@@ -26,7 +26,13 @@
 /// @file
 /// Barcode Reader Qt4 Widget
 
-#include <qwidget.h>
+#include <QtGui>
+#if QT_VERSION >= 0x050000
+#  include <QtWidgets>
+#else
+#  include <qwidget.h>
+#endif
+#include <zbar.h>
 
 namespace zbar {
 
@@ -77,8 +83,20 @@ class QZBar : public QWidget
 
 public:
 
+    // Should match the types at video_control_type_e
+    // get_controls() will do the mapping between the two types.
+    enum ControlType {
+        Unknown,
+        Integer,
+        Menu,
+        Button,
+        Integer64,
+        String,
+        Boolean,
+    };
+
     /// constructs a barcode reader widget with the given @a parent
-    QZBar(QWidget *parent = NULL);
+    QZBar(QWidget *parent = NULL, int verbosity = 0);
 
     ~QZBar();
 
@@ -121,6 +139,27 @@ public Q_SLOTS:
 
     /// scan for barcodes in a QImage.
     void scanImage(const QImage &image);
+
+    /// get controls from the camera device
+    int get_controls(int index, char **name = NULL, char **group = NULL,
+                     enum ControlType *type = NULL,
+                     int *min = NULL, int *max = NULL,
+                     int *def = NULL, int *step = NULL);
+
+    /// Get items for control menus
+    QVector< QPair< int , QString > > get_menu(int index);
+
+    // get/set controls from the camera device
+    int set_control(char *name, bool value);
+    int set_control(char *name, int value);
+    int get_control(char *name, bool *value);
+    int get_control(char *name, int *value);
+
+    int set_config(std::string cfgstr);
+    int set_config(zbar_symbol_type_t symbology,
+                   zbar_config_t config,
+                   int value);
+    int request_dbus(bool enabled);
 
 Q_SIGNALS:
     /// emitted when when a video device is opened or closed.

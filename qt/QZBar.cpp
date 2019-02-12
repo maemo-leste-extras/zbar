@@ -23,13 +23,13 @@
 
 #include <qevent.h>
 #include <qurl.h>
-#include <qx11info_x11.h>
+#include <QX11Info>
 #include <zbar/QZBar.h>
 #include "QZBarThread.h"
 
 using namespace zbar;
 
-QZBar::QZBar (QWidget *parent)
+QZBar::QZBar (QWidget *parent, int verbosity)
     : QWidget(parent),
       thread(NULL),
       _videoDevice(),
@@ -47,9 +47,13 @@ QZBar::QZBar (QWidget *parent)
     sizing.setHeightForWidth(true);
     setSizePolicy(sizing);
 
-    thread = new QZBarThread;
+    thread = new QZBarThread (verbosity);
     if(testAttribute(Qt::WA_WState_Created)) {
+#if QT_VERSION >= 0x050000
+        thread->window.attach(QX11Info::display(), winId());
+#else
         thread->window.attach(x11Info().display(), winId());
+#endif
         _attached = 1;
     }
     connect(thread, SIGNAL(videoOpened(bool)),
@@ -96,6 +100,87 @@ void QZBar::setVideoDevice (const QString& videoDevice)
             thread->pushEvent(new QZBarThread::VideoDeviceEvent(videoDevice));
     }
 }
+
+int QZBar::get_controls(int index, char **name, char **group,
+                        enum ControlType *type,
+                        int *min, int *max, int *def, int *step)
+{
+    if(!thread)
+        return 0;
+
+    return thread->get_controls(index, name, group, type,
+                                min, max, def, step);
+}
+
+QVector< QPair< int , QString > > QZBar::get_menu(int index)
+{
+    if(!thread) {
+        QVector< QPair< int , QString > > empty;
+        return empty;
+    }
+
+    return thread->get_menu(index);
+}
+
+
+int QZBar::set_control(char *name, bool value)
+{
+    if(!thread)
+        return 0;
+
+    return thread->set_control(name, value);
+}
+
+int QZBar::set_control(char *name, int value)
+{
+    if(!thread)
+        return 0;
+
+    return thread->set_control(name, value);
+}
+
+int QZBar::get_control(char *name, bool *value)
+{
+    if(!thread)
+        return 0;
+
+    return thread->get_control(name, value);
+}
+
+int QZBar::get_control(char *name, int *value)
+{
+    if(!thread)
+        return 0;
+
+    return thread->get_control(name, value);
+}
+
+int QZBar::set_config(std::string cfgstr)
+{
+    if(!thread)
+        return 0;
+
+    return thread->set_config(cfgstr);
+}
+
+int QZBar::set_config(zbar_symbol_type_t symbology,
+                      zbar_config_t config,
+                      int value)
+{
+    if(!thread)
+        return 0;
+
+    return thread->set_config(symbology, config, value);
+}
+
+int QZBar::request_dbus(bool enabled)
+{
+    if(!thread)
+        return 0;
+
+    return thread->request_dbus(enabled);
+}
+
 
 bool QZBar::isVideoEnabled () const
 {
@@ -183,7 +268,7 @@ void QZBar::paintEvent (QPaintEvent *event)
         if(thread)
             thread->window.redraw();
     }
-    catch(Exception) {
+    catch(Exception&) {
         // sometimes Qt attempts to paint the widget before it's parented(?)
         // just ignore this (can't throw from event anyway)
     }
@@ -196,7 +281,7 @@ void QZBar::resizeEvent (QResizeEvent *event)
         if(thread)
             thread->window.resize(size.rwidth(), size.rheight());
     }
-    catch(Exception) { /* ignore */ }
+    catch(Exception&) { /* ignore */ }
 }
 
 void QZBar::changeEvent(QEvent *event)
@@ -204,9 +289,14 @@ void QZBar::changeEvent(QEvent *event)
     try {
         QMutexLocker locker(&thread->mutex);
         if(event->type() == QEvent::ParentChange)
+#if QT_VERSION >= 0x050000
+            thread->window.attach(QX11Info::display(), winId());
+#else
             thread->window.attach(x11Info().display(), winId());
+#endif
+
     }
-    catch(Exception) { /* ignore (FIXME do something w/error) */ }
+    catch(Exception&) { /* ignore (FIXME do something w/error) */ }
 }
 
 void QZBar::attach ()
@@ -215,14 +305,19 @@ void QZBar::attach ()
         return;
 
     try {
+#if QT_VERSION >= 0x050000
+        thread->window.attach(QX11Info::display(), winId());
+#else
         thread->window.attach(x11Info().display(), winId());
+#endif
+        thread->window.resize(width(), height());
         _attached = 1;
 
         _videoEnabled = !_videoDevice.isEmpty();
         if(_videoEnabled)
             thread->pushEvent(new QZBarThread::VideoDeviceEvent(_videoDevice));
     }
-    catch(Exception) { /* ignore (FIXME do something w/error) */ }
+    catch(Exception&) { /* ignore (FIXME do something w/error) */ }
 }
 
 void QZBar::showEvent (QShowEvent *event)

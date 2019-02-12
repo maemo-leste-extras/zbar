@@ -100,7 +100,34 @@ public:
 
     Window window;
 
-    QZBarThread();
+    QZBarThread(int verbosity = 0);
+
+    int get_controls(int index, char **name = NULL, char **group = NULL,
+                     enum QZBar::ControlType *type = NULL,
+                     int *min = NULL, int *max = NULL,
+                     int *def = NULL, int *step = NULL);
+    QVector< QPair< int , QString > > get_menu(int index);
+    int set_control(char *name, bool value);
+    int set_control(char *name, int value);
+    int get_control(char *name, bool *value);
+    int get_control(char *name, int *value);
+
+    int set_config(std::string cfgstr)
+    {
+        return scanner.set_config(cfgstr);
+    }
+
+    int set_config(zbar_symbol_type_t symbology,
+                   zbar_config_t config,
+                   int value)
+    {
+        return scanner.set_config(symbology, config, value);
+    }
+
+    int request_dbus(bool enabled)
+    {
+        return scanner.request_dbus(enabled);
+    }
 
     void pushEvent (QEvent *e)
     {

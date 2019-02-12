@@ -69,6 +69,9 @@ struct zbar_video_s {
     uint32_t format;            /* selected fourcc */
     unsigned palette;           /* v4l1 format index corresponding to format */
     uint32_t *formats;          /* 0 terminated list of supported formats */
+    uint32_t *emu_formats;      /* 0 terminated list of emulated formats */
+
+    struct video_controls_s *controls;  /* linked list of controls */
 
     unsigned long datalen;      /* size of image data for selected format */
     unsigned long buflen;       /* total size of image data buffer */
@@ -96,9 +99,26 @@ struct zbar_video_s {
     int (*start)(zbar_video_t*);
     int (*stop)(zbar_video_t*);
     int (*nq)(zbar_video_t*, zbar_image_t*);
+    /** set value of video control
+     *  implemented by v4l2_set_control()
+     *  @param name name of a control, acceptable names are listed
+     *         in processor.h
+     *  @param value pointer to value of a type specified by flags
+     */
+    int (*set_control)(zbar_video_t*, const char* name, void* value);
+    /** get value of video control
+     *  implemented by v4l2_get_control()
+     *  @param name name of a control, acceptable names are listed
+     *         in processor.h
+     *  @param value pointer to a receiver of a value of a type
+     *         specified by flags
+     */
+    int (*get_control)(zbar_video_t*, const char* name, void* value);
+
+    void (*free)(zbar_video_t*);
+
     zbar_image_t* (*dq)(zbar_video_t*);
 };
-
 
 /* video.next_image and video.recycle_image have to be thread safe
  * wrt/other apis

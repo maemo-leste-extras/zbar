@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------
- *  Copyright 2007-2009 (c) Jeff Brown <spadix@users.sourceforge.net>
+ *  Copyright 2007-2010 (c) Jeff Brown <spadix@users.sourceforge.net>
  *
  *  This file is part of the ZBar Bar Code Reader.
  *
@@ -22,6 +22,8 @@
  *------------------------------------------------------------------------*/
 #ifndef _ZBAR_H_
 #define _ZBAR_H_
+
+#include <stdint.h>
 
 /** @file
  * ZBar Barcode Reader C API definition
@@ -86,22 +88,58 @@ typedef enum zbar_color_e {
 typedef enum zbar_symbol_type_e {
     ZBAR_NONE        =      0,  /**< no symbol decoded */
     ZBAR_PARTIAL     =      1,  /**< intermediate status */
+    ZBAR_EAN2        =      2,  /**< GS1 2-digit add-on */
+    ZBAR_EAN5        =      5,  /**< GS1 5-digit add-on */
     ZBAR_EAN8        =      8,  /**< EAN-8 */
     ZBAR_UPCE        =      9,  /**< UPC-E */
     ZBAR_ISBN10      =     10,  /**< ISBN-10 (from EAN-13). @since 0.4 */
     ZBAR_UPCA        =     12,  /**< UPC-A */
     ZBAR_EAN13       =     13,  /**< EAN-13 */
     ZBAR_ISBN13      =     14,  /**< ISBN-13 (from EAN-13). @since 0.4 */
+    ZBAR_COMPOSITE   =     15,  /**< EAN/UPC composite */
     ZBAR_I25         =     25,  /**< Interleaved 2 of 5. @since 0.4 */
+    ZBAR_DATABAR     =     34,  /**< GS1 DataBar (RSS). @since 0.11 */
+    ZBAR_DATABAR_EXP =     35,  /**< GS1 DataBar Expanded. @since 0.11 */
+    ZBAR_CODABAR     =     38,  /**< Codabar. @since 0.11 */
     ZBAR_CODE39      =     39,  /**< Code 39. @since 0.4 */
     ZBAR_PDF417      =     57,  /**< PDF417. @since 0.6 */
     ZBAR_QRCODE      =     64,  /**< QR Code. @since 0.10 */
+    ZBAR_SQCODE      =     80,  /**< SQ Code. @since 0.20.1 */
+    ZBAR_CODE93      =     93,  /**< Code 93. @since 0.11 */
     ZBAR_CODE128     =    128,  /**< Code 128 */
-    ZBAR_SYMBOL      = 0x00ff,  /**< mask for base symbol type */
-    ZBAR_ADDON2      = 0x0200,  /**< 2-digit add-on flag */
-    ZBAR_ADDON5      = 0x0500,  /**< 5-digit add-on flag */
-    ZBAR_ADDON       = 0x0700,  /**< add-on flag mask */
+
+    /** mask for base symbol type.
+     * @deprecated in 0.11, remove this from existing code
+     */
+    ZBAR_SYMBOL      = 0x00ff,
+    /** 2-digit add-on flag.
+     * @deprecated in 0.11, a ::ZBAR_EAN2 component is used for
+     * 2-digit GS1 add-ons
+     */
+    ZBAR_ADDON2      = 0x0200,
+    /** 5-digit add-on flag.
+     * @deprecated in 0.11, a ::ZBAR_EAN5 component is used for
+     * 5-digit GS1 add-ons
+     */
+    ZBAR_ADDON5      = 0x0500,
+    /** add-on flag mask.
+     * @deprecated in 0.11, GS1 add-ons are represented using composite
+     * symbols of type ::ZBAR_COMPOSITE; add-on components use ::ZBAR_EAN2
+     * or ::ZBAR_EAN5
+     */
+    ZBAR_ADDON       = 0x0700,
 } zbar_symbol_type_t;
+
+/** decoded symbol coarse orientation.
+ * @since 0.11
+ */
+typedef enum zbar_orientation_e {
+    ZBAR_ORIENT_UNKNOWN = -1,   /**< unable to determine orientation */
+    ZBAR_ORIENT_UP,             /**< upright, read left to right */
+    ZBAR_ORIENT_RIGHT,          /**< sideways, read top to bottom */
+    ZBAR_ORIENT_DOWN,           /**< upside-down, read right to left */
+    ZBAR_ORIENT_LEFT,           /**< sideways, read bottom to top */
+} zbar_orientation_t;
 
 /** error codes. */
 typedef enum zbar_error_e {
@@ -133,11 +171,78 @@ typedef enum zbar_config_e {
     ZBAR_CFG_MIN_LEN = 0x20,    /**< minimum data length for valid decode */
     ZBAR_CFG_MAX_LEN,           /**< maximum data length for valid decode */
 
+    ZBAR_CFG_UNCERTAINTY = 0x40,/**< required video consistency frames */
+
     ZBAR_CFG_POSITION = 0x80,   /**< enable scanner to collect position data */
 
     ZBAR_CFG_X_DENSITY = 0x100, /**< image scanner vertical scan density */
     ZBAR_CFG_Y_DENSITY,         /**< image scanner horizontal scan density */
 } zbar_config_t;
+
+/** decoder symbology modifier flags.
+ * @since 0.11
+ */
+typedef enum zbar_modifier_e {
+    /** barcode tagged as GS1 (EAN.UCC) reserved
+     * (eg, FNC1 before first data character).
+     * data may be parsed as a sequence of GS1 AIs
+     */
+    ZBAR_MOD_GS1 = 0,
+
+    /** barcode tagged as AIM reserved
+     * (eg, FNC1 after first character or digit pair)
+     */
+    ZBAR_MOD_AIM,
+
+    /** number of modifiers */
+    ZBAR_MOD_NUM,
+} zbar_modifier_t;
+
+typedef enum video_control_type_e {
+    VIDEO_CNTL_INTEGER = 1,
+    VIDEO_CNTL_MENU,
+    VIDEO_CNTL_BUTTON,
+    VIDEO_CNTL_INTEGER64,
+    VIDEO_CNTL_STRING,
+    VIDEO_CNTL_BOOLEAN,
+} video_control_type_t;
+
+/** store video control menu
+ * @param name name of the menu item
+ * @param val integer value associated with the item
+ */
+typedef struct video_control_menu_s {
+    char *name;
+    int64_t value;
+} video_control_menu_t;
+
+/** store video controls
+ * @param name name of the control
+ * @param group name of the control group/class
+ * @param type type of the control
+ * @param min minimum value of control (if control is integer)
+ * @param max maximum value of control (if control is integer)
+ * @param def default value of control (if control is integer)
+ * @param step increment steps (if control is integer)
+ * @param menu menu array
+ * @param menu_size menu size
+ * @since 0.20
+ */
+typedef struct video_controls_s {
+    char *name;
+    char *group;
+    video_control_type_t type;
+
+    int64_t min, max, def;
+    uint64_t step;
+
+    unsigned int menu_size;
+    video_control_menu_t *menu;
+
+    void *next;
+
+    // video drivers may add extra private data in the end of this struct
+} video_controls_t;
 
 /** retrieve runtime library version information.
  * @param major set to the running major version (unless NULL)
@@ -145,7 +250,8 @@ typedef enum zbar_config_e {
  * @returns 0
  */
 extern int zbar_version(unsigned *major,
-                        unsigned *minor);
+                        unsigned *minor,
+			unsigned *patch);
 
 /** set global library debug level.
  * @param verbosity desired debug level.  higher values create more spew
@@ -168,8 +274,31 @@ extern const char *zbar_get_symbol_name(zbar_symbol_type_t sym);
  * @param sym symbol type encoding
  * @returns static string name for any addon, or the empty string
  * if no addons were decoded
+ * @deprecated in 0.11
  */
 extern const char *zbar_get_addon_name(zbar_symbol_type_t sym);
+
+/** retrieve string name for configuration setting.
+ * @param config setting to name
+ * @returns static string name for config,
+ * or the empty string if value is not a known config
+ */
+extern const char *zbar_get_config_name(zbar_config_t config);
+
+/** retrieve string name for modifier.
+ * @param modifier flag to name
+ * @returns static string name for modifier,
+ * or the empty string if the value is not a known flag
+ */
+extern const char *zbar_get_modifier_name(zbar_modifier_t modifier);
+
+/** retrieve string name for orientation.
+ * @param orientation orientation encoding
+ * @returns the static string name for the specified orientation,
+ * or "UNKNOWN" if the orientation is not recognized
+ * @since 0.11
+ */
+extern const char *zbar_get_orientation_name(zbar_orientation_t orientation);
 
 /** parse a configuration string of the form "[symbology.]config[=value]".
  * the config must match one of the recognized names.
@@ -183,6 +312,30 @@ extern int zbar_parse_config(const char *config_string,
                              zbar_symbol_type_t *symbology,
                              zbar_config_t *config,
                              int *value);
+
+/** consistently compute fourcc values across architectures
+ * (adapted from v4l2 specification)
+ * @since 0.11
+ */
+#define zbar_fourcc(a, b, c, d)                 \
+        ((unsigned long)(a) |                   \
+         ((unsigned long)(b) << 8) |            \
+         ((unsigned long)(c) << 16) |           \
+         ((unsigned long)(d) << 24))
+
+/** parse a fourcc string into its encoded integer value.
+ * @since 0.11
+ */
+static inline unsigned long zbar_fourcc_parse (const char *format)
+{
+    unsigned long fourcc = 0;
+    if(format) {
+        int i;
+        for(i = 0; i < 4 && format[i]; i++)
+            fourcc |= ((unsigned long)format[i]) << (i * 8);
+    }
+    return(fourcc);
+}
 
 /** @internal type unsafe error API (don't use) */
 extern int _zbar_error_spew(const void *object,
@@ -228,6 +381,20 @@ extern void zbar_symbol_ref(const zbar_symbol_t *symbol,
  * @returns the symbol type
  */
 extern zbar_symbol_type_t zbar_symbol_get_type(const zbar_symbol_t *symbol);
+
+/** retrieve symbology boolean config settings.
+ * @returns a bitmask indicating which configs were set for the detected
+ * symbology during decoding.
+ * @since 0.11
+ */
+extern unsigned int zbar_symbol_get_configs(const zbar_symbol_t *symbol);
+
+/** retrieve symbology modifier flag settings.
+ * @returns a bitmask indicating which characteristics were detected
+ * during decoding.
+ * @since 0.11
+ */
+extern unsigned int zbar_symbol_get_modifiers(const zbar_symbol_t *symbol);
 
 /** retrieve data decoded from symbol.
  * @returns the data string
@@ -283,6 +450,14 @@ extern int zbar_symbol_get_loc_x(const zbar_symbol_t *symbol,
  */
 extern int zbar_symbol_get_loc_y(const zbar_symbol_t *symbol,
                                  unsigned index);
+
+/** retrieve general orientation of decoded symbol.
+ * @returns a coarse, axis-aligned indication of symbol orientation or
+ * ::ZBAR_ORIENT_UNKNOWN if unknown
+ * @since 0.11
+ */
+extern zbar_orientation_t
+zbar_symbol_get_orientation(const zbar_symbol_t *symbol);
 
 /** iterate the set to which this symbol belongs (there can be only one).
  * @returns the next symbol in the set, or
@@ -356,6 +531,14 @@ extern int zbar_symbol_set_get_size(const zbar_symbol_set_t *symbols);
  */
 extern const zbar_symbol_t*
 zbar_symbol_set_first_symbol(const zbar_symbol_set_t *symbols);
+
+/** raw result iterator.
+ * @returns the first decoded symbol result in a set, *before* filtering
+ * @returns NULL if the set is empty
+ * @since 0.11
+ */
+extern const zbar_symbol_t*
+zbar_symbol_set_first_unfiltered(const zbar_symbol_set_t *symbols);
 
 /*@}*/
 
@@ -456,6 +639,25 @@ extern unsigned zbar_image_get_width(const zbar_image_t *image);
  */
 extern unsigned zbar_image_get_height(const zbar_image_t *image);
 
+/** retrieve both dimensions of the image.
+ * fills in the width and height in samples
+ */
+extern void zbar_image_get_size(const zbar_image_t *image,
+                                unsigned *width,
+                                unsigned *height);
+
+/** retrieve the crop rectangle.
+ * fills in the image coordinates of the upper left corner and size
+ * of an axis-aligned rectangular area of the image that will be scanned.
+ * defaults to the full image
+ * @since 0.11
+ */
+extern void zbar_image_get_crop(const zbar_image_t *image,
+                                unsigned *x,
+                                unsigned *y,
+                                unsigned *width,
+                                unsigned *height);
+
 /** return the image sample data.  the returned data buffer is only
  * valid until zbar_image_destroy() is called
  */
@@ -505,9 +707,21 @@ extern void zbar_image_set_sequence(zbar_image_t *image,
                                     unsigned sequence_num);
 
 /** specify the pixel size of the image.
+ * @note this also resets the crop rectangle to the full image
+ * (0, 0, width, height)
  * @note this does not affect the data!
  */
 extern void zbar_image_set_size(zbar_image_t *image,
+                                unsigned width,
+                                unsigned height);
+
+/** specify a rectangular region of the image to scan.
+ * the rectangle will be clipped to the image boundaries.
+ * defaults to the full image specified by zbar_image_set_size()
+ */
+extern void zbar_image_set_crop(zbar_image_t *image,
+                                unsigned x,
+                                unsigned y,
                                 unsigned width,
                                 unsigned height);
 
@@ -675,6 +889,24 @@ extern int zbar_processor_set_config(zbar_processor_t *processor,
                                      zbar_config_t config,
                                      int value);
 
+/** set video control value
+ * @returns 0 for success, non-0 for failure
+ * @since 0.20
+ * @see zbar_video_set_control()
+ */
+extern int zbar_processor_set_control (zbar_processor_t *processor,
+                                       const char *control_name,
+                                       int value);
+
+/** get video control value
+ * @returns 0 for success, non-0 for failure
+ * @since 0.20
+ * @see zbar_video_get_control()
+ */
+extern int zbar_processor_get_control (zbar_processor_t *processor,
+                                       const char *control_name,
+                                       int *value);
+
 /** parse configuration string using zbar_parse_config()
  * and apply to processor using zbar_processor_set_config().
  * @returns 0 for success, non-0 for failure
@@ -753,6 +985,12 @@ extern int zbar_process_one(zbar_processor_t *processor,
  */
 extern int zbar_process_image(zbar_processor_t *processor,
                               zbar_image_t *image);
+
+/** enable dbus IPC API.
+ * @returns 0 succesful
+ */
+int zbar_processor_request_dbus(zbar_processor_t *proc,
+                                int req_dbus_enabled);
 
 /** display detail for last processor error to stderr.
  * @returns a non-zero value suitable for passing to exit()
@@ -875,6 +1113,33 @@ extern int zbar_video_enable(zbar_video_t *video,
  * @returns NULL if video is not enabled or an error occurs
  */
 extern zbar_image_t *zbar_video_next_image(zbar_video_t *video);
+
+/** set video control value (integer).
+ * @returns 0 for success, non-0 for failure
+ * @since 0.20
+ * @see zbar_processor_set_control()
+ */
+extern int zbar_video_set_control (zbar_video_t *video,
+                                   const char *control_name,
+                                   int value);
+
+
+/** get video control value (integer).
+ * @returns 0 for success, non-0 for failure
+ * @since 0.20
+ * @see zbar_processor_get_control()
+ */
+extern int zbar_video_get_control (zbar_video_t *video,
+                                   const char *control_name,
+                                   int *value);
+
+/** get available controls from video source
+ * @returns 0 for success, non-0 for failure
+ * @since 0.20
+ */
+extern struct video_controls_s
+*zbar_video_get_controls (const zbar_video_t *video,
+                          int index);
 
 /** display detail for last video error to stderr.
  * @returns a non-zero value suitable for passing to exit()
@@ -1028,6 +1293,13 @@ zbar_image_scanner_set_data_handler(zbar_image_scanner_t *scanner,
                                     const void *userdata);
 
 
+/** request sending decoded codes via D-Bus
+ * @see zbar_processor_parse_config()
+ * @since 0.21
+ */
+extern int zbar_image_scanner_request_dbus(zbar_image_scanner_t *scanner,
+                                           int req_dbus_enabled);
+
 /** set config for indicated symbology (0 for all) to specified value.
  * @returns 0 for success, non-0 for failure (config does not apply to
  * specified symbology, or value out of range)
@@ -1148,6 +1420,14 @@ static inline int zbar_decoder_parse_config (zbar_decoder_t *decoder,
            zbar_decoder_set_config(decoder, sym, cfg, val));
 }
 
+/** retrieve symbology boolean config settings.
+ * @returns a bitmask indicating which configs are currently set for the
+ * specified symbology.
+ * @since 0.11
+ */
+extern unsigned int zbar_decoder_get_configs(const zbar_decoder_t *decoder,
+                                             zbar_symbol_type_t symbology);
+
 /** clear all decoder state.
  * any partial symbols are flushed
  */
@@ -1194,6 +1474,20 @@ zbar_decoder_get_data_length(const zbar_decoder_t *decoder);
  */
 extern zbar_symbol_type_t
 zbar_decoder_get_type(const zbar_decoder_t *decoder);
+
+/** retrieve modifier flags for the last decoded symbol.
+ * @returns a bitmask indicating which characteristics were detected
+ * during decoding.
+ * @since 0.11
+ */
+extern unsigned int zbar_decoder_get_modifiers(const zbar_decoder_t *decoder);
+
+/** retrieve last decode direction.
+ * @returns 1 for forward and -1 for reverse
+ * @returns 0 if the decode direction is unknown or does not apply
+ * @since 0.11
+ */
+extern int zbar_decoder_get_direction(const zbar_decoder_t *decoder);
 
 /** setup data handler callback.
  * the registered function will be called by the decoder

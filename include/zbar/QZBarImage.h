@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------
-//  Copyright 2008-2009 (c) Jeff Brown <spadix@users.sourceforge.net>
+//  Copyright 2008-2010 (c) Jeff Brown <spadix@users.sourceforge.net>
 //
 //  This file is part of the ZBar Bar Code Reader.
 //
@@ -53,8 +53,12 @@ public:
         unsigned width = bpl / 4;
         unsigned height = qimg.height();
         set_size(width, height);
-        set_format('B' | ('G' << 8) | ('R' << 16) | ('4' << 24));
+        set_format(zbar_fourcc('B','G','R','4'));
+#if QT_VERSION >= 0x050000
+        unsigned long datalen = qimg.byteCount();
+#else
         unsigned long datalen = qimg.numBytes();
+#endif
         set_data(qimg.bits(), datalen);
 
         if((width * 4 != bpl) ||

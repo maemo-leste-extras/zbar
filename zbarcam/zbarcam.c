@@ -48,6 +48,9 @@ static const char *note_usage =
     "    --verbose=N     set specific debug output level\n"
     "    --xml           use XML output format\n"
     "    --raw           output decoded symbol data without symbology prefix\n"
+#ifdef HAVE_DBUS
+    "    --nodbus        disable dbus message\n"
+#endif
     "    --nodisplay     disable video display window\n"
     "    --prescale=<W>x<H>\n"
     "                    request alternate video image size from driver\n"
@@ -105,17 +108,27 @@ static void data_handler (zbar_image_t *img, const void *userdata)
         if(type == ZBAR_PARTIAL)
             continue;
 
-        if(!format)
-            printf("%s%s:%s\n",
-                   zbar_get_symbol_name(type), zbar_get_addon_name(type),
-                   zbar_symbol_get_data(sym));
-        else if(format == RAW)
-            printf("%s\n", zbar_symbol_get_data(sym));
+        if(!format) {
+            printf("%s:", zbar_get_symbol_name(type));
+            if(fwrite(zbar_symbol_get_data(sym),
+                      zbar_symbol_get_data_length(sym),
+                      1, stdout) != 1)
+                continue;
+        }
+        else if(format == RAW) {
+            if(fwrite(zbar_symbol_get_data(sym),
+                      zbar_symbol_get_data_length(sym),
+                      1, stdout) != 1)
+                continue;
+        }
         else if(format == XML) {
             if(!n)
                 printf("<index num='%u'>\n", zbar_image_get_sequence(img));
-            printf("%s\n", zbar_symbol_xml(sym, &xml_buf, &xml_len));
+            zbar_symbol_xml(sym, &xml_buf, &xml_len);
+            if(fwrite(xml_buf, xml_len, 1, stdout) != 1)
+                continue;
         }
+        printf("\n");
         n++;
     }
 
@@ -140,6 +153,9 @@ int main (int argc, const char *argv[])
     zbar_processor_set_data_handler(proc, data_handler, NULL);
 
     const char *video_device = "";
+#ifdef HAVE_DBUS
+    int dbus = 1;
+#endif
     int display = 1;
     unsigned long infmt = 0, outfmt = 0;
     int i;
@@ -193,6 +209,12 @@ int main (int argc, const char *argv[])
             format = XML;
         else if(!strcmp(argv[i], "--raw"))
             format = RAW;
+        else if(!strcmp(argv[i], "--nodbus"))
+#ifdef HAVE_DBUS
+            dbus = 0;
+#else
+           ; /* silently ignore the option */
+#endif
         else if(!strcmp(argv[i], "--nodisplay"))
             display = 0;
         else if(!strcmp(argv[i], "--verbose"))
@@ -237,6 +259,10 @@ int main (int argc, const char *argv[])
     if(infmt || outfmt)
         zbar_processor_force_format(proc, infmt, outfmt);
 
+#ifdef HAVE_DBUS
+    zbar_processor_request_dbus(proc, dbus);
+#endif
+
     /* open video device, open window */
     if(zbar_processor_init(proc, video_device, display) ||
        /* show window */
@@ -262,6 +288,18 @@ int main (int argc, const char *argv[])
     while((rc = zbar_processor_user_wait(proc, -1)) >= 0) {
         if(rc == 'q' || rc == 'Q')
             break;
+        // HACK: controls are known on V4L2 by ID, not by name. This is also
+        // not compatible with other platforms
+        if(rc == 'b' || rc == 'B') {
+            int value;
+            zbar_processor_get_control(proc, "Brightness", &value);
+            zbar_processor_set_control(proc, "Brightness", ++value);
+        }
+        if(rc == 'n' || rc == 'N') {
+            int value;
+            zbar_processor_get_control(proc, "Brightness", &value);
+            zbar_processor_set_control(proc, "Brightness", --value);
+        }
         if(rc == ' ') {
             active = !active;
             if(zbar_processor_set_active(proc, active))
