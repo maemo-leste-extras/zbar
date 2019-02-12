@@ -1,6 +1,3 @@
-AM_CPPFLAGS = -I$(srcdir)/include
-AM_CFLAGS = -Wall -Wno-parentheses
-AM_CXXFLAGS = $(AM_CFLAGS)
 ACLOCAL_AMFLAGS = -I config
 bin_PROGRAMS =
 check_PROGRAMS =
@@ -9,13 +6,16 @@ lib_LTLIBRARIES =
 pyexec_LTLIBRARIES =
 CLEANFILES =
 DISTCLEANFILES =
+MAINTAINERCLEANFILES =
 BUILT_SOURCES =
 EXTRA_DIST =
+SUBDIRS = .
+PHONY = $(SUBDIRS)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = zbar.pc
 
-dist_doc_DATA = COPYING HACKING INSTALL LICENSE NEWS README TODO
+dist_doc_DATA = COPYING HACKING INSTALL.md LICENSE NEWS README.md TODO
 
 include $(srcdir)/include/Makefile.am.inc
 include $(srcdir)/zbar/Makefile.am.inc
@@ -39,19 +39,27 @@ if HAVE_QT
 include $(srcdir)/qt/Makefile.am.inc
 pkgconfig_DATA += zbar-qt.pc
 endif
+if HAVE_JAVA
+SUBDIRS += java
+endif
 if HAVE_NPAPI
 include $(srcdir)/plugin/Makefile.am.inc
 endif
 include $(srcdir)/test/Makefile.am.inc
+if HAVE_DOC
 include $(srcdir)/doc/Makefile.am.inc
+endif
+
+if HAVE_DBUS
+dbusconfdir = @DBUS_CONFDIR@
+dbusconf_DATA = $(srcdir)/dbus/org.linuxtv.Zbar.conf
+EXTRA_DIST += $(dbusconf_DATA)
+endif
 
 EXTRA_DIST += zbar.ico zbar.nsi
 
-EXTRA_DIST += examples/upcrpc.pl examples/upcrpc.py examples/paginate.pl \
-    examples/barcode.png examples/processor.pl examples/processor.py \
-    examples/read_one.py examples/read_one.pl \
-    examples/scan_image.c examples/scan_image.cpp examples/scan_image.pl \
-    examples/scan_image.py examples/scan_image.vcproj
+EXTRA_DIST += examples/*.png examples/upcrpc.py examples/upcrpc.pl \
+    examples/scan_image.c examples/scan_image.cpp examples/scan_image.vcproj
 
 EXTRA_DIST += perl/MANIFEST perl/README perl/Changes perl/COPYING.LIB \
     perl/Makefile.PL perl/typemap perl/ZBar.xs perl/ppport.h \
@@ -87,4 +95,12 @@ dist-nsis: html-local
 	cd _nsis && \
 	  makensis -NOCD -V2 -DVERSION=$(VERSION) $(abs_srcdir)/zbar.nsi
 	@ls -l _nsis/zbar-$(VERSION)-setup.exe
+
+PHONY += dist-nsis
 endif
+
+archive:
+	git archive --format=tar --prefix=zbar-$(VERSION)/ -o zbar-$(VERSION).tar $(VERSION)
+	bzip2 zbar-$(VERSION).tar
+
+.PHONY : $(PHONY) archive

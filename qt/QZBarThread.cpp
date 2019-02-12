@@ -26,9 +26,9 @@
 
 using namespace zbar;
 
-static const QString textFormat("%1%2:%3");
+static const QString textFormat("%1:%2");
 
-QZBarThread::QZBarThread ()
+QZBarThread::QZBarThread (int verbosity)
     : _videoOpened(false),
       reqWidth(DEFAULT_WIDTH),
       reqHeight(DEFAULT_HEIGHT),
@@ -38,6 +38,7 @@ QZBarThread::QZBarThread ()
       videoRunning(false),
       videoEnabled(false)
 {
+    zbar_set_verbosity(verbosity);
     scanner.set_handler(*this);
 }
 
@@ -52,7 +53,6 @@ void QZBarThread::image_callback (Image &image)
 
             emit decodedText(textFormat.arg(
                 QString::fromStdString(sym->get_type_name()),
-                QString::fromStdString(sym->get_addon_name()),
                 data));
         }
 }
@@ -168,7 +168,7 @@ void QZBarThread::scanImageEvent (ScanImageEvent *e)
 
 bool QZBarThread::event (QEvent *e)
 {
-    switch(e->type()) {
+    switch((EventType)e->type()) {
     case VideoDevice:
         videoDeviceEvent((VideoDeviceEvent*)e);
         break;
@@ -231,4 +231,110 @@ void QZBarThread::run ()
     }
     clear();
     openVideo("");
+}
+
+QVector< QPair< int , QString > > QZBarThread::get_menu(int index)
+{
+    QVector< QPair< int , QString > > vector;
+    struct video_controls_s *ctrl;
+
+    if(!video)
+        return vector;
+
+    ctrl = video->get_controls(index);
+    if (!ctrl)
+        return vector;
+
+    for (unsigned int i = 0; i < ctrl->menu_size; i++)
+        vector.append(qMakePair((int)ctrl->menu[i].value,
+                                QString::fromUtf8(ctrl->menu[i].name)));
+
+    return vector;
+}
+
+int QZBarThread::get_controls(int index, char **name, char **group,
+                              enum QZBar::ControlType *type,
+                              int *min, int *max, int *def, int *step)
+{
+    struct video_controls_s *ctrl;
+
+    if(!video)
+        return 0;
+
+    ctrl = video->get_controls(index);
+    if (!ctrl)
+        return 0;
+
+    if (name)
+        *name = ctrl->name;
+    if (group)
+        *group = ctrl->group;
+    if (min)
+        *min = ctrl->min;
+    if (max)
+        *max = ctrl->max;
+    if (def)
+        *def = ctrl->def;
+    if (step)
+        *step = ctrl->step;
+
+    if (type) {
+        switch (ctrl->type) {
+        case VIDEO_CNTL_INTEGER:
+            *type = QZBar::Integer;
+            break;
+        case VIDEO_CNTL_MENU:
+            *type = QZBar::Menu;
+            break;
+        case VIDEO_CNTL_BUTTON:
+            *type = QZBar::Button;
+            break;
+        case VIDEO_CNTL_INTEGER64:
+            *type = QZBar::Integer64;
+            break;
+        case VIDEO_CNTL_STRING:
+            *type = QZBar::String;
+            break;
+        case VIDEO_CNTL_BOOLEAN:
+            *type = QZBar::Boolean;
+            break;
+        default:
+            *type = QZBar::Unknown;
+            break;
+        }
+    }
+
+    return 1;
+}
+
+int QZBarThread::set_control(char *name, bool value)
+{
+    if(!video)
+        return 0;
+
+    return video->set_control(name, value);
+}
+
+int QZBarThread::set_control(char *name, int value)
+{
+    if(!video)
+        return 0;
+
+    return video->set_control(name, value);
+}
+
+int QZBarThread::get_control(char *name, bool *value)
+{
+    if(!video)
+        return 0;
+
+    return video->get_control(name, value);
+}
+
+int QZBarThread::get_control(char *name, int *value)
+{
+    if(!video)
+        return 0;
+
+    return video->get_control(name, value);
 }

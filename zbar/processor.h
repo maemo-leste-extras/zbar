@@ -99,6 +99,8 @@ struct zbar_processor_s {
     proc_waiter_t *free_waiter;
 
     processor_state_t *state;
+
+    int is_dbus_enabled;                /* dbus enabled flag */
 };
 
 /* processor lock API */

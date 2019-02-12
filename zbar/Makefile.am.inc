@@ -19,11 +19,20 @@ EXTRA_zbar_libzbar_la_SOURCES = zbar/svg.h zbar/svg.c
 if ENABLE_EAN
 zbar_libzbar_la_SOURCES += zbar/decoder/ean.h zbar/decoder/ean.c
 endif
+if ENABLE_DATABAR
+zbar_libzbar_la_SOURCES += zbar/decoder/databar.h zbar/decoder/databar.c
+endif
 if ENABLE_CODE128
 zbar_libzbar_la_SOURCES += zbar/decoder/code128.h zbar/decoder/code128.c
 endif
+if ENABLE_CODE93
+zbar_libzbar_la_SOURCES += zbar/decoder/code93.h zbar/decoder/code93.c
+endif
 if ENABLE_CODE39
 zbar_libzbar_la_SOURCES += zbar/decoder/code39.h zbar/decoder/code39.c
+endif
+if ENABLE_CODABAR
+zbar_libzbar_la_SOURCES += zbar/decoder/codabar.h zbar/decoder/codabar.c
 endif
 if ENABLE_I25
 zbar_libzbar_la_SOURCES += zbar/decoder/i25.h zbar/decoder/i25.c
@@ -42,6 +51,10 @@ zbar_libzbar_la_SOURCES += zbar/qrcode.h \
     zbar/qrcode/binarize.h zbar/qrcode/binarize.c \
     zbar/qrcode/util.h zbar/qrcode/util.c
 endif
+if ENABLE_SQCODE
+zbar_libzbar_la_SOURCES += zbar/sqcode.h zbar/sqcode.c \
+    zbar/decoder/sq_finder.h zbar/decoder/sq_finder.c
+endif
 
 if WIN32
 zbar_libzbar_la_SOURCES += zbar/processor/win.c zbar/libzbar.rc
@@ -53,11 +66,14 @@ else
 zbar_libzbar_la_SOURCES += zbar/processor/posix.h zbar/processor/posix.c
 endif
 
-if HAVE_V4L1
-zbar_libzbar_la_SOURCES += zbar/video/v4l1.c
 if HAVE_V4L2
-zbar_libzbar_la_SOURCES += zbar/video/v4l2.c
+zbar_libzbar_la_SOURCES += zbar/video/v4l.c zbar/video/v4l2.c
 endif
+if HAVE_V4L1
+if !HAVE_V4L2
+zbar_libzbar_la_SOURCES += zbar/video/v4l.c
+endif
+zbar_libzbar_la_SOURCES += zbar/video/v4l1.c
 endif
 if WIN32
 if HAVE_VIDEO
@@ -67,6 +83,10 @@ endif
 endif
 if !HAVE_VIDEO
 zbar_libzbar_la_SOURCES += zbar/video/null.c
+endif
+
+if HAVE_LIBV4L
+zbar_libzbar_la_LIBADD += $(V4L2_LIBS)
 endif
 
 if HAVE_JPEG
@@ -92,6 +112,10 @@ zbar_libzbar_la_LIBADD += -lgdi32 -lwinmm
 else
 zbar_libzbar_la_SOURCES += zbar/processor/null.c zbar/window/null.c
 endif
+endif
+
+if HAVE_DBUS
+zbar_libzbar_la_LDFLAGS += $(DBUS_LIBS)
 endif
 
 zbar_libzbar_la_LDFLAGS += $(AM_LDFLAGS)

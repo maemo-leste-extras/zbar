@@ -8,6 +8,9 @@ nodist_qt_libzbarqt_la_SOURCES = qt/moc_QZBar.cpp qt/moc_QZBarThread.cpp
 BUILT_SOURCES += $(nodist_qt_libzbarqt_la_SOURCES)
 DISTCLEANFILES += $(nodist_qt_libzbarqt_la_SOURCES)
 
+clean-local:
+	-rm -vf qt/moc_*.cpp
+
 qt/moc_%.cpp: qt/%.h
 	$(MOC) $(qt_libzbarqt_la_CPPFLAGS) $< -o $@
 

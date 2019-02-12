@@ -28,6 +28,10 @@ check_PROGRAMS += test/test_cpp
 test_test_cpp_SOURCES = test/test_cpp.cpp
 test_test_cpp_LDADD = zbar/libzbar.la $(AM_LDADD)
 
+check_PROGRAMS += test/test_cpp_img
+test_test_cpp_img_SOURCES = test/test_cpp_img.cpp $(TEST_IMAGE_SOURCES)
+test_test_cpp_img_LDADD = zbar/libzbar.la $(AM_LDADD)
+
 if HAVE_JPEG
 check_PROGRAMS += test/test_jpeg
 test_test_jpeg_SOURCES = test/test_jpeg.c
@@ -41,24 +45,10 @@ test_dbg_scan_CPPFLAGS = $(MAGICK_CFLAGS) $(AM_CPPFLAGS)
 test_dbg_scan_LDADD = $(MAGICK_LIBS) -lMagick++ zbar/libzbar.la $(AM_LDADD)
 endif
 
-if HAVE_GTK
-check_PROGRAMS += test/test_gtk
-test_test_gtk_SOURCES = test/test_gtk.c test/scan_video.c
-test_test_gtk_CPPFLAGS = $(GTK_CFLAGS) $(AM_CPPFLAGS)
-test_test_gtk_LDADD = $(GTK_LIBS) gtk/libzbargtk.la $(AM_LDADD)
-endif
-
-if HAVE_QT
-check_PROGRAMS += test/test_qt
-test_test_qt_SOURCES = test/test_qt.cpp test/scan_video.c
-nodist_test_test_qt_SOURCES = test/moc_test_qt.h
-test_test_qt_CPPFLAGS = -Itest $(QT_CFLAGS) $(AM_CPPFLAGS)
-test_test_qt_LDADD = $(QT_LIBS) qt/libzbarqt.la $(AM_LDADD)
-BUILT_SOURCES += $(nodist_test_test_qt_SOURCES)
-DISTCLEANFILES += $(nodist_test_test_qt_SOURCES)
-
-test/moc_%.h: test/%.cpp
-	$(MOC) -i $(test_test_qt_CPPFLAGS) $< -o $@
+if HAVE_DBUS
+check_PROGRAMS += test/test_dbus
+test_test_dbus_SOURCES = test/test_dbus.c
+test_test_dbus_LDFLAGS = $(DBUS_LIBS)
 endif
 
 EXTRA_DIST += test/test_pygtk.py test/test_perl.pl
@@ -67,3 +57,81 @@ EXTRA_DIST += test/test_pygtk.py test/test_perl.pl
 CLEANFILES += test/.libs/test_decode test/.libs/test_proc \
     test/.libs/test_convert test/.libs/test_window \
     test/.libs/test_video test/.libs/dbg_scan test/.libs/test_gtk
+
+
+# Images that work out of the box without needing to enable
+# an specific symbology
+NORMAL_IMAGES = codabar.png code-128.png code-39.png code-93.png \
+		databar.png databar-exp.png ean-13.png ean-8.png i2-5.png \
+		qr-code.png sqcode1-generated.png sqcode1-scanned.png
+
+EXAMPLES = @abs_top_builddir@/examples
+ZBARIMG = @abs_top_builddir@/zbarimg/zbarimg --nodbus
+
+gen_checksum: all
+	for i in $(NORMAL_IMAGES); do $(ZBARIMG) $(EXAMPLES)/$$i 2>/dev/null|sha1sum|sed "s,-,zbarimg $$i,"; done >$(EXAMPLES)/sha1sum
+	$(ZBARIMG) -Sean2.enable $(EXAMPLES)/ean-2.png 2>/dev/null|sha1sum|sed "s,-,zbarimg ean2 ean-2.png," >>$(EXAMPLES)/sha1sum
+	$(ZBARIMG) -Sean5.enable $(EXAMPLES)/ean-5.png 2>/dev/null|sha1sum|sed "s,-,zbarimg ean5 ean-5.png," >>$(EXAMPLES)/sha1sum
+	$(ZBARIMG) -Sisbn10.enable $(EXAMPLES)/ean-13.png 2>/dev/null|sha1sum|sed "s,-,zbarimg isbn10 ean-13.png," >>$(EXAMPLES)/sha1sum
+	$(ZBARIMG) -Sisbn13.enable $(EXAMPLES)/ean-13.png 2>/dev/null|sha1sum|sed "s,-,zbarimg isbn13 ean-13.png,"  >>$(EXAMPLES)/sha1sum
+	$(ZBARIMG) -Supca.enable $(EXAMPLES)/code-upc-a.png 2>/dev/null|sha1sum|sed "s,-,zbarimg upca code-upc-a.png,"  >>$(EXAMPLES)/sha1sum
+
+test_progs: $(check_PROGRAMS)
+	@$(MAKE) $(check_PROGRAMS)
+
+# Require X11 to work
+check-cpp: test/test_cpp_img
+	@abs_top_builddir@/test/test_cpp_img
+
+check-decoder: test/test_decode
+	@abs_top_builddir@/test/test_decode -q
+
+regress-decoder: test/test_decode
+	@abs_top_builddir@/test/test_decode -q -n 100000
+
+check-images-py: zbarimg/zbarimg
+	@abs_top_srcdir@/test/barcodetest.py
+
+check-images: zbarimg/zbarimg
+	@abs_top_builddir@/test/test_examples.sh
+
+check-convert: test/test_convert
+	@abs_top_srcdir@/test/test_convert
+	@if [ "`sha1sum /tmp/base.I420.zimg |cut -d' ' -f 1`" != \
+	     "d697b0bb84617bef0f6413b3e5537ee38ba92312" ]; then \
+	   echo "convert FAILED"; else echo "convert PASSED."; fi
+	@rm /tmp/base.I420.zimg 2>/dev/null
+
+# Require a camera device for it to work
+check-video: test/test_video
+	@abs_top_srcdir@/test/test_video -q
+
+check-jpeg: test/test_jpeg
+	@abs_top_srcdir@/test/test_jpeg -q
+
+if HAVE_DBUS
+# Require a working D-Bus - may fail with containers
+check-dbus: test/test_dbus
+	@abs_top_builddir@/test/check_dbus.sh
+else
+check-dbus:
+endif
+
+if HAVE_JAVA_UNIT
+check-java: zbar/libzbar.la
+	$(MAKE) -C java check-java
+else
+check-java:
+endif
+
+regress: regress-decoder
+
+check-local: check-images-py check-decoder check-images check-java regress
+
+other-tests: check-cpp check-convert check-video check-jpeg
+
+tests: check-local check-dbus other-tests
+
+.NOTPARALLEL: check-local regress tests
+
+PHONY += gen_checksum check-cpp check-decoder check-images check-dbus regress-decoder regress-images regress

@@ -2,6 +2,7 @@
 DOCSOURCES = doc/manual.xml doc/version.xml doc/reldate.xml \
     doc/ref/zbarimg.xml doc/ref/zbarcam.xml doc/ref/commonoptions.xml
 
+MAINTAINERCLEANFILES += doc/man/man.stamp doc/version.xml doc/reldate.xml
 
 # man page targets to distribute and install
 dist_man_MANS =
@@ -23,7 +24,8 @@ EXTRA_DIST += $(DOCSOURCES) $(man_stamp)
 EXTRA_DIST += doc/api/footer.html doc/style.xsl
 
 docs: $(dist_man_MANS) #dist_doc_DATA
-.PHONY: docs
+
+PHONY += docs
 
 doc_path = --searchpath $(abs_builddir)/doc -m $(abs_srcdir)/doc/style.xsl
 # xmlto --searchpath broken again...
@@ -37,6 +39,7 @@ html-local: doc/html/index.html
 doc/html/index.html: $(DOCSOURCES)
 	$(XMLTO) $(doc_path) $(XMLTOFLAGS) -o doc/html xhtml $<
 
+CLEANFILES += doc/html/*.html
 
 $(dist_man_MANS): $(man_stamp)
 	@if test ! -f $@ ; then \
