@@ -19,6 +19,7 @@ Build-Depends:
  python-all-dev (>= 2.6.6-3~),
  python-gtk2-dev,
  qtbase5-dev,
+ xmlto,
 Rules-Requires-Root: no
 Standards-Version: 4.3.0
 Homepage: http://zbar.sourceforge.net/
