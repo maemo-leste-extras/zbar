@@ -11,7 +11,7 @@ zbar (0.21-1~exp1) experimental; urgency=medium
   * debian/patches:
     - Drop all patches, merged or fixed upstream.
 
- -- Boyuan Yang <byang@debian.org>  Wed, 13 Feb 2019 11:08:34 -0500
+ -- Boyuan Yang <byang@debian.org>  Wed, 13 Feb 2019 15:56:11 -0500
 
 zbar (0.10+doc-11) unstable; urgency=medium
 
