@@ -1,3 +1,1 @@
-python-zbar-import-fix-am.patch
-threading-fix.patch
 0005-src-Replace-dprintf-macro-with-zbar_dprintf-to-avoid.patch
