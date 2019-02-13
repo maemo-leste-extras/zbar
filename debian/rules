@@ -22,7 +22,7 @@ export QT_SELECT := 5
 
 
 # Properly set configure flags
-CONFIGURE_FLAGS = --without-java
+CONFIGURE_FLAGS = --without-java --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)
 
 # We enable libv4l support only on Linux platforms.
 ifeq (,$(findstring linux,$(DEB_HOST_ARCH_OS)))
