@@ -1,1 +1,4 @@
-/usr/bin/zbar*
+/usr/bin/zbarcam
+#/usr/bin/zbarcam-gtk
+#/usr/bin/zbarcam-qt
+/usr/bin/zbarimg
