@@ -3,6 +3,8 @@ zbar (0.21-1~exp1) experimental; urgency=medium
   * QA upload.
   * New upstream release 0.21.
   * debian/watch: Monitor new upstream on GitHub.
+  * debian/control:
+    - Drop build-dependency on dh-exec, no longer necessary.
   * debian/gbp.conf: Disable gbp-import-orig postimport hook,
     it is useless now.
   * debian/rules:
@@ -13,7 +15,7 @@ zbar (0.21-1~exp1) experimental; urgency=medium
     + Cherry-pick upstream fixes on stable-0.21 branch
       till 20190214.
 
- -- Boyuan Yang <byang@debian.org>  Thu, 14 Feb 2019 13:19:56 -0500
+ -- Boyuan Yang <byang@debian.org>  Thu, 14 Feb 2019 15:32:31 -0500
 
 zbar (0.10+doc-11) unstable; urgency=medium
 

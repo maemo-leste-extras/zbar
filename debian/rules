@@ -58,7 +58,7 @@ override_dh_auto_install: build-perl
 
 build-perl:
 	dh_auto_configure --sourcedirectory=perl -- INC="-I$(CURDIR)/include" LIBS="$(LDFLAGS_LIB_SEARCHPATH) -lzbar"
-	dh_auto_build --sourcedirectory=perl -- OTHERLDFLAGS="$(LDFLAGS_LIB_SEARCHPATH)"
+	dh_auto_build --sourcedirectory=perl -- OTHERLDFLAGS="$(LDFLAGS_LIB_SEARCHPATH)" LD_RUN_PATH=''
 	dh_auto_install --sourcedirectory=perl
 
 .PHONY: build-perl
