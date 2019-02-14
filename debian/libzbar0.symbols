@@ -20,7 +20,7 @@ libzbar.so.0 libzbar0 #MINVER#
  zbar_decoder_set_handler@Base 0.10
  zbar_decoder_set_userdata@Base 0.10
  zbar_get_addon_name@Base 0.10
-zbar_get_config_name@Base 0.21
+ zbar_get_config_name@Base 0.21
  zbar_get_modifier_name@Base 0.21
  zbar_get_orientation_name@Base 0.21
  zbar_get_symbol_name@Base 0.10
