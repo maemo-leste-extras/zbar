@@ -1,3 +1,11 @@
+zbar (0.21-2) unstable; urgency=medium
+
+  * QA upload.
+  * debian/zbar-tools.install: Use dh-exec again to selectively
+    install zbarcam for linux-any only.
+
+ -- Boyuan Yang <byang@debian.org>  Thu, 14 Feb 2019 18:58:42 -0500
+
 zbar (0.21-1) unstable; urgency=medium
 
   * QA upload.
