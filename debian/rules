@@ -18,6 +18,9 @@ include /usr/share/dpkg/default.mk
 
 PERL ?= /usr/bin/perl
 
+LDFLAGS_LIB_SEARCHPATH = $(strip $(shell find $(CURDIR)/zbar -name '*.so' -printf "-L%h "))
+LDFLAGS_BINDINGS = $(strip $(LDFLAGS) $(LDFLAGS_LIB_SEARCHPATH))
+
 
 # Explicitly set supported Qt version
 export QT_SELECT := 5
@@ -54,8 +57,8 @@ override_dh_auto_install: build-perl
 	dh_auto_install
 
 build-perl:
-	dh_auto_configure --sourcedirectory=perl -- INC="-I$(CURDIR)/include"
-	dh_auto_build --sourcedirectory=perl
+	dh_auto_configure --sourcedirectory=perl -- INC="-I$(CURDIR)/include" LIBS="$(LDFLAGS_LIB_SEARCHPATH) -lzbar"
+	dh_auto_build --sourcedirectory=perl -- OTHERLDFLAGS="$(LDFLAGS_LIB_SEARCHPATH)"
 	dh_auto_install --sourcedirectory=perl
 
 .PHONY: build-perl
