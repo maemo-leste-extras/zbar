@@ -54,8 +54,8 @@ override_dh_auto_install: build-perl
 	dh_auto_install
 
 build-perl:
-	dh_auto_configure --buildsystem=perl --sourcedirectory=perl -- INC="-I$(CURDIR)/include"
-	dh_auto_build --buildsystem=perl --sourcedirectory=perl
-	dh_auto_install --buildsystem=perl --sourcedirectory=perl
+	dh_auto_configure --sourcedirectory=perl -- INC="-I$(CURDIR)/include"
+	dh_auto_build --sourcedirectory=perl
+	dh_auto_install --sourcedirectory=perl
 
 .PHONY: build-perl
