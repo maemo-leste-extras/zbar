@@ -2,3 +2,4 @@
 #/usr/bin/zbarcam-gtk
 #/usr/bin/zbarcam-qt
 /usr/bin/zbarimg
+etc/dbus-1/system.d/org.linuxtv.Zbar.conf
