@@ -10,8 +10,10 @@ zbar (0.21-1~exp1) experimental; urgency=medium
     + use override_dh_strip to generate automatic debug packages.
   * debian/patches:
     - Drop all patches, merged or fixed upstream.
+    + Cherry-pick upstream fixes on stable-0.21 branch
+      till 20190214.
 
- -- Boyuan Yang <byang@debian.org>  Wed, 13 Feb 2019 15:56:11 -0500
+ -- Boyuan Yang <byang@debian.org>  Thu, 14 Feb 2019 13:19:56 -0500
 
 zbar (0.10+doc-11) unstable; urgency=medium
 

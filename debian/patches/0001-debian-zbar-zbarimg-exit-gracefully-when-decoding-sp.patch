@@ -1,0 +1,50 @@
+From: Javier Serrano Polo <javier@jasp.net>
+Date: Wed, 13 Feb 2019 10:06:11 +0100
+Subject: debian, zbar, zbarimg: exit gracefully when decoding split QR codes
+
+Applied-Upstream: https://github.com/mchehab/zbar/commit/dc9f5d1377ac82deab63cdadb0c86b7ecccc3098
+
+Structured QR codes are split in several barcodes. ZBar decodes them if they
+are combined in one image; otherwise, it fails with an assert error. Thus,
+handle this error gracefully and add a warning hint.
+
+Closes Debian #719013.
+
+Signed-off-by: Javier Serrano Polo <javier@jasp.net>
+---
+ zbar/qrcode/qrdectxt.c | 8 ++++++--
+ zbarimg/zbarimg.c      | 2 ++
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/zbar/qrcode/qrdectxt.c b/zbar/qrcode/qrdectxt.c
+index b011dbb..2ab7b9b 100644
+--- a/zbar/qrcode/qrdectxt.c
++++ b/zbar/qrcode/qrdectxt.c
+@@ -454,8 +454,12 @@ int qr_code_data_list_extract_text(const qr_code_data_list *_qrlist,
+                   }
+               syms->data = sa_text + syms->datalen;
+               next = (syms->next) ? syms->next->datalen : sa_ntext;
+-              assert(next > syms->datalen);
+-              syms->datalen = next - syms->datalen - 1;
++              if (next > syms->datalen)
++                  syms->datalen = next - syms->datalen - 1;
++              else {
++                  zprintf(1, "Assertion `next > syms->datalen' failed\n");
++                  syms->datalen = 0;
++              }
+           }
+           if(xmax >= -1) {
+               sym_add_point(sa_sym, xmin, ymin);
+diff --git a/zbarimg/zbarimg.c b/zbarimg/zbarimg.c
+index bf09d0f..b354747 100644
+--- a/zbarimg/zbarimg.c
++++ b/zbarimg/zbarimg.c
+@@ -125,6 +125,8 @@ static const char *warning_not_found =
+     "  - is the barcode large enough in the image?\n"
+     "  - is the barcode mostly in focus?\n"
+     "  - is there sufficient contrast/illumination?\n"
++    "  - If the symbol is split in several barcodes, are they combined in one "
++    "image?\n"
+     "  - Did you enable the barcode type?\n"
+     "    some EAN/UPC codes are disabled by default. To enable all, use:\n"
+     "    $ zbarimg -S*.enable <files>\n"
