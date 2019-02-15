@@ -29,6 +29,7 @@ Vcs-Browser: https://salsa.debian.org/debian/zbar
 Package: libbarcode-zbar-perl
 Section: perl
 Architecture: any
+Multi-Arch: same
 Depends:
  ${misc:Depends},
  ${perl:Depends},
@@ -104,6 +105,7 @@ Description: bar code scanner and decoder (GTK+ bindings)
 Package: python-zbar
 Section: python
 Architecture: any
+Multi-Arch: same
 Replaces:
  python-zbarpygtk (<< 0.10+doc),
 Breaks:
@@ -123,6 +125,7 @@ Description: bar code scanner and decoder (Python bindings)
 Package: python-zbarpygtk
 Section: python
 Architecture: any
+Multi-Arch: same
 Depends:
  libzbar0 (= ${binary:Version}),
  python-gtk2,
