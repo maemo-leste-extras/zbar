@@ -1,3 +1,14 @@
+zbar (0.21-3) unstable; urgency=medium
+
+  * QA upload.
+  * debian/patches:
+    + Replace custom codespell typo fix patches with upstream
+      applied one.
+    + Cherry-pick upstream patches till 20190215 to fix grammar
+      error in configure.ac script.
+
+ -- Boyuan Yang <byang@debian.org>  Fri, 15 Feb 2019 10:27:49 -0500
+
 zbar (0.21-2) unstable; urgency=medium
 
   * QA upload.

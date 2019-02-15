@@ -55,7 +55,7 @@ index 5fd51ce..978e36f 100644
  The zbarcam program uses the video4linux API (v4l1 or v4l2) to access
  the video device.  This interface is part of the linux kernel, a 3.16
 diff --git a/configure.ac b/configure.ac
-index da334e7..e9345c1 100644
+index 7e9cac6..20d078b 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -14,7 +14,7 @@ LT_INIT([dlopen win32-dll])
@@ -67,7 +67,7 @@ index da334e7..e9345c1 100644
  dnl   LIB_VERSION update instructions copied from libtool docs:
  dnl   library version follows the form current:revision:age
  dnl   - If the library source code has changed at all since the last update,
-@@ -404,7 +404,7 @@ AS_IF([test "x$with_imagemagick" = "xno"], [],
+@@ -405,7 +405,7 @@ AS_IF([test "x$with_imagemagick" = "xno"], [],
       [MAGICK_VERSION=`$PKG_CONFIG MagickWand --modversion`],
       [dnl
  dnl Wand is deprecated in favor of MagickWand,
