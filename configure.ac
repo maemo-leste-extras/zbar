@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.68])
-AC_INIT([zbar], [0.21], [mchehab+samsung@kernel.org])
+AC_INIT([zbar], [0.22], [mchehab+samsung@kernel.org])
 m4_ifndef([AC_LANG_DEFINES_PROVIDED],
           [m4_define([AC_LANG_DEFINES_PROVIDED])])
 AC_CONFIG_AUX_DIR(config)
@@ -14,7 +14,7 @@ LT_INIT([dlopen win32-dll])
 LT_LANG([Windows Resource])
 AM_SILENT_RULES([yes])
 
-dnl update these just before each release (along w/pacakge version above)
+dnl update these just before each release (along w/package version above)
 dnl   LIB_VERSION update instructions copied from libtool docs:
 dnl   library version follows the form current:revision:age
 dnl   - If the library source code has changed at all since the last update,
@@ -241,18 +241,19 @@ AS_IF([test "x$enable_video" = "xno"],
    AC_CHECK_HEADERS([linux/videodev2.h], [have_v4l2="yes"])
    AC_CHECK_HEADERS([libv4l2.h], [have_libv4l="yes"])
    AS_IF([test "x$have_v4l2" = "xno" && test "x$have_v4l1" = "xno"],
-     [AC_MSG_FAILURE([test for video support failed!
+         [AC_MSG_FAILURE([test for video support failed!
 rebuild your kernel to include video4linux support or
 configure --disable-video to skip building video support.])],
-     [test "x$have_v4l2" = "xno"],
-     [AC_MSG_WARN([v4l2 API not detected, upgrade your kernel!])])],
+         [AS_IF([test "x$have_v4l2" = "xno"],
+               [AC_MSG_WARN([v4l2 API not detected, upgrade your kernel!])])]
+        )],
   [AC_CHECK_HEADERS([vfw.h], [with_video="vfw"],
     [AC_MSG_FAILURE([test for VfW video support failed!
 configure --disable-video to skip building video support.])])])
 
 AS_IF([test "x$have_libv4l" = "xyes"],
-   PKG_CHECK_MODULES([V4L2], [libv4l2], [],
-     [AC_MSG_FAILURE([unable to find libv4l.so])]),
+   [PKG_CHECK_MODULES([V4L2], [libv4l2], [],
+     [AC_MSG_FAILURE([unable to find libv4l2.so])])],
   [AC_MSG_WARN([libv4l not detected. Install it to support more cameras!])])
 
 AM_CONDITIONAL([HAVE_VIDEO], [test "x$enable_video" != "xno"])
@@ -404,7 +405,7 @@ AS_IF([test "x$with_imagemagick" = "xno"], [],
      [MAGICK_VERSION=`$PKG_CONFIG MagickWand --modversion`],
      [dnl
 dnl Wand is deprecated in favor of MagickWand,
-dnl but the latter doesn't exist in older verisons (bug #2848437)
+dnl but the latter doesn't exist in older versions (bug #2848437)
       saved_error=$MAGICK_PKG_ERRORS
       PKG_CHECK_MODULES([MAGICK], [Wand >= 6.2.6],
         [MAGICK_VERSION=`$PKG_CONFIG Wand --modversion`],

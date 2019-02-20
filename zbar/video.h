@@ -71,6 +71,8 @@ struct zbar_video_s {
     uint32_t *formats;          /* 0 terminated list of supported formats */
     uint32_t *emu_formats;      /* 0 terminated list of emulated formats */
 
+    struct video_resolution_s *res; /* 0 terminated list of resolutions */
+
     struct video_controls_s *controls;  /* linked list of controls */
 
     unsigned long datalen;      /* size of image data for selected format */
