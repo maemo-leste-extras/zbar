@@ -44,6 +44,7 @@ Description: bar code scanner and decoder (Perl bindings)
 Package: libzbar-dev
 Section: libdevel
 Architecture: any
+Multi-Arch: same
 Depends:
  libmagick++-dev,
  libx11-dev,
@@ -74,6 +75,7 @@ Description: bar code scanner and decoder (library)
 Package: libzbargtk-dev
 Section: libdevel
 Architecture: any
+Multi-Arch: same
 Depends:
  libgtk2.0-dev,
  libzbar-dev (= ${binary:Version}),

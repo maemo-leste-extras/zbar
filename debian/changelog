@@ -1,3 +1,13 @@
+zbar (0.22-1) unstable; urgency=medium
+
+  * QA upload.
+  * New upstream release (2019-02-20).
+  * debian/patches: Drop all patches, merged upstream.
+  * debian/control: Also mark libzbar-dev and libzbargtk-dev as
+    Multi-Arch: same.
+
+ -- Boyuan Yang <byang@debian.org>  Wed, 20 Feb 2019 10:18:30 -0500
+
 zbar (0.21-3) unstable; urgency=medium
 
   * QA upload.
