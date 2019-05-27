@@ -1,6 +1,4 @@
 #!/usr/bin/make -f
-# See debhelper(7) (uncomment to enable)
-# output every command that modifies files on the build system.
 export DH_VERBOSE = 1
 
 # see FEATURE AREAS in dpkg-buildflags(1)
@@ -8,7 +6,7 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
 # see ENVIRONMENT in dpkg-buildflags(1)
 # package maintainers to append CFLAGS
-#export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
+export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
 # package maintainers to append LDFLAGS
 export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 
@@ -21,23 +19,19 @@ PERL ?= /usr/bin/perl
 LDFLAGS_LIB_SEARCHPATH = $(strip $(shell find $(CURDIR)/zbar -name '*.so' -printf "-L%h "))
 LDFLAGS_BINDINGS = $(strip $(LDFLAGS) $(LDFLAGS_LIB_SEARCHPATH))
 
-
 # Explicitly set supported Qt version
 export QT_SELECT := 5
 
-
 # Properly set configure flags
-CONFIGURE_FLAGS = --without-java --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)
+CONFIGURE_FLAGS = --without-java --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) --with-gtk=gtk3 --with-python=python3
 
 # We enable libv4l support only on Linux platforms.
 ifeq (,$(findstring linux,$(DEB_HOST_ARCH_OS)))
     CONFIGURE_FLAGS += --disable-video
 endif
 
-
-
 %:
-	dh $@ --with python2
+	dh $@ --with python3
 
 override_dh_auto_configure:
 	dh_auto_configure -- $(CONFIGURE_FLAGS)

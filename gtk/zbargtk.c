@@ -21,8 +21,12 @@
  *  http://sourceforge.net/projects/zbar
  *------------------------------------------------------------------------*/
 
-#include <gtk/gtksignal.h>
+#include <gtk/gtk.h>
+#ifdef HAVE_X
 #include <gdk/gdkx.h>
+#elif defined(_WIN32)
+#include <gdk/gdkwin32.h>
+#endif
 
 #include <zbar/zbargtk.h>
 #include "zbargtkprivate.h"
@@ -50,10 +54,10 @@ enum {
 
 static guint zbar_gtk_signals[LAST_SIGNAL] = { 0 };
 
-static gpointer zbar_gtk_parent_class = NULL;
+G_DEFINE_TYPE(ZBarGtk, zbar_gtk, GTK_TYPE_WIDGET);
 
 /* FIXME what todo w/errors? OOM? */
-/* FIXME signal failure notifications to main gui thread */
+/* FIXME signal failure notifications to main gui idle handler */
 
 void zbar_gtk_release_pixbuf (zbar_image_t *img)
 {
@@ -135,10 +139,8 @@ static inline gboolean zbar_gtk_video_open (ZBarGtk *self,
     ZBarGtkPrivate *zbar = ZBAR_GTK_PRIVATE(self->_private);
     gboolean video_opened = FALSE;
 
-    gdk_threads_enter();
-
     zbar->video_opened = FALSE;
-    if(zbar->thread)
+    if(zbar->idle_id)
         g_object_notify(G_OBJECT(self), "video-opened");
 
     if(zbar->window) {
@@ -148,14 +150,13 @@ static inline gboolean zbar_gtk_video_open (ZBarGtk *self,
         zbar_window_draw(zbar->window, NULL);
         gtk_widget_queue_draw(GTK_WIDGET(self));
     }
-    gdk_threads_leave();
 
     if(zbar->video) {
         zbar_video_destroy(zbar->video);
         zbar->video = NULL;
     }
 
-    if(video_device && video_device[0] && zbar->thread) {
+    if(video_device && video_device[0] && zbar->idle_id) {
         /* create video
          * FIXME video should support re-open
          */
@@ -173,8 +174,6 @@ static inline gboolean zbar_gtk_video_open (ZBarGtk *self,
         /* negotiation accesses the window format list,
          * so we hold the lock for this part
          */
-        gdk_threads_enter();
-
         if(zbar->video_width && zbar->video_height)
             zbar_video_request_size(zbar->video,
                                     zbar->video_width, zbar->video_height);
@@ -188,11 +187,10 @@ static inline gboolean zbar_gtk_video_open (ZBarGtk *self,
         gtk_widget_queue_resize(GTK_WIDGET(self));
 
         zbar->video_opened = video_opened;
-        if(zbar->thread)
+        if(zbar->idle_id)
             g_object_notify(G_OBJECT(self), "video-opened");
-
-        gdk_threads_leave();
     }
+
     return(video_opened);
 }
 
@@ -215,9 +213,7 @@ static inline int zbar_gtk_process_image (ZBarGtk *self,
     if(rc < 0)
         return(rc);
 
-    gdk_threads_enter();
-
-    if(rc && zbar->thread) {
+    if(rc && zbar->idle_id) {
         /* update decode results */
         const zbar_symbol_t *sym;
         for(sym = zbar_image_first_symbol(image);
@@ -245,112 +241,99 @@ static inline int zbar_gtk_process_image (ZBarGtk *self,
     }
     else
         rc = -1;
-    gdk_threads_leave();
+
     return(rc);
 }
 
-static void *zbar_gtk_processing_thread (void *arg)
+static gboolean zbar_processing_idle_callback(gpointer data)
 {
-    ZBarGtk *self = ZBAR_GTK(arg);
-    if(!self->_private)
-        return(NULL);
+    ZBarGtk *self = data;
     ZBarGtkPrivate *zbar = ZBAR_GTK_PRIVATE(self->_private);
-    g_object_ref(zbar);
-    g_assert(zbar->queue);
-    g_async_queue_ref(zbar->queue);
 
-    zbar->scanner = zbar_image_scanner_create();
-    g_assert(zbar->scanner);
+    GValue *msg = g_async_queue_try_pop(zbar->queue);
+    if (!msg) {
+        if (zbar->video_enabled_state) {
+            zbar_image_t *image = zbar_video_next_image(zbar->video);
+            if(zbar_gtk_process_image(self, image) < 0)
+                zbar->video_enabled_state = FALSE;
+            if(image)
+                zbar_image_destroy(image);
 
-    /* thread side enabled state */
-    gboolean video_enabled = FALSE;
-    GValue *msg = NULL;
+            if (zbar->video_enabled_state)
+                return TRUE;
 
-    while(TRUE) {
-        if(!msg)
-            msg = g_async_queue_pop(zbar->queue);
-        g_assert(G_IS_VALUE(msg));
-
-        GType type = G_VALUE_TYPE(msg);
-        if(type == G_TYPE_INT) {
-            /* video state change */
-            int state = g_value_get_int(msg);
-            if(state < 0) {
-                /* terminate processing thread */
-                g_value_unset(msg);
-                g_free(msg);
-                msg = NULL;
-                break;
-            }
-            g_assert(state >= 0 && state <= 1);
-            video_enabled = (state != 0);
-        }
-        else if(type == G_TYPE_STRING) {
-            /* open new video device */
-            const char *video_device = g_value_get_string(msg);
-            video_enabled = zbar_gtk_video_open(self, video_device);
-        }
-        else if(type == GDK_TYPE_PIXBUF) {
-            /* scan provided image and broadcast results */
-            zbar_image_t *image = zbar_image_create();
-            GdkPixbuf *pixbuf = GDK_PIXBUF(g_value_dup_object(msg));
-            if(zbar_gtk_image_from_pixbuf(image, pixbuf))
-                zbar_gtk_process_image(self, image);
-            else
-                g_object_unref(pixbuf);
-            zbar_image_destroy(image);
-        }
-        else {
-            gchar *dbg = g_strdup_value_contents(msg);
-            g_warning("unknown message type (%x) passed to thread: %s\n",
-                      (unsigned)type, dbg);
-            g_free(dbg);
-        }
-        g_value_unset(msg);
-        g_free(msg);
-        msg = NULL;
-
-        if(video_enabled) {
-            /* release reference to any previous pixbuf */
-	    if(zbar->window)
-                zbar_window_draw(zbar->window, NULL);
-
-            if(zbar_video_enable(zbar->video, 1)) {
+            if(zbar_video_enable(zbar->video, 0)) {
                 zbar_video_error_spew(zbar->video, 0);
-                video_enabled = FALSE;
-                continue;
-            }
-            zbar_image_scanner_enable_cache(zbar->scanner, 1);
-
-            while(video_enabled &&
-                  !(msg = g_async_queue_try_pop(zbar->queue))) {
-                zbar_image_t *image = zbar_video_next_image(zbar->video);
-                if(zbar_gtk_process_image(self, image) < 0)
-                    video_enabled = FALSE;
-                if(image)
-                    zbar_image_destroy(image);
+                zbar->video_enabled_state = FALSE;
             }
 
             zbar_image_scanner_enable_cache(zbar->scanner, 0);
-            if(zbar_video_enable(zbar->video, 0)) {
-                zbar_video_error_spew(zbar->video, 0);
-                video_enabled = FALSE;
-            }
             /* release video image and revert to logo */
             if(zbar->window) {
-                zbar_window_draw(zbar->window, NULL);
-                gtk_widget_queue_draw(GTK_WIDGET(self));
+                    zbar_window_draw(zbar->window, NULL);
+                    gtk_widget_queue_draw(GTK_WIDGET(self));
             }
 
-            if(!video_enabled)
-                /* must have been an error while streaming */
-                zbar_gtk_video_open(self, NULL);
+            /* must have been an error while streaming */
+            zbar_gtk_video_open(self, NULL);
         }
+
+        return TRUE;
     }
-    if(zbar->window)
-        zbar_window_draw(zbar->window, NULL);
-    g_object_unref(zbar);
-    return(NULL);
+
+    g_assert(G_IS_VALUE(msg));
+
+    GType type = G_VALUE_TYPE(msg);
+    if(type == G_TYPE_INT) {
+        /* video state change */
+        int state = g_value_get_int(msg);
+        if(state < 0) {
+            /* error identifying state */
+            g_value_unset(msg);
+            g_free(msg);
+	    return TRUE;
+        }
+        g_assert(state >= 0 && state <= 1);
+        zbar->video_enabled_state = (state != 0);
+    } else if(type == G_TYPE_STRING) {
+        /* open new video device */
+        const char *video_device = g_value_get_string(msg);
+        zbar->video_enabled_state = zbar_gtk_video_open(self, video_device);
+    } else if(type == GDK_TYPE_PIXBUF) {
+        /* scan provided image and broadcast results */
+        zbar_image_t *image = zbar_image_create();
+        GdkPixbuf *pixbuf = GDK_PIXBUF(g_value_dup_object(msg));
+        if(zbar_gtk_image_from_pixbuf(image, pixbuf))
+            zbar_gtk_process_image(self, image);
+        else
+            g_object_unref(pixbuf);
+        zbar_image_destroy(image);
+    } else {
+        gchar *dbg = g_strdup_value_contents(msg);
+        g_warning("unknown message type (%x) received: %s\n",
+                  (unsigned)type, dbg);
+        g_free(dbg);
+    }
+    g_value_unset(msg);
+    g_free(msg);
+    msg = NULL;
+
+    if(zbar->video_enabled_state) {
+        /* release reference to any previous pixbuf */
+        if(zbar->window)
+            zbar_window_draw(zbar->window, NULL);
+
+        if(zbar_video_enable(zbar->video, 1)) {
+            zbar_video_error_spew(zbar->video, 0);
+            zbar->video_enabled_state = FALSE;
+            return TRUE;
+        }
+        zbar_image_scanner_enable_cache(zbar->scanner, 1);
+
+        return TRUE;
+    }
+
+    return TRUE;
 }
 
 static void zbar_gtk_realize (GtkWidget *widget)
@@ -360,30 +343,48 @@ static void zbar_gtk_realize (GtkWidget *widget)
         return;
     ZBarGtkPrivate *zbar = ZBAR_GTK_PRIVATE(self->_private);
 
-    GTK_WIDGET_UNSET_FLAGS(widget, GTK_DOUBLE_BUFFERED);
-    GTK_WIDGET_SET_FLAGS(widget, GTK_REALIZED);
+    gtk_widget_set_realized(widget, TRUE);
 
+#if GTK_MAJOR_VERSION >= 3 && GTK_MINOR_VERSION >= 14
+    // FIXME: this is deprecated after 3.14 - no idea what replaces it
+#else
+    gtk_widget_set_double_buffered(widget, FALSE);
+#endif
     GdkWindowAttr attributes;
-    attributes.x = widget->allocation.x;
-    attributes.y = widget->allocation.y;
-    attributes.width = widget->allocation.width;
-    attributes.height = widget->allocation.height;
+    GtkAllocation allocation;
+
+    gtk_widget_get_allocation(widget, &allocation);
+    attributes.x = allocation.x;
+    attributes.y = allocation.y;
+    attributes.width = allocation.width;
+    attributes.height = allocation.height;
     attributes.wclass = GDK_INPUT_OUTPUT;
     attributes.window_type = GDK_WINDOW_CHILD;
     attributes.event_mask = (gtk_widget_get_events(widget) |
                              GDK_EXPOSURE_MASK);
 
-    widget->window = gdk_window_new(gtk_widget_get_parent_window(widget),
-                                    &attributes,
-                                    GDK_WA_X | GDK_WA_Y);
-    gdk_window_set_user_data(widget->window, widget);
-    gdk_window_set_back_pixmap(widget->window, NULL, TRUE);
+    GdkWindow *window = gdk_window_new(gtk_widget_get_parent_window(widget),
+                                       &attributes,
+                                       GDK_WA_X | GDK_WA_Y);
+    gtk_widget_set_window(widget, window);
+    gdk_window_set_user_data(window, widget);
+#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION < 18
+    gdk_window_set_background_pattern(window, NULL);
+#elif GTK_MAJOR_VERSION < 3
+    gdk_window_set_back_pixmap(window, NULL, TRUE);
+#endif
 
     /* attach zbar_window to underlying X window */
+#ifdef HAVE_X
     if(zbar_window_attach(zbar->window,
-                           gdk_x11_drawable_get_xdisplay(widget->window),
-                           gdk_x11_drawable_get_xid(widget->window)))
-        zbar_window_error_spew(zbar->window, 0);
+                           GDK_DISPLAY_XDISPLAY(gdk_display_get_default()),
+                           GDK_WINDOW_XID(window)))
+#elif defined(_WIN32)
+    if(zbar_window_attach(zbar->window,
+                           GDK_WINDOW_HWND (window),
+                           0))
+#endif
+    zbar_window_error_spew(zbar->window, 0);
 }
 
 static inline GValue *zbar_gtk_new_value (GType type)
@@ -393,9 +394,12 @@ static inline GValue *zbar_gtk_new_value (GType type)
 
 static void zbar_gtk_unrealize (GtkWidget *widget)
 {
-    if(GTK_WIDGET_MAPPED(widget))
+    GdkWindow *window;
+
+    if(gtk_widget_get_mapped(widget))
         gtk_widget_unmap(widget);
 
+    gtk_widget_set_mapped(widget, FALSE);
     ZBarGtk *self = ZBAR_GTK(widget);
     if(!self->_private)
         return;
@@ -410,13 +414,105 @@ static void zbar_gtk_unrealize (GtkWidget *widget)
 
     zbar_window_attach(zbar->window, NULL, 0);
 
-    GTK_WIDGET_UNSET_FLAGS(widget, GTK_REALIZED);
+    gtk_widget_set_realized(widget, FALSE);
 
-    gdk_window_set_user_data(widget->window, NULL);
-    gdk_window_destroy(widget->window);
-    widget->window = NULL;
+    window = gtk_widget_get_window(widget);
+    gdk_window_set_user_data(window, NULL);
+    gdk_window_destroy(window);
+    gtk_widget_set_window(widget, NULL);
 }
 
+#if GTK_MAJOR_VERSION >= 3
+
+static void zbar_get_preferred_width(GtkWidget *widget,
+                                     gint      *minimum_width,
+                                     gint      *natural_width)
+{
+    ZBarGtk *self = ZBAR_GTK(widget);
+    if(!self->_private)
+        return;
+    ZBarGtkPrivate *zbar = ZBAR_GTK_PRIVATE(self->_private);
+
+    /* use native video size (max) if available,
+     * arbitrary defaults otherwise.
+     * video attributes maintained under main gui idle handler
+     */
+#if GTK_MAJOR_VERSION >= 3 && GTK_MINOR_VERSION >= 22
+    GdkRectangle geo;
+
+    GdkDisplay *display = gdk_display_get_default();
+    GdkMonitor *monitor = gdk_display_get_monitor(display, 0);
+    gdk_monitor_get_geometry(monitor, &geo);
+
+    unsigned int screen_width  = geo.width;
+#else
+    unsigned int screen_width  = gdk_screen_width();
+#endif
+
+    if (zbar->req_width > screen_width) {
+         float scale = screen_width * .8 / zbar->req_width;
+
+         zbar->req_width *= scale;
+         zbar->req_height *= scale;
+    }
+
+    *minimum_width = zbar->req_width;
+    *natural_width = zbar->req_width;
+}
+
+static void zbar_get_preferred_height(GtkWidget *widget,
+                                      gint      *minimum_height,
+                                      gint      *natural_height)
+{
+    ZBarGtk *self = ZBAR_GTK(widget);
+    if(!self->_private)
+        return;
+    ZBarGtkPrivate *zbar = ZBAR_GTK_PRIVATE(self->_private);
+
+    /* use native video size (max) if available,
+     * arbitrary defaults otherwise.
+     * video attributes maintained under main gui idle handler
+     */
+#if GTK_MAJOR_VERSION >= 3 && GTK_MINOR_VERSION >= 22
+    GdkRectangle geo;
+
+    GdkDisplay *display = gdk_display_get_default();
+    GdkMonitor *monitor = gdk_display_get_monitor(display, 0);
+    gdk_monitor_get_geometry(monitor, &geo);
+
+    unsigned int screen_height  = geo.height;
+#else
+    unsigned int screen_height  = gdk_screen_height();
+#endif
+
+    if (zbar->req_height > screen_height) {
+         float scale = screen_height * .8 / zbar->req_height;
+
+         zbar->req_width *= scale;
+         zbar->req_height *= scale;
+    }
+
+    *minimum_height = zbar->req_height;
+    *natural_height = zbar->req_height;
+}
+
+static gboolean zbar_gtk_scale_draw(GtkWidget *widget, cairo_t   *cr)
+{
+    // NOTE: should we change something here?
+
+    ZBarGtk *self = ZBAR_GTK(widget);
+    if(!self->_private)
+        return(FALSE);
+    ZBarGtkPrivate *zbar = ZBAR_GTK_PRIVATE(self->_private);
+
+    if(gtk_widget_get_visible(widget) &&
+       gtk_widget_get_mapped(widget) &&
+       zbar_window_redraw(zbar->window))
+        return(TRUE);
+    return(FALSE);
+}
+
+#else
 static void zbar_gtk_size_request (GtkWidget *widget,
                                    GtkRequisition *requisition)
 {
@@ -427,11 +523,27 @@ static void zbar_gtk_size_request (GtkWidget *widget,
 
     /* use native video size (max) if available,
      * arbitrary defaults otherwise.
-     * video attributes maintained under main gui thread lock
+     * video attributes maintained under main gui idle handler
      */
     requisition->width = zbar->req_width;
     requisition->height = zbar->req_height;
 }
+
+static gboolean zbar_gtk_expose (GtkWidget *widget,
+                                 GdkEventExpose *event)
+{
+    ZBarGtk *self = ZBAR_GTK(widget);
+    if(!self->_private)
+        return(FALSE);
+    ZBarGtkPrivate *zbar = ZBAR_GTK_PRIVATE(self->_private);
+
+    if(gtk_widget_get_visible(widget) &&
+       gtk_widget_get_mapped(widget) &&
+       zbar_window_redraw(zbar->window))
+        return(TRUE);
+    return(FALSE);
+}
+#endif
 
 static void zbar_gtk_size_allocate (GtkWidget *widget,
                                     GtkAllocation *allocation)
@@ -448,21 +560,6 @@ static void zbar_gtk_size_allocate (GtkWidget *widget,
                             allocation->width, allocation->height);
 }
 
-static gboolean zbar_gtk_expose (GtkWidget *widget,
-                                 GdkEventExpose *event)
-{
-    ZBarGtk *self = ZBAR_GTK(widget);
-    if(!self->_private)
-        return(FALSE);
-    ZBarGtkPrivate *zbar = ZBAR_GTK_PRIVATE(self->_private);
-
-    if(GTK_WIDGET_VISIBLE(widget) &&
-       GTK_WIDGET_MAPPED(widget) &&
-       zbar_window_redraw(zbar->window))
-        return(TRUE);
-    return(FALSE);
-}
-
 void zbar_gtk_scan_image (ZBarGtk *self,
                           GdkPixbuf *img)
 {
@@ -472,11 +569,11 @@ void zbar_gtk_scan_image (ZBarGtk *self,
 
     g_object_ref(G_OBJECT(img));
 
-    /* queue for scanning by the processor thread */
+    /* queue for scanning by the processor idle handler */
     GValue *msg = zbar_gtk_new_value(GDK_TYPE_PIXBUF);
 
     /* this grabs a new reference to the image,
-     * eventually released by the processor thread
+     * eventually released by the processor idle handler
      */
     g_value_set_object(msg, img);
     g_async_queue_push(zbar->queue, msg);
@@ -505,7 +602,7 @@ void zbar_gtk_set_video_device (ZBarGtk *self,
     zbar->video_device = g_strdup(video_device);
     zbar->video_enabled = video_device && video_device[0];
 
-    /* push another copy to processor thread */
+    /* push another copy to processor idle handler */
     GValue *msg = zbar_gtk_new_value(G_TYPE_STRING);
     if(video_device)
         g_value_set_string(msg, video_device);
@@ -538,7 +635,7 @@ void zbar_gtk_set_video_enabled (ZBarGtk *self,
     if(zbar->video_enabled != video_enabled) {
         zbar->video_enabled = video_enabled;
 
-        /* push state change to processor thread */
+        /* push state change to processor idle handler */
         GValue *msg = zbar_gtk_new_value(G_TYPE_INT);
         g_value_set_int(msg, zbar->video_enabled);
         g_async_queue_push(zbar->queue, msg);
@@ -552,6 +649,7 @@ gboolean zbar_gtk_get_video_opened (ZBarGtk *self)
     if(!self->_private)
         return(FALSE);
     ZBarGtkPrivate *zbar = ZBAR_GTK_PRIVATE(self->_private);
+
     return(zbar->video_opened);
 }
 
@@ -625,14 +723,24 @@ static void zbar_gtk_init (ZBarGtk *self)
     zbar->req_width = zbar->video_width = DEFAULT_WIDTH;
     zbar->req_height = zbar->video_width = DEFAULT_HEIGHT;
 
-    /* spawn a thread to handle decoding and video */
+    /* use a queue to signalize about the need to handle decoding and video */
     zbar->queue = g_async_queue_new();
-    zbar->thread = g_thread_new(NULL, zbar_gtk_processing_thread, self);
-    g_assert(zbar->thread);
+    zbar->idle_id = g_idle_add(zbar_processing_idle_callback, self);
+    zbar->video_enabled_state = FALSE;
+
+    /* Prepare for idle handler */
+    g_object_ref(zbar);
+    g_assert(zbar->queue);
+    g_async_queue_ref(zbar->queue);
+
+    zbar->scanner = zbar_image_scanner_create();
+    g_assert(zbar->scanner);
 }
 
 static void zbar_gtk_dispose (GObject *object)
 {
+
+
     ZBarGtk *self = ZBAR_GTK(object);
     if(!self->_private)
         return;
@@ -643,11 +751,11 @@ static void zbar_gtk_dispose (GObject *object)
     g_free((void*)zbar->video_device);
     zbar->video_device = NULL;
 
-    /* signal processor thread to exit */
+    /* signal processor idle handler to exit */
     GValue *msg = zbar_gtk_new_value(G_TYPE_INT);
     g_value_set_int(msg, -1);
     g_async_queue_push(zbar->queue, msg);
-    zbar->thread = NULL;
+    zbar->idle_id = 0;
 
     /* there are no external references which might call other APIs */
     g_async_queue_unref(zbar->queue);
@@ -658,6 +766,15 @@ static void zbar_gtk_dispose (GObject *object)
 static void zbar_gtk_private_finalize (GObject *object)
 {
     ZBarGtkPrivate *zbar = ZBAR_GTK_PRIVATE(object);
+
+    if (zbar->idle_id) {
+        if(zbar->window)
+            zbar_window_draw(zbar->window, NULL);
+        g_object_unref(zbar);
+        g_source_remove(zbar->idle_id);
+        zbar->idle_id = 0;
+    }
+
     if(zbar->window) {
         zbar_window_destroy(zbar->window);
         zbar->window = NULL;
@@ -686,9 +803,16 @@ static void zbar_gtk_class_init (ZBarGtkClass *klass)
     GtkWidgetClass *widget_class = (GtkWidgetClass*)klass;
     widget_class->realize = zbar_gtk_realize;
     widget_class->unrealize = zbar_gtk_unrealize;
+#if GTK_MAJOR_VERSION >= 3
+    widget_class->get_preferred_width  = zbar_get_preferred_width;
+    widget_class->get_preferred_height = zbar_get_preferred_height;
+    widget_class->draw                 = zbar_gtk_scale_draw;
+#else
     widget_class->size_request = zbar_gtk_size_request;
-    widget_class->size_allocate = zbar_gtk_size_allocate;
     widget_class->expose_event = zbar_gtk_expose;
+#endif
+    widget_class->size_allocate = zbar_gtk_size_allocate;
+
     widget_class->unmap = NULL;
 
     zbar_gtk_signals[DECODED] =
@@ -731,26 +855,6 @@ static void zbar_gtk_class_init (ZBarGtkClass *klass)
         FALSE,
         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
     g_object_class_install_property(object_class, PROP_VIDEO_OPENED, p);
-}
-
-GType zbar_gtk_get_type (void)
-{
-    static GType type = 0;
-    if(!type) {
-        static const GTypeInfo info = {
-            sizeof(ZBarGtkClass),
-            NULL, /* base_init */
-            NULL, /* base_finalize */
-            (GClassInitFunc)zbar_gtk_class_init,
-            NULL, /* class_finalize */
-            NULL, /* class_data */
-            sizeof(ZBarGtk),
-            0,
-            (GInstanceInitFunc)zbar_gtk_init,
-        };
-        type = g_type_register_static(GTK_TYPE_WIDGET, "ZBarGtk", &info, 0);
-    }
-    return(type);
 }
 
 static void zbar_gtk_private_class_init (ZBarGtkPrivateClass *klass)

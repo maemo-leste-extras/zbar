@@ -1,3 +1,13 @@
+zbar (0.23-1) unstable; urgency=medium
+
+  * New upstream version.
+  * New maintainer. (Closes: #898078)
+  * Drop pygtk, python2 support. (Closes: #885473)
+  * Add python3 support. (Closes: #888303)
+  * debian/clean: added.
+
+ -- Gürkan Myczko <gurkan@phys.ethz.ch>  Mon, 27 May 2019 09:22:12 +0200
+
 zbar (0.22-1) unstable; urgency=medium
 
   * QA upload.

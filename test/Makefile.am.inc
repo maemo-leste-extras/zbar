@@ -51,7 +51,7 @@ test_test_dbus_SOURCES = test/test_dbus.c
 test_test_dbus_LDFLAGS = $(DBUS_LIBS)
 endif
 
-EXTRA_DIST += test/test_pygtk.py test/test_perl.pl
+EXTRA_DIST += test/test_pygtk.py test/test_perl.pl test/test_gi.py test/test_python.py
 
 # automake bug in "monolithic mode"?
 CLEANFILES += test/.libs/test_decode test/.libs/test_proc \
@@ -91,7 +91,7 @@ regress-decoder: test/test_decode
 	@abs_top_builddir@/test/test_decode -q -n 100000
 
 check-images-py: zbarimg/zbarimg
-	@abs_top_srcdir@/test/barcodetest.py
+	@PYTHON@ @abs_top_srcdir@/test/barcodetest.py
 
 check-images: zbarimg/zbarimg
 	@abs_top_builddir@/test/test_examples.sh
@@ -102,6 +102,28 @@ check-convert: test/test_convert
 	     "d697b0bb84617bef0f6413b3e5537ee38ba92312" ]; then \
 	   echo "convert FAILED"; else echo "convert PASSED."; fi
 	@rm /tmp/base.I420.zimg 2>/dev/null
+
+if HAVE_PYGTK2
+check-pygtk: pygtk/zbarpygtk.la
+	PYTHONPATH=@abs_top_srcdir@/pygtk/.libs/ \
+		@PYTHON@ @abs_top_srcdir@/test/test_pygtk.py
+else
+check-pygtk:
+endif
+
+if HAVE_PYTHON
+check-python: python/zbar.la
+	PYTHONPATH=@abs_top_srcdir@/python/.libs/ \
+		@PYTHON@ @abs_top_srcdir@/test/test_python.py \
+		'@abs_top_srcdir@/examples/ean-13.png' '9789876543217'
+else
+check-python:
+endif
+
+check-gi: gtk/ZBar-1.0.typelib
+	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):@abs_top_srcdir@/gtk/.libs:@abs_top_srcdir@/zbar/.libs \
+		GI_TYPELIB_PATH=@abs_top_srcdir@/gtk/ \
+		@PYTHON@ @abs_top_srcdir@/test/test_gi.py
 
 # Require a camera device for it to work
 check-video: test/test_video
@@ -120,14 +142,15 @@ endif
 
 if HAVE_JAVA_UNIT
 check-java: zbar/libzbar.la
-	$(MAKE) -C java check-java
+	JAVA_HOME=${JAVA_HOME} $(MAKE) -C java check-java
 else
 check-java:
 endif
 
 regress: regress-decoder
 
-check-local: check-images-py check-decoder check-images check-java regress
+check-local: check-images-py check-decoder check-images check-java \
+	     check-python regress
 
 other-tests: check-cpp check-convert check-video check-jpeg
 
