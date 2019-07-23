@@ -1,3 +1,11 @@
+zbar (0.23-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Rebuild for a source-only upload.
+  * debian/control: Bump Standards-Version to 4.4.0.
+
+ -- Boyuan Yang <byang@debian.org>  Tue, 23 Jul 2019 11:37:14 -0400
+
 zbar (0.23-1) unstable; urgency=medium
 
   * New upstream version.
