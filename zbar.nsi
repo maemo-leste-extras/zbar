@@ -82,7 +82,7 @@ Caption "ZBar ${VERSION} Setup"
 
 !insertmacro MUI_PAGE_WELCOME
 
-!insertmacro MUI_PAGE_LICENSE "share\doc\zbar\LICENSE"
+!insertmacro MUI_PAGE_LICENSE "share\doc\zbar\LICENSE.md"
 
 !define MUI_COMPONENTSPAGE_SMALLDESC
 !define MUI_COMPONENTSPAGE_CHECKBITMAP ${NSISDIR}\Contrib\Graphics\Checks\simple-round2.bmp
@@ -92,7 +92,7 @@ Caption "ZBar ${VERSION} Setup"
 !insertmacro MUI_PAGE_INSTFILES
 
 Function ShowREADME
-     Exec '"notepad.exe" "$INSTDIR\README.windows"'
+     Exec '"notepad.exe" "$INSTDIR\README-windows.md"'
 FunctionEnd
 
 !define MUI_FINISHPAGE_NOREBOOTSUPPORT
@@ -100,7 +100,7 @@ FunctionEnd
 !define MUI_FINISHPAGE_SHOWREADME_FUNCTION ShowREADME
 !define MUI_FINISHPAGE_LINK \
         "Visit the ZBar website for the latest news, FAQs and support"
-!define MUI_FINISHPAGE_LINK_LOCATION "http://zbar.sourceforge.net/"
+!define MUI_FINISHPAGE_LINK_LOCATION "https://github.com/mchehab/zbar"
 
 !insertmacro MUI_PAGE_FINISH
 
@@ -114,11 +114,11 @@ Section "ZBar Core Files (required)" SecCore
     SectionIn 1 2 RO
 
     SetOutPath $INSTDIR
-    File share\doc\zbar\README.windows
-    File share\doc\zbar\NEWS
-    File share\doc\zbar\TODO
+    File share\doc\zbar\README-windows.md
+    File share\doc\zbar\NEWS.md
+    File share\doc\zbar\TODO.md
     File share\doc\zbar\COPYING
-    File share\doc\zbar\LICENSE
+    File share\doc\zbar\LICENSE.md
 
     # emit a batch file to add the install directory to the path
     FileOpen $0 zbarvars.bat w
@@ -257,11 +257,11 @@ Section Uninstall
     RMDir /r $INSTDIR\doc
     RMDir /r $INSTDIR\lib
     RMDir /r $INSTDIR\bin
-    Delete $INSTDIR\README.windows
-    Delete $INSTDIR\NEWS
-    Delete $INSTDIR\TODO
+    Delete $INSTDIR\README-windows.md
+    Delete $INSTDIR\NEWS.md
+    Delete $INSTDIR\TODO.md
     Delete $INSTDIR\COPYING
-    Delete $INSTDIR\LICENSE
+    Delete $INSTDIR\LICENSE.md
     Delete $INSTDIR\zbarvars.bat
     Delete $INSTDIR\uninstall.exe
     RMDir $INSTDIR

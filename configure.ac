@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.68])
-AC_INIT([zbar], [0.22], [mchehab+samsung@kernel.org])
+AC_INIT([zbar], [0.23], [mchehab+samsung@kernel.org])
 m4_ifndef([AC_LANG_DEFINES_PROVIDED],
           [m4_define([AC_LANG_DEFINES_PROVIDED])])
 AC_CONFIG_AUX_DIR(config)
@@ -24,7 +24,7 @@ dnl     increment current, and set revision to 0.
 dnl   - If any interfaces have been added since the last public release,
 dnl     then increment age.
 dnl   - If any interfaces have been removed since the last public release,
-dnl     then set age to 0. 
+dnl     then set age to 0.
 AC_SUBST([LIB_VERSION], [3:0:3])
 AC_SUBST([RELDATE], [2017-04-11])
 
@@ -53,7 +53,7 @@ AC_DEFINE_UNQUOTED([LIB_VERSION_REVISION],
   [[`echo "$LIB_VERSION" | sed -e 's/^[^:]*:\([^:]*\):.*$/\1/'`]],
   [Library revision])
 
-AM_CPPFLAGS="-I$srcdir/include"
+AM_CPPFLAGS="-I\$(top_srcdir)/include"
 AM_CFLAGS="-Wall -Wno-parentheses"
 AM_CXXFLAGS="$AM_CFLAGS"
 AC_SUBST([AM_CPPFLAGS])
@@ -66,7 +66,12 @@ AC_CANONICAL_HOST
 case $host_os in
   *cygwin* | *mingw* | *uwin* | *djgpp* | *ems* )
     win32="yes"
+    with_dbus="no"
     AC_DEFINE([_WIN32_WINNT], [0x0500], [Minimum Windows API version])
+    AC_FUNC_ALLOCA
+    AC_FUNC_ERROR_AT_LINE
+    AC_FUNC_FSEEKO
+    AC_CHECK_HEADERS([arpa/inet.h libintl.h malloc.h mntent.h netdb.h netinet/in.h shadow.h sys/file.h sys/mount.h sys/param.h sys/socket.h sys/statfs.h sys/statvfs.h sys/vfs.h unistd.h values.h])
   ;;
   * )
     win32="no"
@@ -86,58 +91,6 @@ AC_ARG_VAR([XMLTO], [location of xmlto, used for optional \
 documentation generation])
 AC_ARG_VAR([XMLTOFLAGS], [additional arguments for xmlto])
 AC_CHECK_PROGS([XMLTO], [xmlto], [:])
-
-have_java="maybe"
-AC_ARG_VAR([JAVA_HOME], [root location of JDK])
-AS_IF([test "x$JAVA_HOME" = "x"],
-  [JAVA_PATH="$PATH"],
-  [JAVA_PATH="$JAVA_HOME/bin$PATH_SEPARATOR$PATH"])
-
-AC_ARG_VAR([JAVAC], [location of Java language compiler])
-AC_PATH_PROGS([JAVAC], [javac jikes ecj gcj], [:], [$JAVA_PATH])
-JAVAC=${JAVAC/ecj/ecj -1.5}
-AS_IF([test "x$JAVAC" = "x:"], [have_java="no"])
-
-AC_ARG_VAR([JAVAH], [location of Java header generator])
-AC_PATH_PROGS([JAVAH], [javah], [/bin/false], [$JAVA_PATH])
-
-AC_ARG_VAR([JAR], [location of Java archive tool])
-AC_PATH_PROGS([JAR], [jar], [:], [$JAVA_PATH])
-AS_IF([test "x$JAR" = "x:"], [have_java="no"])
-
-AC_ARG_VAR([JAVA], [location of Java application launcher])
-AC_PATH_PROGS([JAVA], [java], [/bin/false], [$JAVA_PATH])
-
-AC_ARG_VAR([CLASSPATH], [Java class path (include JUnit to run java tests)])
-AS_IF([test "x$CLASSPATH" = "x"], [CLASSPATH="."])
-
-dnl Search for Java unit test library
-if test -z "$JUNIT_HOME"; then
-    JUNIT_HOME="/usr/share/java"
-fi
-
-if test -f "$JUNIT_HOME/junit4.jar"; then
-    JUNIT="$JUNIT_HOME/junit4.jar"
-else
-    if test -f "$JUNIT_HOME/junit.jar"; then
-        JUNIT="$JUNIT_HOME/junit.jar"
-    fi
-fi
-
-if test "x$JUNIT" != "x"; then
-    if test -f "/usr/share/java/hamcrest/all.jar"; then
-        CLASSPATH="$JUNIT:/usr/share/java/hamcrest/all.jar:$CLASSPATH"
-        AC_SUBST(CLASSPATH)
-        with_java_unit="yes"
-    else
-        if test -f "/usr/share/java/hamcrest-all.jar"; then
-            CLASSPATH="$JUNIT:/usr/share/java/hamcrest-all.jar:$CLASSPATH"
-            AC_SUBST(CLASSPATH)
-            with_java_unit="yes"
-        fi
-    fi
-fi
-AM_CONDITIONAL([HAVE_JAVA_UNIT], [test "x$with_java_unit" = "xyes"])
 
 dnl symbologies
 
@@ -183,8 +136,16 @@ ZBAR_CHK_CODE([pdf417], [PDF417 symbology (incomplete)])
 
 dnl libraries
 
-AC_SEARCH_LIBS([clock_gettime], [rt])
+AC_SEARCH_LIBS([clock_gettime], [rt pthread])
 AM_ICONV()
+
+dnl libraries linkage
+AC_ARG_ENABLE([static_qt],
+  [AS_HELP_STRING([--enable-static-qt],
+    [Produce a static library for libzbarcam-qt])])
+
+AS_IF([test x$enable_static_qt = xyes], [AC_SUBST([LIBQT_EXTRA_LDFLAGS], ["-static"])])
+
 
 dnl poll support
 
@@ -231,6 +192,14 @@ AC_ARG_ENABLE([video],
   [],
   [enable_video="yes"])
 
+dnl video, directshow
+AC_ARG_WITH([directshow],
+  [AS_HELP_STRING([--with-directshow],
+     [compile directshow driver on windows instead of vfw,
+available only when video support is enabled])],
+  [],
+  [with_directshow="no"])
+
 have_v4l1="no"
 have_v4l2="no"
 have_libv4l="no"
@@ -247,9 +216,11 @@ configure --disable-video to skip building video support.])],
          [AS_IF([test "x$have_v4l2" = "xno"],
                [AC_MSG_WARN([v4l2 API not detected, upgrade your kernel!])])]
         )],
-  [AC_CHECK_HEADERS([vfw.h], [with_video="vfw"],
-    [AC_MSG_FAILURE([test for VfW video support failed!
-configure --disable-video to skip building video support.])])])
+  [AS_IF([test "x$with_directshow" != "xno"],
+    [with_video="directshow"],
+    [AC_CHECK_HEADERS([vfw.h], [with_video="vfw"],
+      [AC_MSG_FAILURE([test for VfW video support failed!
+configure --disable-video to skip building video support.])],[#include <windows.h>])])])
 
 AS_IF([test "x$have_libv4l" = "xyes"],
    [PKG_CHECK_MODULES([V4L2], [libv4l2], [],
@@ -260,6 +231,7 @@ AM_CONDITIONAL([HAVE_VIDEO], [test "x$enable_video" != "xno"])
 AM_CONDITIONAL([HAVE_V4L1], [test "x$have_v4l1" != "xno"])
 AM_CONDITIONAL([HAVE_V4L2], [test "x$have_v4l2" != "xno"])
 AM_CONDITIONAL([HAVE_LIBV4L], [test "x$have_libv4l" != "xno"])
+AM_CONDITIONAL([WITH_DIRECTSHOW], [test "x$with_directshow" != "xno"])
 
 dnl X
 AC_ARG_VAR([XSHM_LIBS], [linker flags for X shared memory extension])
@@ -338,7 +310,7 @@ AC_ARG_WITH([dbus],
   [with_dbus="check"])
 
 AS_IF([test "x$with_dbus" != "xno"],
-  [PKG_CHECK_MODULES(DBUS, dbus-1 >= 1.0, have_dbus=yes, have_dbus=no)
+  [PKG_CHECK_MODULES(DBUS, dbus-1 >= 1.0, have_dbus="yes", have_dbus="no")
   AS_IF([test "x$have_dbus$with_dbus" = "xnoyes"],
     [AC_MSG_FAILURE([DBus development libraries not found])],
     [with_dbus="$have_dbus"])
@@ -419,6 +391,15 @@ dnl double check ImageMagick install (bug #2582232)
       AC_CHECK_HEADER([wand/MagickWand.h],
         [have_IM="yes"],
         [have_IM="broken"])
+dnl check for ImageMagick 7, see https://imagemagick.org/script/porting.php#headers
+      AS_IF([test "x$have_IM" = "xbroken"], [
+        AC_CHECK_HEADER([MagickWand/MagickWand.h],
+          [
+            have_IM="yes"
+            have_IM7="yes"
+          ],
+          [have_IM="broken"])
+      ])
       CPPFLAGS="$CPPFLAGS_save"])])
 
 have_GM="maybe"
@@ -429,9 +410,11 @@ AS_IF([test "x$have_IM" = "xyes"], [],
   [AS_IF([test "x$looked_for" = "x"],
      [looked_for="GraphicsMagick"],
      [looked_for="$looked_for or GraphicsMagick"])
-   PKG_CHECK_MODULES([MAGICK], [GraphicsMagickWand],
+   PKG_CHECK_MODULES([GM], [GraphicsMagickWand],
      [have_GM="yes"
       magick="GraphicsMagick"
+      MAGICK_CFLAGS="$MAGICK_CFLAGS $GM_CFLAGS"
+      MAGICK_LIBS="$MAGICK_LIBS $GM_LIBS"
       MAGICK_VERSION=`$PKG_CONFIG GraphicsMagickWand --modversion`],
      [have_GM="no"
       AS_IF([test "x$saved_error" = "x"],
@@ -472,6 +455,8 @@ AS_IF([test "x$have_IM" = "xyes"],
   [AC_DEFINE([HAVE_IMAGEMAGICK], [1], [Define to 1 to use ImageMagick])],
   [test "x$have_GM" = "xyes"],
   [AC_DEFINE([HAVE_GRAPHICSMAGICK], [1], [Define to 1 to use GraphicsMagick])])
+AS_IF([test "x$have_IM7" = "xyes"],
+  [AC_DEFINE([HAVE_IMAGEMAGICK7], [1], [Define to 1 to use ImageMagick 7])])
 AM_CONDITIONAL([HAVE_MAGICK],
   [test "x$have_IM" = "xyes" || test "x$have_GM" = "xyes"])
 
@@ -490,50 +475,109 @@ AS_IF([test "x$with_npapi" != "xno"],
 AM_CONDITIONAL([HAVE_NPAPI], [test "x$with_npapi" = "xyes"])
 
 dnl GTK
+dnl For now, defaults to GTK version 2
+
 AC_ARG_WITH([gtk],
-  [AS_HELP_STRING([--without-gtk],
-    [disable support for GTK+ widget])],
-  [],
-  [with_gtk="yes"])
+  [AS_HELP_STRING([--with-gtk],
+    [Specify support for GTK. Valid values are: no, auto, gtk2, gtk3 (default is gtk2)])],
+  [AS_IF([test "x$with_gtk" != "xno"   && test "x$with_gtk" != "xauto" &&
+          test "x$with_gtk" != "xgtk2" && test "x$with_gtk" != "xgtk3"],
+         [echo "Invalid value for --with-gtk. Falling back to 'no'"
+          with_gtk="xno"])],
+  [with_gtk="gtk2"])
 
 AC_ARG_VAR([GLIB_GENMARSHAL], [full path to glib-genmarshal])
+AC_ARG_VAR([GTK_VERSION_MAJOR])
 
-AS_IF([test "x$with_gtk" != "xno"],
-  [PKG_CHECK_MODULES([GTK], [gtk+-2.0 gthread-2.0])
-   GLIB_GENMARSHAL=`$PKG_CONFIG glib-2.0 --variable=glib_genmarshal`
-   GTK_VERSION=`$PKG_CONFIG gtk+-2.0 --modversion`
-   AC_MSG_NOTICE([using GTK+ version $GTK_VERSION])
-   GTHREAD_VERSION=`$PKG_CONFIG gthread-2.0 --modversion`
-   AC_MSG_NOTICE([using gthread-2.0 version $GTHREAD_VERSION])])
+AS_IF([test "x$with_gtk" == "xgtk3" || test "x$with_gtk" == "xauto"],
+  [PKG_CHECK_MODULES([GTK3], [gtk+-3.0],
+    [GLIB_GENMARSHAL=`$PKG_CONFIG glib-2.0 --variable=glib_genmarshal`
+     GTK_VERSION=`$PKG_CONFIG gtk+-3.0 --modversion`
+     AC_MSG_NOTICE([using GTK+ version $GTK_VERSION])
+     GTK_VERSION_MAJOR=3.0
+     with_gtk="gtk3"
+     GTK_CFLAGS=$GTK3_CFLAGS
+     GTK_LIBS=$GTK3_LIBS
+    ])
+  ])
 
-AM_CONDITIONAL([HAVE_GTK], [test "x$with_gtk" = "xyes"])
+AS_IF([test "x$with_gtk" == "xgtk2" || test "x$with_gtk" == "xauto"],
+  [PKG_CHECK_MODULES([GTK2], [gtk+-2.0],
+    [GLIB_GENMARSHAL=`$PKG_CONFIG glib-2.0 --variable=glib_genmarshal`
+     GTK_VERSION=`$PKG_CONFIG gtk+-2.0 --modversion`
+     AC_MSG_NOTICE([using GTK+ version $GTK_VERSION])
+     GTK_VERSION_MAJOR=2.0
+     with_gtk="gtk2"
+     GTK_CFLAGS=$GTK2_CFLAGS
+     GTK_LIBS=$GTK2_LIBS
+    ])
+  ])
 
-dnl PyGTK
-AC_ARG_WITH([python2],
-  [AS_HELP_STRING([--without-python2],
-    [disable support for Python 2 bindings])],
+# GTK not found
+AS_IF(test "x$with_gtk" = "xauto"],[with_gtk="no"])
+
+AC_SUBST(GTK_LIBS)
+AC_SUBST(GTK_CFLAGS)
+
+AM_CONDITIONAL([HAVE_GTK], [test "x$with_gtk" != "xno"])
+
+AC_ARG_WITH([gir],
+  [AS_HELP_STRING([--with-gir], [enable support for GObject Introspection])],
   [],
-  [with_python2="yes"])
+  [with_gir="yes"])
+
+dnl Python
+dnl For now, keep python2 as default
+dnl If both PYTHON and --with-python=foo are defined, PYTHON takes precedence
+
+AC_ARG_WITH([python],
+  [AS_HELP_STRING([--with-python],
+    [Specify support for Python. Valid values are: no, auto, python2, python3
+(default is python2).
+Please notice that PYTHON var, if especified, takes precedence.])],
+  [AS_IF([test "x$with_python" != "xno"      && test "x$with_python" != "xauto" &&
+          test "x$with_python" != "xpython2" && test "x$with_python" != "xpython3"],
+         [echo "Invalid value for --with-python. Falling back to 'no'"
+          with_python="xno"])],
+  [with_python="python2"])
 
 AC_ARG_VAR([PYTHON_CONFIG], [full path to python-config program])
 AC_ARG_VAR([PYTHON_CFLAGS], [compiler flags for building python extensions])
 AC_ARG_VAR([PYTHON_LIBS], [linker flags for building python extensions])
 
-AC_ARG_VAR([PYGTK_H2DEF], [full path to PyGTK h2def.py module])
-AC_ARG_VAR([PYGTK_CODEGEN], [full path to pygtk-codegen program])
-AC_ARG_VAR([PYGTK_DEFS], [directory where PyGTK definitions may be found])
+AC_ARG_VAR([PYGTK_H2DEF], [full path to PyGTK h2def.py module (python2 only)])
+AC_ARG_VAR([PYGTK_CODEGEN], [full path to pygtk-codegen program (python2 only)])
+AC_ARG_VAR([PYGTK_DEFS], [directory where PyGTK definitions may be found (python2 only)])
 
-AS_IF([test "x$with_python2" != "xno"],
-  [AM_PATH_PYTHON(2.7.0)
+AS_IF([test -z "$PYTHON"],
+      [AS_IF([test "x$with_python" == "xauto"],
+             [AC_PATH_PROGS([PYTHON], [python3 python2 python], [:], [$PATH])],
+             [AS_IF([test "x$with_python" == "xpython3"],
+                    [AC_PATH_PROGS([PYTHON], [python3 python], [:], [$PATH])],
+                    [AS_IF([test "x$with_python" == "xpython2"],
+                           [AC_PATH_PROGS([PYTHON], [python2 python], [:], [$PATH])],
+                           [with_python="no"])
+                    ])
+             ]
+      )],
+      [with_python="auto"]
+)
+
+AS_IF([test "x$with_python" != "xno"],
+      [AM_PATH_PYTHON([2.7.0])])
+
+AS_IF([test "x$PYTHON_VERSION" != "x" && test "x$with_python" != "xno"],
+  [PYTHON_VERSION_MAJOR="`echo $PYTHON_VERSION | cut -d'.' -f 1`"
+
    AS_IF([test "x$PYTHON_CFLAGS" != "x"],
      [],
      [test "x$PYTHON_CONFIG" != "x" && test -x "$PYTHON_CONFIG"],
      [PYTHON_CFLAGS=`$PYTHON_CONFIG --cflags`],
      [test -x "$PYTHON-config"],
      [PYTHON_CFLAGS=`$PYTHON-config --cflags`],
-     [PYTHON_CFLAGS=`$PYTHON -c 'import distutils.sysconfig as s; print " ".join(s.get_config_vars("CFLAGS")) + " -I"+s.get_python_inc() + " -I"+s.get_python_inc(plat_specific=True)'`])
+     [PYTHON_CFLAGS=`$PYTHON -c 'import distutils.sysconfig as s, sys; sys.stdout.write(" ".join(s.get_config_vars("CFLAGS")) + " -I"+s.get_python_inc() + " -I"+s.get_python_inc(plat_specific=True))'`])
 
-dnl check that #include <Python.h> compiles (bug #3092663)
+   dnl check that #include <Python.h> compiles (bug #3092663)
    CPPFLAGS_save="$CPPFLAGS"
    CPPFLAGS="$CPPFLAGS $PYTHON_CFLAGS"
    AC_CHECK_HEADER([Python.h], [], [AC_MSG_ERROR([dnl
@@ -543,19 +587,40 @@ Install the development package for python-$am_cv_python_version, or configure
 ])])
    CPPFLAGS="$CPPFLAGS_save"
 
-   AS_IF([test "x$with_gtk" = "xyes"],
-     [PKG_CHECK_MODULES([PYGTK], [pygtk-2.0])
-      AC_CHECK_PROGS([PYGTK_CODEGEN], [pygobject-codegen-2.0 pygtk-codegen-2.0 pygtk-codegen], [:])
+   dnl PyGTK
+   dnl disable pygtk when we're on Python 3
+   AS_IF([test "x$with_gtk" != "xno"],
+     [AS_IF([test "x$PYTHON_VERSION_MAJOR" = "x2"],
+       [PKG_CHECK_MODULES([PYGTK], [pygtk-2.0], [with_pygtk2="yes"], [with_pygtk2="no"])
+        AC_CHECK_PROGS([PYGTK_CODEGEN], [pygobject-codegen-2.0 pygtk-codegen-2.0 pygtk-codegen], [:])
 
-      AS_IF([test "x$PYGTK_H2DEF" = "x"],
-        [PYGTK_H2DEF=`$PKG_CONFIG pygtk-2.0 --variable=codegendir`/h2def.py
-         AS_IF([test -f "$PYGTK_H2DEF"], [], [PYGTK_H2DEF=":"])])
-      AS_IF([test "x$PYGTK_DEFS" = "x"],
-        [PYGTK_DEFS=`$PKG_CONFIG pygtk-2.0 --variable=defsdir`])
+        AS_IF([test "x$PYGTK_H2DEF" = "x"],
+          [PYGTK_H2DEF=`$PKG_CONFIG pygtk-2.0 --variable=codegendir`/h2def.py
+           AS_IF([test -f "$PYGTK_H2DEF"], [], [PYGTK_H2DEF=":"])])
+        AS_IF([test "x$PYGTK_DEFS" = "x"],
+          [PYGTK_DEFS=`$PKG_CONFIG pygtk-2.0 --variable=defsdir`])
+     ])
    ])
-])
+], [with_python="no"])
 
-AM_CONDITIONAL([HAVE_PYTHON], [test "x$with_python2" = "xyes"])
+AS_IF([test "x$PYTHON_VERSION_MAJOR" != "x2"], [with_pygtk2="no"])
+AM_CONDITIONAL([HAVE_PYTHON], [test "x$with_python" != "xno"])
+AM_CONDITIONAL([HAVE_PYGTK2], [test "x$with_pygtk2" != "xno"])
+
+dnl GObject Introspection (GIR)
+
+AS_IF([test "x$with_gir" == "xyes" && test "x$with_gtk" != "xno"],
+  [m4_ifdef([GOBJECT_INTROSPECTION_CHECK],
+    [GOBJECT_INTROSPECTION_CHECK([0.6.7])
+     AS_IF([test "x$found_introspection" = "xyes"],
+       [INTROSPECTION_TYPELIBDIR=`$PKG_CONFIG --variable=typelibdir --define-variable="libdir=${libdir}" gobject-introspection-1.0`
+        INTROSPECTION_GIRDIR=`$PKG_CONFIG --variable=girdir --define-variable="datadir=${datadir}" gobject-introspection-1.0`
+        AC_SUBST(INTROSPECTION_TYPELIBDIR)
+        AC_SUBST(INTROSPECTION_GIRDIR)])])
+ ])
+
+AS_IF([test "x$found_introspection" != "xyes"], [with_gir="no"])
+AM_CONDITIONAL([HAVE_INTROSPECTION], [test "x$with_gir" = "xyes"])
 
 dnl Qt
 AC_ARG_WITH([qt],
@@ -573,17 +638,29 @@ AC_ARG_WITH([qt5],
 
 AC_ARG_VAR([MOC], [full path to Qt moc program])
 
+AS_IF([test "x$have_x" = "xyes"],
+      [qt_extra="Qt5X11Extras >= 5.0"],
+      [qt_extra=""])
+
+AS_IF([test "x$with_qt" != "xno"],
+      [PKG_CHECK_MODULES([QT],
+		         [Qt5Core >= 5 Qt5Gui >= 5 Qt5Widgets >= 5.0 $qt_extra],,
+		         [with_qt5 = "no"
+		          PKG_CHECK_MODULES([QT],
+					    [QtCore >= 4 QtGui >= 4],,
+					    [with_qt="no"])])])
+
 AS_IF([test "x$with_qt" != "xno"],
    AS_IF([test "x$with_qt5" != "xno"],
-     [PKG_CHECK_MODULES([QT], [Qt5Core >= 5 Qt5Gui >= 5 Qt5Widgets >= 5.0 Qt5X11Extras >= 5.0])
-     AC_CHECK_PROGS(MOC, [moc-qt5 moc])
+    [AC_CHECK_PROGS(MOC, [moc-qt5 moc])
      AC_MSG_NOTICE([using moc from $MOC])
      QT_VERSION=`$PKG_CONFIG Qt5Gui --modversion`
-     CPPFLAGS="$CPPFLAGS $QT_CPPFLAGS -fPIC"
+     CPPFLAGS="$CPPFLAGS $QT_CPPFLAGS"
+dnl -fPIC has no effect on Windows and breaks windres
+     AS_IF([test "x$win32" = "xno"], [CPPFLAGS="$CPPFLAGS -fPIC"])
      AC_MSG_NOTICE([using Qt version $QT_VERSION])],
 
-     [PKG_CHECK_MODULES([QT], [QtCore >= 4 QtGui >= 4])
-     MOC=`$PKG_CONFIG QtGui --variable=moc_location`
+    [MOC=`$PKG_CONFIG QtGui --variable=moc_location`
      AC_MSG_NOTICE([using moc from $MOC])
      QT_VERSION=`$PKG_CONFIG QtGui --modversion`
      AC_MSG_NOTICE([using Qt version $QT_VERSION])]))
@@ -591,19 +668,70 @@ AS_IF([test "x$with_qt" != "xno"],
 AM_CONDITIONAL([HAVE_QT], [test "x$with_qt" = "xyes"])
 
 dnl Java
-if test -z "$JAVA_HOME"; then
-    AC_PATH_PROG([JAVAC], javac,, $PATH)
-    if test ! -z "$JAVAC"; then
-        JAVA_HOME=$( readlink -f ${JAVAC} | rev | cut -d/ -f3- | rev )
-        AC_SUBST(JAVA_HOME)
-    fi
-fi
+have_java="maybe"
+
+AC_ARG_VAR([JAVA_HOME], [root location of JDK])
+
+AC_ARG_VAR([JAVAC], [location of Java language compiler])
+AC_ARG_VAR([JAVAH], [location of Java header generator])
+
+# If $JAVA_HOME not defined, try to autodetect it
+AS_IF([test -z "$JAVA_HOME"],
+      [AC_PATH_PROGS([JAVAC], [javac jikes ecj gcj], [:], [$PATH])
+       AS_IF([test ! -z "$JAVAC"],
+	     [JAVA_HOME=$( readlink -f ${JAVAC} | rev | cut -d/ -f3- | rev )])])
+
+# If $JAVA_HOME is defined, set JAVA_PATH and JAVAC
+AS_IF([test ! -z "$JAVA_HOME"],
+      [JAVA_PATH="$JAVA_HOME/bin$PATH_SEPARATOR$PATH"
+       AS_IF([test -z "$JAVAC"],
+             [AC_PATH_PROGS([JAVAC], [javac jikes ecj gcj], [:], [$JAVA_PATH])])])
 
 AC_ARG_WITH([java],
   [AS_HELP_STRING([--without-java],
     [disable support for Java interface])],
   [],
   [with_java="check"])
+
+JAVAC=${JAVAC/ecj/ecj -1.5}
+
+# Javah was obsoleted on Java 8 and removed on Java 11. So, we need to
+# look strictly at the $JAVA_HOME in order to avoid mixing different versions
+AS_IF([test -z "$JAVAH"],
+      [AC_PATH_PROGS([JAVAH], [javah], [], [$JAVA_HOME/bin])])
+
+AM_CONDITIONAL([HAVE_JAVAH], [test "x$JAVAH" != "x"])
+
+AC_ARG_VAR([JAR], [location of Java archive tool])
+AC_PATH_PROGS([JAR], [jar], [:], [$JAVA_PATH])
+AS_IF([test "x$JAR" == "x:"], [have_java="no"])
+
+AC_ARG_VAR([JAVA], [location of Java application launcher])
+AC_PATH_PROGS([JAVA], [java], [/bin/false], [$JAVA_PATH])
+
+AC_ARG_VAR([CLASSPATH], [Java class path (include JUnit to run java tests)])
+AS_IF([test "x$CLASSPATH" == "x"], [CLASSPATH="."])
+
+dnl Search for Java unit test library
+AS_IF([test -z "$JUNIT_HOME"],
+      [JUNIT_HOME="/usr/share/java"])
+
+AS_IF([test -f "$JUNIT_HOME/junit4.jar"],
+      [JUNIT="$JUNIT_HOME/junit4.jar"],
+      [AS_IF([test -f "$JUNIT_HOME/junit.jar"],
+	    [JUNIT="$JUNIT_HOME/junit.jar"])])
+
+AS_IF([test "x$JUNIT" != "x"],
+      [AS_IF([test -f "/usr/share/java/hamcrest/all.jar"],
+	     [CLASSPATH="$JUNIT:/usr/share/java/hamcrest/all.jar:$CLASSPATH"
+              AC_SUBST(CLASSPATH)
+              with_java_unit="yes"])],
+      [AS_IF([test -f "/usr/share/java/hamcrest-all.jar"],
+             [CLASSPATH="$JUNIT:/usr/share/java/hamcrest-all.jar:$CLASSPATH"
+              AC_SUBST(CLASSPATH)
+              with_java_unit="yes"])])
+
+AM_CONDITIONAL([HAVE_JAVA_UNIT], [test "x$with_java_unit" = "xyes"])
 
 AC_ARG_VAR([JAVA_CFLAGS], [compiler flags for building JNI extensions])
 AS_IF([test "x$JAVA_CFLAGS" = "x" && test "x$JAVA_HOME" != "x"],
@@ -620,8 +748,7 @@ AS_IF([test "x$with_java" != "xno"],
    AS_IF([test "x$have_java" != "xno"],
      [with_java="yes"],
      [test "x$with_java" = "xyes"],
-     [AC_MSG_FAILURE([unable to find Java JNI! ensure CFLAGS are set
-appropriately or configure --without-java])],
+     [AC_MSG_FAILURE([unable to find Java JNI! ensure CFLAGS are set appropriately or configure --without-java])],
      [with_java="no"])
 ])
 AM_CONDITIONAL([HAVE_JAVA], [test "x$with_java" = "xyes"])
@@ -631,9 +758,11 @@ dnl header files
 
 dnl FIXME switches for shm, mmap
 AC_HEADER_ASSERT
-AC_CHECK_HEADERS([errno.h fcntl.h features.h inttypes.h stdlib.h string.h \
-  unistd.h sys/types.h sys/stat.h sys/ioctl.h sys/time.h sys/times.h \
-  sys/ipc.h sys/shm.h sys/mman.h])
+AC_CHECK_HEADERS([errno.h fcntl.h features.h inttypes.h float.h limits.h \
+  locale.h stddef.h stdlib.h string.h unistd.h sys/types.h sys/stat.h \
+  sys/ioctl.h sys/time.h sys/times.h sys/ipc.h sys/shm.h sys/mman.h])
+AC_HEADER_MAJOR
+AC_CHECK_HEADER_STDBOOL
 
 dnl types
 
@@ -641,6 +770,16 @@ AC_TYPE_INT32_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT8_T
 AC_TYPE_UINTPTR_T
+AC_TYPE_UID_T
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_OFF_T
+AC_TYPE_SIZE_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_UINT8_T
+AC_CHECK_MEMBERS([struct stat.st_rdev])
 
 dnl compile characteristics
 
@@ -650,7 +789,8 @@ AC_C_INLINE
 dnl functions
 
 AC_FUNC_MMAP
-AC_CHECK_FUNCS([memset atexit setenv])
+AC_CHECK_FUNCS([alarm clock_gettime floor getcwd gettimeofday localeconv memchr memmove memset modf munmap pow select setenv sqrt strcasecmp strchr strdup strerror strrchr strstr strtol strtoul malloc realloc])
+
 
 dnl output generation
 
@@ -659,20 +799,24 @@ AC_CONFIG_COMMANDS([doc/version.xml],
   [AS_IF([test -f doc/version.xml && \
           ! echo $VERSION | diff doc/version.xml - >/dev/null 2>&1 || \
           ! echo $VERSION | diff $srcdir/doc/version.xml - >/dev/null 2>&1 ],
-    [echo "writing new doc/version.xml" ; echo $VERSION > doc/version.xml ])],
+    [echo "writing new doc/version.xml" ; echo $VERSION > $srcdir/doc/version.xml ])],
   [VERSION="$VERSION"]
 )
 AC_CONFIG_COMMANDS([doc/reldate.xml],
   [AS_IF([test -f doc/reldate.xml && \
           ! echo $RELDATE | diff doc/reldate.xml - >/dev/null 2>&1 || \
           ! echo $RELDATE | diff $srcdir/doc/reldate.xml - >/dev/null 2>&1 ],
-    [echo "writing new doc/reldate.xml" ; echo $RELDATE > doc/reldate.xml ])],
+    [echo "writing new doc/reldate.xml" ; echo $RELDATE > $srcdir/doc/reldate.xml ])],
   [RELDATE="$RELDATE"]
 )
 
+echo "Generating config files"
+
 AC_CONFIG_FILES([
 Makefile
+gtk/Makefile
 java/Makefile
+zbar/Makefile
 zbar.pc
 zbar-gtk.pc
 zbar-qt.pc
@@ -688,25 +832,35 @@ dnl summary log
 echo ""
 echo "please verify that the detected configuration matches your expectations:"
 echo "------------------------------------------------------------------------"
-echo "X                 --with-x=$have_x"
-echo "pthreads          --enable-pthread=$enable_pthread"
-echo "doc               --enable-doc=$enable_doc"
-echo "v4l               --enable-video=$enable_video"
-echo "jpeg              --with-jpeg=$with_jpeg"
-echo "Python ${PYTHON_VERSION}        --with-python2=$with_python2"
-echo "GTK+${GTK_VERSION}       --with-gtk=$with_gtk"
-echo "Qt${QT_VERSION}           --with-qt=$with_qt"
-echo "Java              --with-java=$with_java"
+AS_IF([test "x$win32" != "xno"],
+  [AS_IF([test "x$with_directshow" != "xno"],
+    [echo "DirectShow driver      --with-directshow=$with_directshow"],
+    [echo "VfW driver             --with-directshow=$with_directshow"]
+  )],
+  [echo "X                      --with-x=$have_x"]
+)
+echo "pthreads               --enable-pthread=$enable_pthread"
+echo "doc                    --enable-doc=$enable_doc"
+echo "v4l                    --enable-video=$enable_video"
+echo "jpeg                   --with-jpeg=$with_jpeg"
+echo "Python                 --with-python=$with_python    python${PYTHON_VERSION}"
+echo "GTK                    --with-gtk=$with_gtk          Gtk${GTK_VERSION}"
+echo "GObject introspection  --with-gir=$with_gir"
+echo "Qt                     --with-qt=$with_qt            Qt${QT_VERSION}"
+echo "Java                   --with-java=$with_java"
+AS_IF([test "x$win32" == "xno"],
+  [echo "Dbus                   --with-dbus=$with_dbus"])
 AS_IF([test "x$have_GM" = "xyes"],
-  [echo "GraphicsMagick    --with-graphicsmagick=yes"],
-  [echo "ImageMagick       --with-imagemagick=$with_imagemagick"])
-echo "dbus              --with-dbus=$with_dbus"
-echo "Enabled codes:   $enabled_codes"
-echo "Disabled codes:  $disabled_codes"
-echo ""
+  [echo "GraphicsMagick         --with-graphicsmagick=yes"],
+  [echo "ImageMagick            --with-imagemagick=$with_imagemagick"])
+echo "Enabled codes:        $enabled_codes"
+echo "Disabled codes:       $disabled_codes"
+AS_IF([test "x$with_java" = "xyes"],
+  [echo "JAVA_HOME              $JAVA_HOME"])
 
 dnl Display "warnings" about disabled and experimental features
 
+echo ""
 AS_IF([test "x$enable_video" != "xyes"],
   [echo "        => zbarcam video scanner will *NOT* be built"])
 AS_IF([test "x$have_libv4l" != "xyes"],
@@ -717,12 +871,14 @@ AS_IF([test "x$have_IM" != "xyes" && test "x$have_GM" != "xyes"],
   [echo "        => the zbarimg file scanner will *NOT* be built"])
 AS_IF([test "x$have_GM" = "xyes"],
   [echo "        => ImageMagick is preferred, as GraphicsMagick doesn't support https"])
-AS_IF([test "x$with_gtk" != "xyes"],
-  [echo "        => the GTK+ widget will *NOT* be built"],
-  [AS_IF([test "x$with_python2" != "xyes"],
-     [echo "        => the PyGTK widget wrapper will *NOT* be built"])])
+AS_IF([test "x$with_gtk" == "xno"],
+  [echo "        => GTK support will *NOT* be built"])
+AS_IF([test "x$with_pygtk2" != "xyes" && test "xPYTHON_VERSION_MAJOR" = "x2"],
+  [echo "        => the Python 2 GTK widget wrapper will *NOT* be built"])
 AS_IF([test "x$with_qt" != "xyes"],
   [echo "        => the Qt widget will *NOT* be built"])
+AS_IF([test "x$with_qt" == "xyes" && test "x$enable_static_qt" == "xyes" ],
+  [echo "        => Building a static Qt library"])
 AS_IF([test "x$with_java" != "xyes"],
   [echo "        => the Java interface will *NOT* be built"])
 AS_IF([test "x$with_java_unit" != "xyes"],
@@ -732,5 +888,3 @@ AS_IF([test "x$with_java_unit" != "xyes"],
 #  [echo "       => the Mozilla/Firefox/OpenOffice plugin will *NOT* be built"])
 AS_IF([test "x$enable_pdf417" == "xyes"],
   [echo "        => the pdf417 code support is incomplete!"])
-AS_IF([test "x$enable_sqcode" == "xyes"],
-  [echo "        => the sqcode support is currently experimental. Use with care!"])

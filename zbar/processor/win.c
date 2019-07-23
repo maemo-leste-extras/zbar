@@ -32,6 +32,10 @@
                    WS_MAXIMIZEBOX)
 #define EXT_STYLE (WS_EX_APPWINDOW | WS_EX_OVERLAPPEDWINDOW)
 
+struct processor_state_s {
+    ATOM registeredClass;
+};
+
 
 int _zbar_event_init (zbar_event_t *event)
 {
@@ -117,12 +121,12 @@ static LRESULT CALLBACK win_handle_event (HWND hwnd,
                                           LPARAM lparam)
 {
     zbar_processor_t *proc =
-        (zbar_processor_t*)GetWindowLongPtr(hwnd, GWL_USERDATA);
+        (zbar_processor_t*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     /* initialized during window creation */
     if(message == WM_NCCREATE) {
         proc = ((LPCREATESTRUCT)lparam)->lpCreateParams;
         assert(proc);
-        SetWindowLongPtr(hwnd, GWL_USERDATA, (LONG_PTR)proc);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)proc);
         proc->display = hwnd;
 
         zbar_window_attach(proc->window, proc->display, proc->xwin);
@@ -211,11 +215,14 @@ static inline int win_handle_events (zbar_processor_t *proc)
 
 int _zbar_processor_init (zbar_processor_t *proc)
 {
+    proc->state = calloc(1, sizeof(processor_state_t));
     return(0);
 }
 
 int _zbar_processor_cleanup (zbar_processor_t *proc)
 {
+    free(proc->state);
+    proc->state = 0;
     return(0);
 }
 
@@ -277,6 +284,7 @@ int _zbar_processor_open (zbar_processor_t *proc,
         return(err_capture(proc, SEV_ERROR, ZBAR_ERR_WINAPI, __func__,
                            "failed to register window class"));
 
+    proc->state->registeredClass = wca;
     RECT r = { 0, 0, width, height };
     AdjustWindowRectEx(&r, WIN_STYLE, 0, EXT_STYLE);
     proc->display = CreateWindowEx(EXT_STYLE, (LPCTSTR)(long)wca,
@@ -295,6 +303,7 @@ int _zbar_processor_close (zbar_processor_t *proc)
 {
     if(proc->display) {
         DestroyWindow(proc->display);
+        UnregisterClass((LPCTSTR)(long)proc->state->registeredClass, 0);
         proc->display = NULL;
     }
     return(0);
