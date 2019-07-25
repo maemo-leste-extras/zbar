@@ -3,8 +3,11 @@ zbar (0.23-1.1) unstable; urgency=medium
   * Non-maintainer upload.
   * Rebuild for a source-only upload.
   * debian/control: Bump Standards-Version to 4.4.0.
+  * debian/patches:
+    + Refactor previous perl shabang patch to merge them together.
+    + Backport upstream patch to fix iconv-related unexpected abort.
 
- -- Boyuan Yang <byang@debian.org>  Tue, 23 Jul 2019 11:37:14 -0400
+ -- Boyuan Yang <byang@debian.org>  Thu, 25 Jul 2019 16:36:38 -0400
 
 zbar (0.23-1) unstable; urgency=medium
 

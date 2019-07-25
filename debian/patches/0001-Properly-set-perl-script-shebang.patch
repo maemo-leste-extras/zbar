@@ -1,0 +1,31 @@
+From: =?utf-8?q?G=C3=BCrkan_Myczko?= <gurkan@phys.ethz.ch>
+Date: Thu, 25 Jul 2019 16:34:30 -0400
+Subject: Properly set perl script shebang
+
+Signed-off-by: Boyuan Yang <byang@debian.org>
+Last-Update: 2019-07-25
+---
+ perl/examples/processor.pl | 2 +-
+ perl/examples/read_one.pl  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/perl/examples/processor.pl b/perl/examples/processor.pl
+index d2d1e91..c8daa69 100755
+--- a/perl/examples/processor.pl
++++ b/perl/examples/processor.pl
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env perl
++#!/usr/bin/perl
+ use warnings;
+ use strict;
+ require Barcode::ZBar;
+diff --git a/perl/examples/read_one.pl b/perl/examples/read_one.pl
+index d64860c..2c6f1ae 100755
+--- a/perl/examples/read_one.pl
++++ b/perl/examples/read_one.pl
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env perl
++#!/usr/bin/perl
+ use warnings;
+ use strict;
+ require Barcode::ZBar;

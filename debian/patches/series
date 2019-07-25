@@ -1,2 +1,2 @@
-perl
-she-bang
+0001-Properly-set-perl-script-shebang.patch
+0002-Reset-conversion-descriptor-after-close-prevent-doub.patch
