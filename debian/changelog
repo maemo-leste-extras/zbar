@@ -6,8 +6,9 @@ zbar (0.23-1.1) unstable; urgency=medium
   * debian/patches:
     + Refactor previous perl shabang patch to merge them together.
     + Backport upstream patch to fix iconv-related unexpected abort.
+  * debian/libzbargtk0.symbols: Add new symbol.
 
- -- Boyuan Yang <byang@debian.org>  Thu, 25 Jul 2019 16:36:38 -0400
+ -- Boyuan Yang <byang@debian.org>  Thu, 25 Jul 2019 17:01:39 -0400
 
 zbar (0.23-1) unstable; urgency=medium
 
