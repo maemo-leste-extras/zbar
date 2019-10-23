@@ -15,7 +15,6 @@ Build-Depends:
  libx11-dev,
  perl,
  pkg-config,
- python-gtk2-dev,
  python3:any | python3-all:any | python3-dev:any | python3-all-dev:any | dh-sequence-python3,
  qtbase5-dev,
  xmlto,
