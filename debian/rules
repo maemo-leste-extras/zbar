@@ -31,7 +31,7 @@ ifeq (,$(findstring linux,$(DEB_HOST_ARCH_OS)))
 endif
 
 %:
-	dh $@ --with python3
+	dh $@
 
 override_dh_auto_configure:
 	dh_auto_configure -- $(CONFIGURE_FLAGS)
