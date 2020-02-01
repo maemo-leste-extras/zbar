@@ -24,7 +24,7 @@ LDFLAGS_BINDINGS = $(strip $(LDFLAGS) $(LDFLAGS_LIB_SEARCHPATH))
 export QT_SELECT := 5
 
 # Properly set configure flags
-CONFIGURE_FLAGS = --without-java --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) --with-gtk=gtk3 --with-python=python3 --with-qt=yes --with-qt5=yes
+CONFIGURE_FLAGS = --without-java --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) --with-gtk=gtk3 --with-python=python3 --with-qt5
 
 # We enable libv4l support only on Linux platforms.
 ifeq (,$(findstring linux,$(DEB_HOST_ARCH_OS)))

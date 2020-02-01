@@ -17,6 +17,7 @@ Build-Depends:
  pkg-config,
  python3-all-dev:any,
  qtbase5-dev,
+ qtbase5-dev-tools,
  xmlto,
  libgtk-3-dev,
 Rules-Requires-Root: no
