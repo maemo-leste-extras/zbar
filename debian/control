@@ -131,6 +131,9 @@ Depends:
  libzbar0 (= ${binary:Version}),
  ${misc:Depends},
  ${shlibs:Depends},
+Suggests:
+ zbarcam-qt,
+ zbarcam-gtk,
 Description: QR code / bar code scanner and decoder (utilities)
  ZBar is a library for scanning and decoding bar codes from various sources
  such as video streams, image files or raw intensity sensors. It supports
@@ -138,3 +141,59 @@ Description: QR code / bar code scanner and decoder (utilities)
  .
  This package contains basic applications for decoding captured bar code images
  and using a video4linux device (e.g. webcam) as a bar code scanner.
+
+Package: libzbarqt-dev
+Section: libdevel
+Architecture: any
+Depends:
+ libqt5x11extras5-dev,
+ libzbar-dev (= ${binary:Version}),
+ libzbarqt0 (= ${binary:Version}),
+ qtbase5-dev,
+ ${misc:Depends},
+Description: QR code / bar code scanner and decoder (Qt binding development)
+ ZBar is a library for scanning and decoding bar codes from various sources
+ such as video streams, image files or raw intensity sensors. It supports
+ EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
+ .
+ This package contains the development files for the Qt binding.
+
+Package: libzbarqt0
+Architecture: any
+Multi-Arch: same
+Depends:
+ libzbar0 (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: QR code / bar code scanner and decoder (Qt binding)
+ ZBar is a library for scanning and decoding bar codes from various sources
+ such as video streams, image files or raw intensity sensors. It supports
+ EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
+ .
+ This package contains the library for Qt binding.
+
+Package: zbarcam-qt
+Architecture: any
+Depends:
+ libzbarqt0 (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: QR code / bar code scanner and decoder (Qt camera tool)
+ ZBar is a library for scanning and decoding bar codes from various sources
+ such as video streams, image files or raw intensity sensors. It supports
+ EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
+ .
+ This package contains the Qt-based camara frontend tool.
+
+Package: zbarcam-gtk
+Architecture: any
+Depends:
+ libzbargtk0 (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: QR code / bar code scanner and decoder (Gtk camera tool)
+ ZBar is a library for scanning and decoding bar codes from various sources
+ such as video streams, image files or raw intensity sensors. It supports
+ EAN-13/UPC-A, UPC-E, EAN-8, Code 128, Code 39, Interleaved 2 of 5 and QR Code.
+ .
+ This package contains the Gtk-based camara frontend tool.
