@@ -1,2 +1,6 @@
 0001-Properly-set-perl-script-shebang.patch
 0002-Reset-conversion-descriptor-after-close-prevent-doub.patch
+0003-Create-correct-pkconfig-file-for-zbar-qt5.patch
+0004-configure-make-test-more-portable.patch
+0005-Fix-detection-of-errors-in-the-v4l-read.patch
+0006-barcodetest.py-Fix-an-error-condition-when-called-wi.patch
