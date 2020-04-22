@@ -145,6 +145,7 @@ Description: QR code / bar code scanner and decoder (utilities)
 Package: libzbarqt-dev
 Section: libdevel
 Architecture: any
+Multi-Arch: same
 Depends:
  libqt5x11extras5-dev,
  libzbar-dev (= ${binary:Version}),
