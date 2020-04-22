@@ -174,7 +174,7 @@ Description: QR code / bar code scanner and decoder (Qt binding)
  This package contains the library for Qt binding.
 
 Package: zbarcam-qt
-Architecture: any
+Architecture: linux-any
 Depends:
  libzbarqt0 (= ${binary:Version}),
  ${misc:Depends},
@@ -187,7 +187,7 @@ Description: QR code / bar code scanner and decoder (Qt camera tool)
  This package contains the Qt-based camara frontend tool.
 
 Package: zbarcam-gtk
-Architecture: any
+Architecture: linux-any
 Depends:
  libzbargtk0 (= ${binary:Version}),
  ${misc:Depends},
