@@ -26,21 +26,26 @@
 #define ZBAR_SIGNAL_CODE "Code"
 #define ZBAR_SIGNAL_TYPE "Type"
 #define ZBAR_SIGNAL_DATA "Data"
+#define ZBAR_SIGNAL_BINARY_DATA "BinaryData"
 
 #define PROGRAM_NAME	"test_dbus"
 
 static const char doc[] = "\nTest if ZBar is sending codes via D-Bus\n";
 
 static const struct argp_option options[] = {
-    {"count", 'c', "#codes",   0, "Stop after received #codes", 0},
-    {"time",  't', "#seconds", 0, "Stop after #seconds",        0},
-    {"help",  '?', 0,          0, "Give this help list",       -1},
-    {"usage",  -3, 0,          0, "Give a short usage message", 0},
+    {"count",   'c', "#codes",   0, "Stop after received #codes", 0},
+    {"time",    't', "#seconds", 0, "Stop after #seconds",        0},
+    {"log",     'l', "#file",    0, "Write log to #file",         0},
+    {"bin-log", 'b', "#file",    0, "Write binary log to #file",  0},
+    {"help",    '?', 0,          0, "Give this help list",       -1},
+    {"usage",   -3,  0,          0, "Give a short usage message", 0},
     { 0 }
 };
 
 static int max_msg = 0;
 static int timeout = 0;
+static FILE *log   = NULL;
+static FILE *bin_log  = NULL;
 
 static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 {
@@ -50,6 +55,12 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
         break;
     case 't':
         timeout = strtoul(optarg, NULL, 0);
+        break;
+    case 'l':
+        log = fopen(optarg, "wb");
+        break;
+    case 'b':
+        bin_log = fopen(optarg, "wb");
         break;
     case '?':
         argp_state_help(state, state->out_stream,
@@ -78,12 +89,18 @@ int main(int argc, char *argv[])
     DBusConnection* conn;
     DBusError err;
     char *str, *property;
-    int count = 0;
+    int count = 0, length = 0;
 
     if (argp_parse(&argp, argc, argv, ARGP_NO_HELP | ARGP_NO_EXIT, 0, 0)) {
         argp_help(&argp, stderr, ARGP_HELP_SHORT_USAGE, PROGRAM_NAME);
         return -1;
     }
+
+    if (!log)
+	log = fdopen(dup(fileno(stderr)), "w+");
+
+    if (!bin_log)
+	bin_log = fdopen(dup(fileno(stderr)), "w+");
 
     // initialise the error value
     dbus_error_init(&err);
@@ -112,7 +129,7 @@ int main(int argc, char *argv[])
        alarm(timeout);
 
    /* loop listening for signals being emitted */
-   printf("Waiting for Zbar events\n");
+   fprintf(stderr, "Waiting for Zbar events\n");
    while (true) {
       // non blocking read of the next available message
       dbus_connection_read_write(conn, 0);
@@ -140,19 +157,43 @@ int main(int argc, char *argv[])
                 while (dbus_message_iter_get_arg_type(&entry) != DBUS_TYPE_INVALID) {
                   dbus_message_iter_recurse(&entry, &dict);
                   if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&dict)) {
-                    fprintf(stderr, "Dict Entry is not string!\n");
+                    fprintf(stderr, "Dict Entry key is not string!\n");
                   } else {
                     dbus_message_iter_get_basic(&dict, &property);
-                    if (strcmp(property, ZBAR_SIGNAL_TYPE) == 0) {
-                      dbus_message_iter_next(&dict);
+                    dbus_message_iter_next(&dict);
+                    if (DBUS_TYPE_VARIANT != dbus_message_iter_get_arg_type(&dict)) {
+                      fprintf(stderr, "Dict Entry value is not variant!\n");
+                    } else {
                       dbus_message_iter_recurse(&dict, &val);
-                      dbus_message_iter_get_basic(&val, &str);
-                      printf("Type = %s\n", str);
-                    } else if (strcmp(property, ZBAR_SIGNAL_DATA) == 0) {
-                      dbus_message_iter_next(&dict);
-                      dbus_message_iter_recurse(&dict, &val);
-                      dbus_message_iter_get_basic(&val, &str);
-                      printf("Value = %s\n", str);
+                      if (strcmp(property, ZBAR_SIGNAL_TYPE) == 0) {
+                        if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&val)) {
+                          fprintf(stderr, "Dict Entry value for barcode type is not string!\n");
+                        } else {
+                          dbus_message_iter_get_basic(&val, &str);
+                          fprintf(stderr, "Type = %s\n", str);
+                        }
+                      } else if (strcmp(property, ZBAR_SIGNAL_DATA) == 0) {
+                        if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&val)) {
+                          fprintf(stderr, "Dict Entry value for barcode text data is not string!\n");
+                        } else {
+                          dbus_message_iter_get_basic(&val, &str);
+                          fprintf(stderr, "Value = %s\n", str);
+                          fprintf(log, "%s\n", str);
+                        }
+                      } else if (strcmp(property, ZBAR_SIGNAL_BINARY_DATA) == 0) {
+                        if (DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type(&val)) {
+                          fprintf(stderr, "Dict Entry value for barcode binary data is not array!\n");
+                        } else {
+                          dbus_message_iter_recurse(&val, &val);
+                          if (DBUS_TYPE_BYTE != dbus_message_iter_get_arg_type(&val)) {
+                            fprintf(stderr, "Dict Entry value for barcode binary data is not array of bytes!\n");
+                          } else {
+                            dbus_message_iter_get_fixed_array(&val, &str, &length);
+                            fprintf(stderr, "BinaryData[%d]\n", length);
+                            fwrite(str, sizeof(*str), length, bin_log);
+                          }
+                        }
+                      }
                     }
                   }
                   dbus_message_iter_next(&entry);
@@ -170,5 +211,9 @@ int main(int argc, char *argv[])
       // free the message
       dbus_message_unref(msg);
    }
+
+   fclose(log);
+   fclose(bin_log);
+
    return 0;
 }

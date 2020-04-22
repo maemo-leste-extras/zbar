@@ -39,6 +39,16 @@
 
 #include <zbar.h>
 
+#ifdef ENABLE_NLS
+#include "../zbar/gettext.h"
+# include <libintl.h>
+# define _(string) gettext(string)
+#else
+# define _(string) string
+#endif
+
+# define N_(string) string
+
 #ifdef HAVE_GRAPHICSMAGICK
 # include <wand/wand_api.h>
 #endif
@@ -67,7 +77,7 @@
 # endif
 #endif
 
-static const char *note_usage =
+static const char *note_usage = N_(
     "usage: zbarimg [options] <image>...\n"
     "\n"
     "scan and decode bar codes from one or more image files\n"
@@ -78,54 +88,28 @@ static const char *note_usage =
     "    -q, --quiet     minimal output, only print decoded symbol data\n"
     "    -v, --verbose   increase debug output level\n"
     "    --verbose=N     set specific debug output level\n"
-#ifdef HAVE_DBUS
-    "    --nodbus        disable dbus message\n"
-#endif
     "    -d, --display   enable display of following images to the screen\n"
     "    -D, --nodisplay disable display of following images (default)\n"
     "    --xml, --noxml  enable/disable XML output format\n"
-    "    --raw           output decoded symbol data without symbology prefix\n"
+    "    --raw           output decoded symbol data without converting charsets\n"
+    "    -1, --oneshot   exit after scanning one bar code\n"
     "    -S<CONFIG>[=<VALUE>], --set <CONFIG>[=<VALUE>]\n"
     "                    set decoder/scanner <CONFIG> to <VALUE> (or 1)\n"
     // FIXME overlay level
-    "\n"
-    ;
+    "\n");
 
-static const char *warning_not_found =
+#ifdef HAVE_DBUS
+static const char *note_usage2 = N_(
+    "    --nodbus        disable dbus message\n");
+#endif
+
+static const char *warning_not_found_head = N_(
     "\n"
     "WARNING: barcode data was not detected in some image(s)\n"
     "Things to check:\n"
-    "  - is the barcode type supported? Currently supported symbologies are:\n"
-#if ENABLE_EAN == 1
-    "    . EAN/UPC (EAN-13, EAN-8, EAN-2, EAN-5, UPC-A, UPC-E, ISBN-10, ISBN-13)\n"
-#endif
-#if ENABLE_DATABAR == 1
-    "    . DataBar, DataBar Expanded\n"
-#endif
-#if ENABLE_CODE128 == 1
-    "    . Code 128\n"
-#endif
-#if ENABLE_CODE93 == 1
-    "    . Code 93\n"
-#endif
-#if ENABLE_CODE39 == 1
-    "    . Code 39\n"
-#endif
-#if ENABLE_CODABAR == 1
-    "    . Codabar\n"
-#endif
-#if ENABLE_I25 == 1
-    "    . Interleaved 2 of 5\n"
-#endif
-#if ENABLE_QRCODE == 1
-    "    . QR code\n"
-#endif
-#if ENABLE_SQCODE == 1
-    "    . SQ code\n"
-#endif
-#if ENABLE_PDF417 == 1
-    "    . PDF 417\n"
-#endif
+    "  - is the barcode type supported? Currently supported symbologies are:\n");
+
+static const char *warning_not_found_tail = N_(
     "  - is the barcode large enough in the image?\n"
     "  - is the barcode mostly in focus?\n"
     "  - is there sufficient contrast/illumination?\n"
@@ -137,7 +121,7 @@ static const char *warning_not_found =
     "    Please also notice that some variants take precedence over others.\n"
     "    Due to that, if you want, for example, ISBN-10, you should do:\n"
     "    $ zbarimg -Sisbn10.enable <files>\n"
-    "\n";
+    "\n");
 
 static const char *xml_head =
     "<barcodes xmlns='http://zbar.sourceforge.net/2008/barcode'>\n";
@@ -147,6 +131,8 @@ static const char *xml_foot =
 static int notfound = 0, exit_code = 0;
 static int num_images = 0, num_symbols = 0;
 static int xmllvl = 0;
+static int oneshot = 0;
+static int binary = 0;
 
 char *xmlbuf = NULL;
 unsigned xmlbuflen = 0;
@@ -244,9 +230,18 @@ static int scan_image (const char *filename)
                     return(-1);
                 }
             }
-            printf("\n");
             found++;
             num_symbols++;
+
+	    if (!binary) {
+		if(oneshot) {
+		    if(xmllvl >= 0)
+			printf("\n");
+		    break;
+		}
+		else
+		    printf("\n");
+	    }
         }
         if(xmllvl > 2) {
             xmllvl--;
@@ -287,7 +282,10 @@ int usage (int rc,
             fprintf(out, "%s", arg);
         fprintf(out, "\n\n");
     }
-    fprintf(out, "%s", note_usage);
+    fprintf(out, "%s", _(note_usage));
+#ifdef HAVE_DBUS
+    fprintf(out, "%s", _(note_usage2));
+#endif
     return(rc);
 }
 
@@ -298,6 +296,9 @@ static inline int parse_config (const char *cfgstr, const char *arg)
 
     if(zbar_processor_parse_config(processor, cfgstr))
         return(usage(1, "ERROR: invalid configuration setting: ", cfgstr));
+
+    if (!strcmp(cfgstr, "binary"))
+	binary = 1;
 
     return(0);
 }
@@ -311,6 +312,13 @@ int main (int argc, const char *argv[])
 #endif
     int display = 0;
     int i, j;
+
+#ifdef ENABLE_NLS
+    setlocale (LC_ALL, "");
+    bindtextdomain (PACKAGE, LOCALEDIR);
+    textdomain (PACKAGE);
+#endif
+
     for(i = 1; i < argc; i++) {
         const char *arg = argv[i];
         if(arg[0] != '-' || !arg[1])
@@ -327,6 +335,7 @@ int main (int argc, const char *argv[])
                 switch(arg[j]) {
                 case 'h': return(usage(0, NULL, NULL));
                 case 'q': quiet = 1; break;
+                case '1': oneshot = 1; break;
                 case 'v': zbar_increase_verbosity(); break;
                 case 'd': display = 1; break;
                 case 'D': break;
@@ -345,6 +354,8 @@ int main (int argc, const char *argv[])
             quiet = 1;
             argv[i] = NULL;
         }
+        else if(!strcmp(arg, "--oneshot"))
+            oneshot = 1;
         else if(!strcmp(arg, "--verbose"))
             zbar_increase_verbosity();
         else if(!strncmp(arg, "--verbose=", 10))
@@ -357,11 +368,20 @@ int main (int argc, const char *argv[])
 #endif
         else if(!strcmp(arg, "--display"))
             display++;
+        else if(!strcmp(arg, "--xml")) {
+            if(xmllvl >= 0)
+                xmllvl = 1;
+        }
+        else if(!strcmp(arg, "--noxml")) {
+            if(xmllvl > 0)
+                xmllvl = 0;
+        }
+        else if(!strcmp(arg, "--raw")) {
+		// RAW mode takes precedence
+                xmllvl = -1;
+        }
         else if(!strcmp(arg, "--nodisplay") ||
                 !strcmp(arg, "--set") ||
-                !strcmp(arg, "--xml") ||
-                !strcmp(arg, "--noxml") ||
-                !strcmp(arg, "--raw") ||
                 !strncmp(arg, "--set=", 6))
             continue;
         else if(!strcmp(arg, "--")) {
@@ -390,10 +410,25 @@ int main (int argc, const char *argv[])
         return(1);
     }
 
+    if(xmllvl > 0) {
+	printf("%s", xml_head);
+    }
+
     for(i = 1; i < argc; i++) {
         const char *arg = argv[i];
         if(!arg)
             continue;
+
+	if (binary)
+	    xmllvl = -1;
+
+#ifdef _WIN32
+	if(xmllvl == -1) {
+	    _setmode(_fileno(stdout), _O_BINARY);
+	} else {
+	    _setmode(_fileno(stdout), _O_TEXT);
+	}
+#endif
 
         if(arg[0] != '-' || !arg[1]) {
             if(scan_image(arg))
@@ -417,33 +452,7 @@ int main (int argc, const char *argv[])
             zbar_processor_set_visible(processor, 1);
         else if(!strcmp(arg, "--nodisplay"))
             zbar_processor_set_visible(processor, 0);
-        else if(!strcmp(arg, "--xml")) {
-            if(xmllvl < 1) {
-                xmllvl = 1;
-#ifdef _WIN32
-                fflush(stdout);
-                _setmode(_fileno(stdout), _O_BINARY);
-#endif
-                printf("%s", xml_head);
-            }
-        }
-        else if(!strcmp(arg, "--noxml") || !strcmp(arg, "--raw")) {
-            if(xmllvl > 0) {
-                xmllvl = 0;
-                printf("%s", xml_foot);
-                fflush(stdout);
-#ifdef _WIN32
-                _setmode(_fileno(stdout), _O_TEXT);
-#endif
-            }
-            if(!strcmp(arg, "--raw")) {
-                xmllvl = -1;
-#ifdef _WIN32
-                fflush(stdout);
-                _setmode(_fileno(stdout), _O_BINARY);
-#endif
-            }
-        }
+
         else if(!strcmp(arg, "--set")) {
             if(parse_config(argv[++i], "--set"))
                 return(1);
@@ -464,7 +473,6 @@ int main (int argc, const char *argv[])
         exit_code = 0;
 
     if(xmllvl > 0) {
-        xmllvl = -1;
         printf("%s", xml_foot);
         fflush(stdout);
     }
@@ -488,7 +496,38 @@ int main (int argc, const char *argv[])
 #endif
         fprintf(stderr, "\n");
         if(notfound)
-            fprintf(stderr, "%s", warning_not_found);
+            fprintf(stderr, "%s", _(warning_not_found_head));
+#if ENABLE_EAN == 1
+     fprintf(stderr, _("\t. EAN/UPC (EAN-13, EAN-8, EAN-2, EAN-5, UPC-A, UPC-E, ISBN-10, ISBN-13)\n"));
+#endif
+#if ENABLE_DATABAR == 1
+     fprintf(stderr, _("\t. DataBar, DataBar Expanded\n"));
+#endif
+#if ENABLE_CODE128 == 1
+     fprintf(stderr, _("\t. Code 128\n"));
+#endif
+#if ENABLE_CODE93 == 1
+     fprintf(stderr, _("\t. Code 93\n"));
+#endif
+#if ENABLE_CODE39 == 1
+     fprintf(stderr, _("\t. Code 39\n"));
+#endif
+#if ENABLE_CODABAR == 1
+     fprintf(stderr, _("\t. Codabar\n"));
+#endif
+#if ENABLE_I25 == 1
+     fprintf(stderr, _("\t. Interleaved 2 of 5\n"));
+#endif
+#if ENABLE_QRCODE == 1
+     fprintf(stderr, _("\t. QR code\n"));
+#endif
+#if ENABLE_SQCODE == 1
+     fprintf(stderr, _("\t. SQ code\n"));
+#endif
+#if ENABLE_PDF417 == 1
+     fprintf(stderr, _("\t. PDF 417\n"));
+#endif
+            fprintf(stderr, "%s", _(warning_not_found_tail));
     }
     if(num_images && notfound && !exit_code)
         exit_code = 4;
