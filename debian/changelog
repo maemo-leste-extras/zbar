@@ -1,3 +1,10 @@
+zbar (0.23.1-2) UNRELEASED; urgency=medium
+
+  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository,
+    Repository-Browse.
+
+ -- Debian Janitor <janitor@jelmer.uk>  Mon, 27 Apr 2020 03:39:28 +0000
+
 zbar (0.23.1-1) unstable; urgency=medium
 
   * New upstream release 0.23.1.
