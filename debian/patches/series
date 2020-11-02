@@ -1,2 +1,3 @@
 0001-Properly-set-perl-script-shebang.patch
 0002-configure.ac-Fix-leftover-on-shell-compatibility.patch
+0003-python-enum-make-it-compatible-with-Python-3.9.patch
