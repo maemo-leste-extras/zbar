@@ -5,7 +5,7 @@ Maintainer: Gürkan Myczko <gurkan@phys.ethz.ch>
 Uploaders:
  Boyuan Yang <byang@debian.org>,
 Build-Depends:
- debhelper-compat (= 12),
+ debhelper-compat (= 13),
  dh-exec,
  dh-sequence-python3,
  libdbus-1-dev,
