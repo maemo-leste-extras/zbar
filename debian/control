@@ -1,9 +1,7 @@
 Source: zbar
 Section: libs
 Priority: optional
-Maintainer: Gürkan Myczko <gurkan@phys.ethz.ch>
-Uploaders:
- Boyuan Yang <byang@debian.org>,
+Maintainer: Boyuan Yang <byang@debian.org>,
 Build-Depends:
  debhelper-compat (= 13),
  dh-exec,
