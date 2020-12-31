@@ -1,1 +1,10 @@
 usr/lib/*/*.la
+usr/lib/*/*/*.la
+usr/share/doc/zbar/ABOUT-NLS
+usr/share/doc/zbar/COPYING
+usr/share/doc/zbar/HACKING.md
+usr/share/doc/zbar/INSTALL.md
+usr/share/doc/zbar/LICENSE.md
+usr/share/doc/zbar/NEWS.md
+usr/share/doc/zbar/README.md
+usr/share/doc/zbar/TODO.md
