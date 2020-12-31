@@ -2,8 +2,10 @@ zbar (0.23.1-4) unstable; urgency=medium
 
   * Rebuild before Debian 11 release.
   * Bump Standards-Version to 4.5.1.
+  * debian/patches/0004-autoconf-2.70-compat: Fix compatibility with
+    autoconf 2.70. (Closes: #978929)
 
- -- Boyuan Yang <byang@debian.org>  Thu, 31 Dec 2020 11:25:53 -0500
+ -- Boyuan Yang <byang@debian.org>  Thu, 31 Dec 2020 13:02:13 -0500
 
 zbar (0.23.1-3) unstable; urgency=medium
 

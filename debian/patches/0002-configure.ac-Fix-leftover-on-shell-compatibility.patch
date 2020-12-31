@@ -5,7 +5,7 @@ Subject: configure.ac: Fix leftover on shell compatibility
 Uses "=" instead of "==" in string comparison for POSIX
 compatibility.  This is a leftover of previous similar fix.
 
-Forwarded: https://github.com/mchehab/zbar/pull/87
+Applied-Upstream: https://github.com/mchehab/zbar/commit/b761cd87a6215e4d30c60b7d94c11c814156c7b2
 ---
  configure.ac | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
