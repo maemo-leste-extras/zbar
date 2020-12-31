@@ -1,1 +1,3 @@
 * Java support is missing now
+* When updating to new release, check whether zbar.mo applies to
+  the library or zbar-tools package
