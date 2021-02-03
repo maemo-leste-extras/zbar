@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Boyuan Yang <byang@debian.org>
 Build-Depends:
- debhelper-compat (= 13),
+ debhelper-compat (= 12),
  dh-exec,
  dh-sequence-python3,
  libdbus-1-dev,
